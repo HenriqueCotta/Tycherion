@@ -1,0 +1,38 @@
+symbol: "PETR4"     # compat com run_once (um ativo)
+timeframe: "H1"
+lookback_days: 15
+
+strategy:
+  type: "sma_cross"
+  sma_cross:
+    fast_period: 7
+    slow_period: 40
+
+trading:
+  dry_run: true
+  require_demo: true
+  deviation_points: 10
+  volume_mode: "min"        # min | fixed
+  fixed_volume: 100.0
+
+risk:
+  risk_per_trade_pct: 0.5
+  max_daily_loss_pct: 2.0
+
+mt5:
+  terminal_path: null        # ex.: "C:\\Program Files\\MetaTrader 5\\terminal64.exe"
+  server: null             # ex.: "XP-Demo"
+  login: null
+  password: null
+
+application:
+  usecase:
+    name: "sma_cross"
+  watchlist:
+    mode: "static"            # static | market_watch | pattern
+    symbols: ["PETR4","VALE3","ABEV3"]
+    pattern: null
+    top_n: 10
+  scan:
+    run_forever: true
+    interval_seconds: 60

@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tycherion"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+  "MetaTrader5>=5.0",
+  "pandas>=2.2",
+  "pyyaml>=6.0",
+  "python-dotenv>=1.0",
+  "pydantic>=2.8",
+  "typing-extensions>=4.12"
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+
+[tool.ruff]
+line-length = 100

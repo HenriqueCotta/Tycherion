@@ -1,0 +1,6 @@
+from __future__ import annotations
+from typing import Protocol, List
+
+class WatchlistPort(Protocol):
+    def visible_symbols(self) -> List[str]: ...
+    def by_pattern(self, pattern: str) -> List[str]: ...
