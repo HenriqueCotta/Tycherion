@@ -1,9 +1,9 @@
 from __future__ import annotations
 import MetaTrader5 as mt5
 from typing import List
-from tycherion.ports.watchlist import WatchlistPort
+from tycherion.ports.universe import UniversePort
 
-class MT5Watchlist(WatchlistPort):
+class MT5Universe(UniversePort):
     def visible_symbols(self) -> List[str]:
         syms = mt5.symbols_get()
         return [s.name for s in syms if getattr(s, "visible", False)]

@@ -1,18 +1,12 @@
-symbol: "PETR4"     # compat com run_once (um ativo)
 timeframe: "H1"
-lookback_days: 15
 
-strategy:
-  type: "sma_cross"
-  sma_cross:
-    fast_period: 7
-    slow_period: 40
+lookback_days: 15
 
 trading:
   dry_run: true
   require_demo: true
   deviation_points: 10
-  volume_mode: "min"        # min | fixed
+  volume_mode: "min"
   fixed_volume: 100.0
 
 risk:
@@ -20,19 +14,20 @@ risk:
   max_daily_loss_pct: 2.0
 
 mt5:
-  terminal_path: null        # ex.: "C:\\Program Files\\MetaTrader 5\\terminal64.exe"
-  server: null             # ex.: "XP-Demo"
+  terminal_path: null
+  server: null
   login: null
   password: null
 
 application:
-  usecase:
-    name: "sma_cross"
-  watchlist:
-    mode: "static"            # static | market_watch | pattern
-    symbols: ["PETR4","VALE3","ABEV3"]
-    pattern: null
-    top_n: 10
-  scan:
+  run_mode:
+    name: "live_multimodel"
+  playbook: "default"
+  schedule:
     run_forever: true
     interval_seconds: 60
+  coverage:
+    source: "static"
+    symbols: ["PETR4","VALE3","WIN$","WDO$"]
+    pattern: null
+    top_n: 20

@@ -4,14 +4,6 @@ from typing import Optional
 import os, yaml
 from dotenv import load_dotenv
 
-class StrategySMA(BaseModel):
-    fast_period: int = 7
-    slow_period: int = 40
-
-class Strategy(BaseModel):
-    type: str = "sma_cross"
-    sma_cross: StrategySMA = StrategySMA()
-
 class Trading(BaseModel):
     dry_run: bool = True
     require_demo: bool = True
@@ -29,29 +21,28 @@ class MT5(BaseModel):
     login: Optional[int] = None
     password: Optional[str] = None
 
-class WatchlistCfg(BaseModel):
-    mode: str = "static"             # static | market_watch | pattern
-    symbols: list[str] = []
-    pattern: str | None = None
-    top_n: int = 10
+class RunMode(BaseModel):
+    name: str = "live_multimodel"
 
-class ScanCfg(BaseModel):
+class ScheduleCfg(BaseModel):
     run_forever: bool = False
     interval_seconds: int = 60
 
-class UsecaseCfg(BaseModel):
-    name: str = "sma_cross"
+class CoverageCfg(BaseModel):
+    source: str = "market_watch"
+    symbols: list[str] = []
+    pattern: str | None = None
+    top_n: int = 20
 
 class ApplicationCfg(BaseModel):
-    usecase: UsecaseCfg = UsecaseCfg()
-    watchlist: WatchlistCfg = WatchlistCfg()
-    scan: ScanCfg = ScanCfg()
+    run_mode: RunMode = RunMode()
+    playbook: str = "default"
+    schedule: ScheduleCfg = ScheduleCfg()
+    coverage: CoverageCfg = CoverageCfg()
 
 class AppConfig(BaseModel):
-    symbol: str
     timeframe: str
     lookback_days: int
-    strategy: Strategy = Strategy()
     trading: Trading = Trading()
     risk: Risk = Risk()
     mt5: MT5 = MT5()
@@ -64,7 +55,7 @@ def load_config(path: str) -> AppConfig:
     if not p.exists():
         raise FileNotFoundError(f"Config not found: {path}")
     with open(path, "r", encoding="utf-8") as f:
-        raw = yaml.safe_load(f) or {}
+        raw = yaml.safe_load(f) | {}
     raw.setdefault("mt5", {})
     mt5_cfg = raw["mt5"] or {}
 

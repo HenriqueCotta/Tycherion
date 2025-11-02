@@ -9,7 +9,7 @@ class MT5Trader(TradingPort):
     dry_run: bool = True
     require_demo: bool = True
     deviation_points: int = 10
-    volume_mode: str = "min"       # "min" | "fixed"
+    volume_mode: str = "min"
     fixed_volume: float = 0.01
 
     def _symbol_min_volume(self, symbol: str) -> float:
@@ -44,7 +44,7 @@ class MT5Trader(TradingPort):
             "deviation": self.deviation_points,
             "type_time": mt5.ORDER_TIME_GTC,
             "type_filling": mt5.ORDER_FILLING_RETURN,
-            "magic": 201,
+            "magic": 301,
             "comment": "tycherion-buy",
         }
         check = mt5.order_check(request)
@@ -73,7 +73,7 @@ class MT5Trader(TradingPort):
             "deviation": self.deviation_points,
             "type_time": mt5.ORDER_TIME_GTC,
             "type_filling": mt5.ORDER_FILLING_RETURN,
-            "magic": 201,
+            "magic": 301,
             "comment": "tycherion-sell",
         }
         check = mt5.order_check(request)

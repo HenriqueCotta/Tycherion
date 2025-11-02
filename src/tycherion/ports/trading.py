@@ -1,8 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Protocol, Optional, Literal
-
-Side = Literal["BUY", "SELL"]
+from typing import Protocol, Optional
 
 @dataclass
 class TradeResult:

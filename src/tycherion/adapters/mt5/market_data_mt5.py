@@ -16,10 +16,10 @@ _TF_MAP: Dict[str, int] = {
 }
 
 class MT5MarketData(MarketDataPort):
-    def get_bars(self, symbol: str, timeFrame: str, start: datetime, end: datetime) -> pd.DataFrame:
-        timeFrame = _TF_MAP.get(timeFrame.upper())
+    def get_bars(self, symbol: str, timeframe: str, start: datetime, end: datetime) -> pd.DataFrame:
+        timeFrame = _TF_MAP.get(timeframe.upper())
         if timeFrame is None:
-            raise ValueError(f"Unsupported timeframe: {timeFrame}")
+            raise ValueError(f"Unsupported timeframe: {timeframe}")
         rates = mt5.copy_rates_range(
             symbol, timeFrame,
             start.astimezone(timezone.utc),
