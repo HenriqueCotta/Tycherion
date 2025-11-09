@@ -48,10 +48,17 @@ Tycherion
     │   │       └── >>> sizer.py <<<
     │   ├── domain
     │   │   ├── indicators
+    │   │   │   ├── __pycache__
+    │   │   │   │   ├── >>> stretch_zscore.cpython-313.pyc <<<
+    │   │   │   │   ├── >>> trend_donchian.cpython-313.pyc <<<
+    │   │   │   │   └── >>> volatility_atr.cpython-313.pyc <<<
     │   │   │   ├── >>> stretch_zscore.py <<<
     │   │   │   ├── >>> trend_donchian.py <<<
     │   │   │   └── >>> volatility_atr.py <<<
     │   │   └── models
+    │   │       ├── __pycache__
+    │   │       │   ├── >>> mean_reversion.cpython-313.pyc <<<
+    │   │       │   └── >>> trend_following.cpython-313.pyc <<<
     │   │       ├── >>> mean_reversion.py <<<
     │   │       └── >>> trend_following.py <<<
     │   ├── ports
@@ -81,10 +88,16 @@ Tycherion
 
 --- .env:START ---
 MT5_TERMINAL_PATH="C:\\Program Files\\MetaTrader 5 Terminal\\terminal64.exe"
-MT5_SERVER="XPMT5-DEMO"
-MT5_LOGIN="517500592"
+
+# DEMO
+MT5_SERVER="Rico-DEMO"
+MT5_LOGIN="3008317111"
 MT5_PASSWORD="BusterBD001."
 
+# # PROD
+# MT5_SERVER="Rico-PROD"
+# MT5_LOGIN="3008317111"
+# MT5_PASSWORD="BusterBD001."
 --- .env:END ---
 
 --- .env.example:START ---
@@ -467,6 +480,7 @@ from tycherion.adapters.mt5.trading_mt5 import MT5Trader
 from tycherion.adapters.mt5.account_mt5 import MT5Account
 from tycherion.adapters.mt5.universe_mt5 import MT5Universe
 from tycherion.application.runmodes.live_multimodel import run_live_multimodel
+from tycherion.application.plugins import registry as _registry
 
 def _ensure_initialized(cfg: AppConfig) -> None:
     if not mt5.initialize(path=cfg.mt5.terminal_path or None):
@@ -487,6 +501,7 @@ def run_app(config_path: str) -> None:
     _ensure_initialized(cfg)
     try:
         _assert_account_ok(cfg)
+        _registry.auto_discover()
         market_data = MT5MarketData()
         trader = MT5Trader(
             dry_run=cfg.trading.dry_run,
@@ -510,39 +525,35 @@ def run_app(config_path: str) -> None:
 --- src\tycherion\app\__pycache__\main.cpython-313.pyc:START ---
 
 
-    di                        S SK Jr  S SKrS SKJrJr  S SKJr  S SK	J
+    oi\                        S SK Jr  S SKrS SKJrJr  S SKJr  S SK	J
 r
   S SKJr  S SK
-Jr  S SKJr  SS	 jrSS
- jrS
-S jrg)    )annotationsN)load_config	AppConfig)
+Jr  S SKJr  S S	KJr  S
+S
+ jrS
+S jrSS jrg)    )annotationsN)load_config	AppConfig)
 MT5MarketData)	MT5Trader)
-MT5Account)MT5Universe)run_live_multimodelc                \   [         R                  " U R                   R                  =(       d    S S9(       d!  [        S[         R                  " 5        35      eU R                   R
+MT5Account)MT5Universe)run_live_multimodel)registryc                \   [         R                  " U R                   R                  =(       d    S S9(       d!  [        S[         R                  " 5        35      eU R                   R
                   (       a  U R                   R                  (       a  U R                   R                  (       a  [         R
                   " [        U R                   R
                   5      U R                   R                  U R                   R                  S9(       d!  [        S[         R                  " 5        35      eg g g g )N)pathzMT5 initialize failed: )loginpasswordserverzMT5 login failed: )	mt5
 initialize
 terminal_path
 SystemExit
-last_errorr
-   r   r   int)cfgs    ^C:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\app\main.py_ensure_initializedr   
-   s    >>sww44<=23>>3C2DEFF
+last_errorr   r   r   int)cfgs    ^C:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\app\main.py_ensure_initializedr      s    >>sww44<=23>>3C2DEFF
 ww}}))cggnnyys377==1CGG<L<LUXU\U\UcUcd1#..2B1CDEE e /=)}    c                    [         R                  " 5       nUc  [        S5      eU R                  R                  (       a*  UR
-                  [         R                  :w  a  [        S5      eg g )Nz>No MT5 account logged in. Open the Terminal and login to DEMO.zCBlocked: not a DEMO account. Enable DEMO or set require_demo=false.)r   account_infor   tradingrequire_demo
-trade_modeACCOUNT_TRADE_MODE_DEMO)r   ais     r   _assert_account_okr!      sT    				B	zYZZ
-{{BMMS5P5P$P^__ %Qr   c                x   [        U 5      n[        U5         [        U5        [        5       n[	        UR
-                  R                  UR
-                  R                  UR
-                  R                  UR
-                  R                  UR
-                  R                  S9n[        5       n[        5       nUR                  R                  R                  =(       d    SR!                  5       nUS:X  a  [#        XX4U5        O[%        SU 35      e [&        R(                  " 5         g ! [&        R(                  " 5         f = f)N)dry_runr   deviation_pointsvolume_modefixed_volume live_multimodelzUnknown run_mode: )r   r   r!   r   r   r   r#   r   r$   r%   r&   r   r	   applicationrun_modenamelowerr
-   r   r   shutdown)config_pathr   market_datatraderaccountuniverser+   s          r   run_appr3      s    
+                  [         R                  :w  a  [        S5      eg g )Nz>No MT5 account logged in. Open the Terminal and login to DEMO.zCBlocked: not a DEMO account. Enable DEMO or set require_demo=false.)r   account_infor   tradingrequire_demo
+trade_modeACCOUNT_TRADE_MODE_DEMO)r   ais     r   _assert_account_okr"      sT    				B	zYZZ
+{{BMMS5P5P$P^__ %Qr   c                   [        U 5      n[        U5         [        U5        [        R                  " 5         [        5       n[
+        UR                  R                  UR                  R                  UR                  R                  UR                  R                  UR                  R                  S9n[        5       n[        5       nUR                  R                   R"                  =(       d    SR%                  5       nUS:X  a  ['        XX4U5        O[)        SU 35      e [*        R,                  " 5         g ! [*        R,                  " 5         f = f)N)dry_runr   deviation_pointsvolume_modefixed_volume live_multimodelzUnknown run_mode: )r   r   r"   	_registry
+auto_discoverr   r   r   r$   r   r%   r&   r'   r   r	   applicationrun_modenamelowerr
+   r   r   shutdown)config_pathr   market_datatraderaccountuniverser.   s          r   run_appr6      s    
 k
-"C3#oKK''11 [[99//11
+"C3!#oKK''11 [[99//11
  ,=((--3::<$$&8L1$899 
-M 	s   C3D" "D9)r   r   returnNone)r.   strr4   r5   )
-__future__r   MetaTrader5r   tycherion.shared.configr   r   &tycherion.adapters.mt5.market_data_mt5r   "tycherion.adapters.mt5.trading_mt5r   "tycherion.adapters.mt5.account_mt5r   #tycherion.adapters.mt5.universe_mt5r	   .tycherion.application.runmodes.live_multimodelr
-   r   r!   r3    r   r   <module>r@      s.    "  : @ 8 9 ; NF`r   
+M 	s   DD7 7E)r   r   returnNone)r1   strr7   r8   )
+__future__r   MetaTrader5r   tycherion.shared.configr   r   &tycherion.adapters.mt5.market_data_mt5r   "tycherion.adapters.mt5.trading_mt5r   "tycherion.adapters.mt5.account_mt5r   #tycherion.adapters.mt5.universe_mt5r	   .tycherion.application.runmodes.live_multimodelr
+   tycherion.application.pluginsr   r*   r   r"   r6    r   r   <module>rD      s1    "  : @ 8 9 ; N ?F`r   
 --- src\tycherion\app\__pycache__\main.cpython-313.pyc:END ---
 
 --- src\tycherion\application\plugins\registry.py:START ---
@@ -583,15 +594,40 @@ def pick_indicator_for(key: str, playbook: str = "default"):
             return ind
     raise KeyError(f"No indicator registered for key={key}")
 
+# --- auto-discovery of plugins ---
+def auto_discover() -> None:
+    """Importa todos os módulos em tycherion.domain.indicators e .models
+    para que os decorators registrem indicadores e models automaticamente."""
+    import importlib, pkgutil
+
+    for base in ("tycherion.domain.indicators", "tycherion.domain.models"):
+        try:
+            pkg = importlib.import_module(base)
+        except Exception as e:
+            print(f"[plugins] base import failed: {base} -> {e}")
+            continue
+
+        pkg_path = getattr(pkg, "__path__", None)
+        if not pkg_path:
+            continue
+
+        for mod in pkgutil.walk_packages(pkg_path, pkg.__name__ + "."):
+            try:
+                importlib.import_module(mod.name)
+            except Exception as e:
+                print(f"[plugins] import failed: {mod.name} -> {e}")
+
+    print(f"[plugins] discovered indicators={len(INDICATORS)} models={len(MODELS)}")
+
 --- src\tycherion\application\plugins\registry.py:END ---
 
 --- src\tycherion\application\plugins\__pycache__\registry.cpython-313.pyc:START ---
 
 
-    di8                    n    % S SK Jr  S SKJrJr  0 rS\S'   0 rS\S'   0 rS\S'   S
-S	 jr	SS
+    soi                    x    % S SK Jr  S SKJrJr  0 rS\S'   0 rS\S'   0 rS\S'   SS	 jr	SS
  jr
-SSS jjrg)    )annotations)DictListzDict[str, List[object]]
+SSS jjrSS jrg
+)    )annotations)DictListzDict[str, List[object]]
 INDICATORSzDict[str, object]MODELSzDict[str, str]DEFAULT_METHODc                   ^ ^^ U UU4S jnU$ )Nc                   > U " 5       nTUl         TUl        TUl        [        R	                  T/ 5      R                  U5        [        R	                  TT5        U $ N)keymethodtagsr   
 setdefaultappendr   )clsinstr   r
    r   s     rC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\application\plugins\registry.pydeco register_indicator.<locals>.deco	   sO    u	c2&--d3!!#v.
@@ -600,10 +636,27 @@ setdefaultappendr   )clsinstr   r
 r   r   )r   r   r   s   `` r   register_modelr      s     Kr   c                    [         R                  U / 5      nU H   nU[        US[        5       5      ;   d  M  Us  $    U H+  n[        USS 5      [        R                  U 5      :X  d  M)  Us  $    [        SU  35      e)Nr   r
    z No indicator registered for key=)r   getgetattrsetr   KeyError)r   playbook
 candidatesinds       r   pick_indicator_forr&      sv    R(JwsFCE22J  3$'>+=+=c+BBJ  5cU;
-<<r   N)r   strr
-   r'   r   set[str])r   r'   r   r(   )default)r   r'   r#   r'   )
-__future__r   typingr   r   r   __annotations__r   r   r   r   r&   r   r   r   <module>r-      s:    " &(
-# ( !# #	=r   
+<<r   c            	        SSK n SSKnS Hl  n U R                  U5      n[        USS5      nU(       d  M+  UR
+                  XSR                  S-   5       H  n U R                  UR                  5        M!     Mn     [	        S	[        [        5       S
+[        [        5       35        g! [         a  n[	        SU SU 35         SnAM  SnAff = f! [         a&  n[	        SUR                   SU 35         SnAM  SnAff = f)u   Importa todos os módulos em tycherion.domain.indicators e .models
+para que os decorators registrem indicadores e models automaticamente.r   N)ztycherion.domain.indicatorsztycherion.domain.modelsz[plugins] base import failed: z -> __path__.z[plugins] import failed: z [plugins] discovered indicators=z models=)	importlibpkgutil
+import_module	Exceptionprintr    
+walk_packages__name__r   lenr   r   )r*   r+   basepkgepkg_pathmods          r   
+auto_discoverr7   '   s     J	))$/C
+ 3
+D1((<<#3EFC
+E''1 G K" 
+,S_,=Xc&k]
+ST  	24&QC@A	  
+E1#((4sCDD
+Es/   B'C'
+C
+1CC
+
+D C;;D N)r   strr
+   r8   r   set[str])r   r8   r   r9   )default)r   r8   r#   r8   )returnNone)
+__future__r   typingr   r   r   __annotations__r   r   r   r   r&   r7   r   r   r   <module>r@      s@    " &(
+# ( !# #	=Ur   
 --- src\tycherion\application\plugins\__pycache__\registry.cpython-313.pyc:END ---
 
 --- src\tycherion\application\runmodes\live_multimodel.py:START ---
@@ -627,50 +680,50 @@ import pandas as pd
 
 def run_live_multimodel(cfg: AppConfig, data: MarketDataPort, trader: TradingPort, account: AccountPort, universe: UniversePort) -> None:
     playbook = cfg.application.playbook or "default"
-    active = [m for m in MODELS.values() if playbook in getattr(m, "tags", set()) or "default" in getattr(m, "tags", set())]
-    if not active:
+    activeModels = [model for model in MODELS.values() if playbook in getattr(model, "tags", set()) or "default" in getattr(model, "tags", set())]
+    if not activeModels:
         print(f"No models found for playbook={playbook}. Nothing to do.")
         return
-    needed_keys = set().union(*[m.requires() for m in active]) if active else set()
+    needed_keys = set().union(*[m.requires() for m in activeModels]) if activeModels else set()
     coverage = build_coverage(cfg, data, universe)
 
     def step_once():
         end = datetime.now(timezone.utc)
         start = end - timedelta(days=cfg.lookback_days)
-        for sym in coverage:
-            if not mt5.symbol_select(sym, True):
-                print(f"[{sym}] not available/visible.")
+        for symbol in coverage:
+            if not mt5.symbol_select(symbol, True):
+                print(f"[{symbol}] not available/visible.")
                 continue
-            df = data.get_bars(sym, cfg.timeframe, start, end)
-            if df.empty or len(df) < 30:
-                print(f"[{sym}] no data.")
+            dataFrame = data.get_bars(symbol, cfg.timeframe, start, end)
+            if dataFrame.empty or len(dataFrame) < 30:
+                print(f"[{symbol}] no data.")
                 continue
             bundle = {}
             for key in needed_keys:
                 ind = pick_indicator_for(key, playbook)
                 try:
-                    bundle[key] = ind.compute(df.copy())
+                    bundle[key] = ind.compute(dataFrame.copy())
                 except Exception as e:
-                    print(f"[{sym}] indicator {key}:{getattr(ind,'method','?')} failed: {e}")
+                    print(f"[{symbol}] indicator {key}:{getattr(ind,'method','?')} failed: {e}")
                     bundle[key] = {"score":0.0,"features":{}}
             decisions = []
-            for m in active:
+            for model in activeModels:
                 try:
-                    d = m.decide(bundle)
-                    decisions.append(d)
+                    decisionByModel = model.decide(bundle)
+                    decisions.append(decisionByModel)
                 except Exception as e:
-                    print(f"[{sym}] model {m.name} failed: {e}")
+                    print(f"[{symbol}] model {model.name} failed: {e}")
             final = combine(decisions)
             side = final["side"]; weight = final["weight"]
-            vol = volume_from_weight(sym, weight, cfg.trading.volume_mode, cfg.trading.fixed_volume)
+            vol = volume_from_weight(symbol, weight, cfg.trading.volume_mode, cfg.trading.fixed_volume)
             if vol <= 0.0 or side == "HOLD":
-                print(f"[{sym}] ENSEMBLE -> HOLD (weight={weight:.2f})")
+                print(f"[{symbol}] ENSEMBLE -> HOLD (weight={weight:.2f})")
                 continue
-            print(f"[{sym}] ENSEMBLE -> {side} (weight={weight:.2f}) vol≈{vol}")
+            print(f"[{symbol}] ENSEMBLE -> {side} (weight={weight:.2f}) vol≈{vol}")
             if side == "BUY":
-                trader.market_buy(sym)
+                trader.market_buy(symbol)
             elif side == "SELL":
-                trader.market_sell(sym)
+                trader.market_sell(symbol)
 
     if cfg.application.schedule.run_forever:
         while True:
@@ -691,20 +744,20 @@ def run_live_multimodel(cfg: AppConfig, data: MarketDataPort, trader: TradingPor
 --- src\tycherion\application\runmodes\__pycache__\live_multimodel.cpython-313.pyc:START ---
 
 
-    di
+    {i
                         S SK Jr  S SKrS SKJrJrJr  S SKJr  S SKJ	r	  S SK
 Jr  S SKJ
 r
   S SKJr  S S	KJrJr  S S
 KJr  S SKJr  S SKJr  S SKrS SKrSS
  jrg)    )annotationsN)datetime	timedeltatimezone)	AppConfig)MarketDataPort)TradingPort)AccountPort)UniversePort)MODELSpick_indicator_for)build_coverage)combine)volume_from_weightc           
-       ^ ^^^^	^
-^ T R                   R                  =(       d    Sm[        R                  " 5        Vs/ s H9  nT[	        US[        5       5      ;   d  S[	        US[        5       5      ;   d  M7  UPM;     snmT(       d  [
-        ST S35        g T(       a5  [        5       R                  " T Vs/ s H  oUR                  5       PM     sn6 O	[        5       m
-[        T TU5      m	UU U	UU
-UU4S jnT R                   R                  R                  (       aI    U" 5         [        R                  " [        ST R                   R                  R                  5      5        MH  U" 5         g s  snf s  snf ! [          a    [
-        S5         g ["         a,  n[
-        SU5        [        R                  " S	5         S nAN[S nAff = f)
+       ^ ^^^	^
+^^ T R                   R                  =(       d    Sm[        R                  " 5        Vs/ s H9  nT[	        US[        5       5      ;   d  S[	        US[        5       5      ;   d  M7  UPM;     snm	T	(       d  [
+        ST S35        g T	(       a5  [        5       R                  " T	 Vs/ s H  ofR                  5       PM     sn6 O	[        5       m[        T TU5      m
+U	U U
+UUUU4S jnT R                   R                  R                  (       aI    U" 5         [        R                  " [        ST R                   R                  R                  5      5        MH  U" 5         g s  snf s  snf ! [          a    [
+        S5         g ["         a,  n[
+        SU5        [        R                  " S	5         S nAN[S nAff = f)
 NdefaulttagszNo models found for playbook=z. Nothing to do.c                   > [         R                  " [        R                  5      n U [	        TR
                   S9-
   nT GH  n[        R                  " US5      (       d  [        SU S35        M1  TR                  UTR                  X5      nUR                  (       d  [        U5      S:  a  [        SU S35        M  0 nT H1  n[        UT5      n UR                  UR                  5       5      XE'   M3     / nT H&  n	 U	R%                  U5      n
@@ -719,17 +772,19 @@ S SU 35        US:X  a  TR5                  U5        GM  US:X 
 lookback_daysmt5
 symbol_selectprintget_bars	timeframeemptylenr
    computecopy	Exceptiongetattrdecideappendnamer   r   tradingvolume_modefixed_volume
-market_buymarket_sell)endstartsymdfbundlekeyinde	decisionsmdfinalr   r   volactivecfgcoveragedataneeded_keysplaybooktraders                  zC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\application\runmodes\live_multimodel.py	step_once&run_live_multimodel.<locals>.step_once   s7   ll8<<(iS%6%677C$$S$//#678sCMM5>Bxx3r7R<#j)*F"(h7>"%++bggi"8FK # IA(A$$Q'  I&E=D?&$S#++2I2I3;;KcKcdCczTV^#9&QGHAcU.is|8C5QRu}!!#&""3'C  ! >AcU,se1WS#5N4OyYZX[\]+.""=FKK> ! AAcU(166()A3?@@As0   !G!>"H#!
-H +)HH #
-I-II   zStopping by keyboard.zLoop error:   )applicationrK   r   valuesr0   setr(   unionrequiresr   schedulerun_forevertimesleepmaxinterval_secondsKeyboardInterruptr/   )rG   rI   rL   accountuniverserB   rN   r@   rF   rH   rJ   rK   s   ```     @@@@rM   run_live_multimodelr`      sQ   ''49H
-|AH6358Q,QU^bijkmsuxuzb{U{a
-|F
--hZ7GHIBH#%++f=f
+market_buymarket_sell)endstartsymbol	dataFramebundlekeyinde	decisionsmodeldecisionByModelfinalr   r   volactiveModelscfgcoveragedataneeded_keysplaybooktraders                  zC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\application\runmodes\live_multimodel.py	step_once&run_live_multimodel.<locals>.step_once   s:   ll8<<(iS%6%677F$$VT22&!9:;
 
-f=>ceKc42H$( $(L ++
+fcmmUHI#i.2"5&,-F"(h7>"%++inn.>"?FK # I%H&+ll6&:O$$_5 & I&E=D?&$VS[[5L5LckkNfNfgCczTV^&!<VCLJKAfX^D66#,hseTUu}!!&)""6*C  ! >AfX\#aHS8Q7RR[\][^_`+.""=FKK> ! HAfXXejj\1#FGGHs0   !G!>"H#!
+H +)HH #
+I-II   zStopping by keyboard.zLoop error:   )applicationrK   r   valuesr0   setr(   unionrequiresr   schedulerun_forevertimesleepmaxinterval_secondsKeyboardInterruptr/   )
+rG   rI   rL   accountuniverserB   mrN   r@   rF   rH   rJ   rK   s
+   ```      @@@@rM   run_live_multimodelra      su   ''49H'-}}  Se(geU[]`]bFc:cgpt{  }B  DJ  LO  LQ  uR  hRE  SL
+-hZ7GHIHT#%++lCl
+
+lCDZ]Z_Kc42H$+ $+L ++
 
 
-3q#//":":"K"KLM  	s }  >\ % 
+3q#//":":"K"KLM  	s S  D\ % 
 -. 
 mQ'
 
@@ -740,7 +795,7 @@ I-II   zStopping by keyboard.zLoop error:   )applicationrK   r  
    r_   r   returnNone)
 __future__r   rY   r   r   r   tycherion.shared.configr   tycherion.ports.market_datar   tycherion.ports.tradingr	   tycherion.ports.accountr
    tycherion.ports.universer   &tycherion.application.plugins.registryr   r
-   0tycherion.application.services.coverage_selectorr   'tycherion.application.services.ensembler   $tycherion.application.services.sizerr   MetaTrader5r&   pandaspdr`        rM   <module>rr      s7    "  2 2 - 6 / / 1 M K ; C  ;rq   
+   0tycherion.application.services.coverage_selectorr   'tycherion.application.services.ensembler   $tycherion.application.services.sizerr   MetaTrader5r&   pandaspdra        rM   <module>rs      s7    "  2 2 - 6 / / 1 M K ; C  ;rr   
 --- src\tycherion\application\runmodes\__pycache__\live_multimodel.cpython-313.pyc:END ---
 
 --- src\tycherion\application\services\coverage_selector.py:START ---
@@ -796,13 +851,13 @@ def combine(decisions: List[Dict]) -> Dict:
         return {'side':'HOLD','weight':0.0,'confidence':0.0}
 
     num, den = 0.0, 0.0
-    for d in decisions:
-        side = d.get('side','HOLD')
-        w = float(d.get('weight',0.0))
-        c = float(d.get('confidence',0.5))
-        signed = w if side == 'BUY' else (-w if side == 'SELL' else 0.0)
-        num += signed * max(0.0, min(1.0, c))
-        den += max(0.0, min(1.0, c))
+    for decision in decisions:
+        side = decision.get('side','HOLD')
+        weight = float(decision.get('weight',0.0))
+        confidence = float(decision.get('confidence',0.5))
+        signed = weight if side == 'BUY' else (-weight if side == 'SELL' else 0.0)
+        num += signed * max(0.0, min(1.0, confidence))
+        den += max(0.0, min(1.0, confidence))
 
     if den <= 0.0:
         return {'side':'HOLD','weight':0.0,'confidence':0.0}
@@ -879,27 +934,25 @@ __future__r   r   r   r   pandasr)   tycherion.shared.configr   tycherio
 --- src\tycherion\application\services\__pycache__\ensemble.cpython-313.pyc:START ---
 
 
-    di                    *    S SK Jr  S SKJrJr  SS jrg)    )annotations)ListDictc           
+    i}i                    *    S SK Jr  S SKJrJr  SS jrg)    )annotations)ListDictc           
         U (       d  SSSS.$ Su  pU  H  nUR                  SS5      n[        UR                  SS5      5      n[        UR                  SS5      5      nUS	:X  a  UO
 US
 :X  a  U* OSnX[        S[        SU5      5      -  -
   nU[        S[        SU5      5      -
   nM     US::  a  SSSS.$ X-  nUS:  a  S	O	US
 :  a  S
-OSn[        S[	        U5      5      n	XI[        SU[        U 5      -  5      S.$ )NHOLD        )sideweight
+OSn[        S[	        U5      5      nXE[        SU[        U 5      -  5      S.$ )NHOLD        )sideweight
 confidence)r   r   r	   r
-   r   g      ?BUYSELLg      ?g?g)getfloatmaxminabslen)
-	decisionsnumdendr	   wcsignedaggr
-   s
-             sC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\application\services\ensemble.pycombiner      s    s<<HC
-uuVF#!%%%&!%%S)*em1"CCS!---s3C$$
-  czs<<
+   r   g      ?BUYSELLg      ?g?g)getfloatmaxminabslen)		decisionsnumdendecisionr	   r
+   r   signedaggs	            sC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\application\services\ensemble.pycombiner      s    s<<HC||F6*x||HS128<<S9:
+5=$&.wcCS*!5666s3C,--
+  czs<<
 
 )C#I5cDjFfD
 c#h
 F#c3s9~CU:VWW    N)r   z
 List[Dict]returnr   )
-__future__r   typingr   r   r    r   r   <module>r#      s    " Xr   
+__future__r   typingr   r   r    r   r   <module>r!      s    " Xr   
 --- src\tycherion\application\services\__pycache__\ensemble.cpython-313.pyc:END ---
 
 --- src\tycherion\application\services\__pycache__\sizer.cpython-313.pyc:START ---
@@ -982,6 +1035,105 @@ class VolATR14:
 
 --- src\tycherion\domain\indicators\volatility_atr.py:END ---
 
+--- src\tycherion\domain\indicators\__pycache__\stretch_zscore.cpython-313.pyc:START ---
+
+
+    di                    P    S SK Jr  S SKrS SKJr  \" SSS1S9 " S S	5      5       rg)
+    )annotationsN)register_indicatorstretch	zscore_20default)keymethodtagsc                  "    \ rS rSrSrSS jrSrg)StretchZScore20      c                   UR                   (       d  [        U5      U R                  :  a  S0 S.$ US   R                  [        5      nUR                  U R                  5      R
+                  5       nUR                  U R                  5      R                  SS9R                  SS5      nX#-
+  U-  n[	        UR                  S   5      n[        S[        S	U* S
+-  5      5      nUSU0S.$ )Ng        )scorefeaturescloser   )ddofg&.>g      g      ?g      @z)emptylenperiodastypefloatrollingmeanstdreplaceilocmaxmin)selfdfr   masdr   zvalr   s           vC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\domain\indicators\stretch_zscore.pycomputeStretchZScore20.compute   s    
+88s2w,2..7""5)
+]]4;;
+'
+,
+,
+.
+]]4;;
+'
++
++
++
+3
+;
+;At
+D
+Z2QVVBZ D#cD53;/0S$K88     N)r#   zpd.DataFramereturndict)__name__
+__module____qualname____firstlineno__r   r(   __static_attributes__r+   r*   r'   r   r      s    
+F	9r*   r   )
+__future__r   pandaspd&tycherion.application.plugins.registryr   r   r+   r*   r'   <module>r7      s1    "  E	+YKH9 9 I9r*   
+--- src\tycherion\domain\indicators\__pycache__\stretch_zscore.cpython-313.pyc:END ---
+
+--- src\tycherion\domain\indicators\__pycache__\trend_donchian.cpython-313.pyc:START ---
+
+
+    di3                    P    S SK Jr  S SKrS SKJr  \" SSS1S9 " S S	5      5       rg)
+    )annotationsN)register_indicatortrenddonchian_50_50default)keymethodtagsc                  &    \ rS rSrSrSrSS jrSrg)TrendDonchian5050   2   c                N   UR                   (       d-  [        U5      [        U R                  U R                  5      :  a  S0 S.$ US   R                  U R                  5      R                  5       nUS   R                  U R                  5      R
+                  5       nX#-   S-  nX#-
+  R                  SS5      nUS   U-
+  US-  -  n[        UR                  S	   5      n[        S
+[
+        SU5      5      nU[        UR                  S	   5      [        UR                  S	   5      S.S.$ )
+Ng        )scorefeatureshighlowg       @r   g&.>closeg      g      ?)upperlower)
+emptylenmaxhigh_nlow_nrollingminreplacefloatiloc)selfdfhhllmidrngposr   s           vC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\domain\indicators\trend_donchian.pycomputeTrendDonchian5050.compute	   s    
+88s2wT[[$**!==2..
+Z
+
+
+,
+0
+0
+2
+Y
+
+tzz
+*
+.
+.
+0w#ow4('{S S3Y/chhrl#D#c5/*eBGGBK6HSXY[Y`Y`acYdSe,fgg     N)r#   zpd.DataFramereturndict)__name__
+__module____qualname____firstlineno__r   r   r*   __static_attributes__r-   r,   r)   r   r      s    
+FE
+hr,   r   )
+__future__r   pandaspd&tycherion.application.plugins.registryr   r   r-   r,   r)   <module>r9      s5    "  E(8	{K
+h 
+h L
+hr,   
+--- src\tycherion\domain\indicators\__pycache__\trend_donchian.cpython-313.pyc:END ---
+
+--- src\tycherion\domain\indicators\__pycache__\volatility_atr.cpython-313.pyc:START ---
+
+
+    diZ                    P    S SK Jr  S SKrS SKJr  \" SSS1S9 " S S	5      5       rg)
+    )annotationsN)register_indicator
+volatilityatr_14default)keymethodtagsc                  "    \ rS rSrSrSS jrSrg)VolATR14      c                v   UR                   (       d  [        U5      U R                  S-   :  a  S0 S.$ US   R                  [        5      nUS   R                  [        5      nUS   R                  [        5      nUR                  S5      nX#-
+  R
+                  5       n[        R                  " XbU-
+  R
+                  5       X5-
+  R
+                  5       /SS9R                  SS9nUR                  U R                  5      R                  5       n[	        UR                  S   5      nUS	:  a  S
+S
+U-   -  OSn	U	SU0S.$ )N   g        )scorefeatureshighlowclose)axisr   g      ?atr)
+emptylenperiodastypefloatshiftabspdconcatmaxrollingmeaniloc)
+selfdfr   r   r   
+prev_closetrr   valr   s
+             vC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\domain\indicators\volatility_atr.pycomputeVolATR14.compute   s   
+88s2wq02..&z  'iu%7""5)[[^
+j
+
+
+
+YYJ.3358H7M7M7OPWX
+Y
+]
+]cd
+]
+ejj%**,CHHRL!%(1WsSy!#UCL99     N)r'   zpd.DataFramereturndict)__name__
+__module____qualname____firstlineno__r   r,   __static_attributes__r/   r.   r+   r   r      s    
+F:r.   r   )
+__future__r   pandasr    &tycherion.application.plugins.registryr   r   r/   r.   r+   <module>r:      s1    "  EXYKH: : I:r.   
+--- src\tycherion\domain\indicators\__pycache__\volatility_atr.cpython-313.pyc:END ---
+
 --- src\tycherion\domain\models\mean_reversion.py:START ---
 from __future__ import annotations
 from tycherion.application.plugins.registry import register_model
@@ -1019,6 +1171,53 @@ class TrendFollowing:
         return {"side":"HOLD","weight":0.0,"confidence":0.3}
 
 --- src\tycherion\domain\models\trend_following.py:END ---
+
+--- src\tycherion\domain\models\__pycache__\mean_reversion.cpython-313.pyc:START ---
+
+
+    di                    F    S SK Jr  S SKJr  \" SS1S9 " S S5      5       rg)	    )annotations)register_modelmean_reversiondefault)nametagsc                       \ rS rSrS rS rSrg)
+MeanReversion   c                
+    SS1$ )Nstretch
+volatility )selfs    rC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\domain\models\mean_reversion.pyrequiresMeanReversion.requires   s
+    ,''    c                   [        UR                  S0 5      R                  S0 5      R                  SS5      5      nUS::  a  [        S[        U5      S-  5      nSUS	S
+.$ US:  a  [        S[        U5      S-  5      nSUS	S
+.$ S
+SSS
+.$ )Nr
+   featureszg        g       g      ?g      @BUYg333333?)sideweight
+confidenceg       @SELLHOLDg?)floatgetminabs)r   
+indicatorsr   ws       r   decideMeanReversion.decide   s    *..2.22:bAEEc3OP9CQ$A 13??8CQ$A!AC@@s<<r   r   N)__name__
+__module____qualname____firstlineno__r   r$   __static_attributes__r   r   r   r
+   r
+      s    (=r   r
+   N)
+__future__r   &tycherion.application.plugins.registryr   r
+   r   r   r   <module>r-      s,    " A%YK8= = 9=r   
+--- src\tycherion\domain\models\__pycache__\mean_reversion.cpython-313.pyc:END ---
+
+--- src\tycherion\domain\models\__pycache__\trend_following.cpython-313.pyc:START ---
+
+
+    dik                    F    S SK Jr  S SKJr  \" SS1S9 " S S5      5       rg)	    )annotations)register_modeltrend_followingdefault)nametagsc                       \ rS rSrS rS rSrg)TrendFollowing   c                
+    SS1$ )Ntrend
+volatility )selfs    sC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\domain\models\trend_following.pyrequiresTrendFollowing.requires   s
+    %%    c                    [        UR                  S0 5      R                  SS5      5      nUS:  a  S[        SSUS-  -   5      SS	.$ US
+:  a  S[        SSU* S-  -   5      SS	.$ SSS
+S	.$ )Nr
+   scoreg        g?BUYg      ?g      ?gffffff?)sideweight
+confidencegɿSELLHOLDg333333?)floatgetmin)r   
+indicatorstrs      r   decideTrendFollowing.decide   sz    
+:>>'"-11'#>
+?
+8 3sC"S&L+AsSS
+9!CSRC9_,ESVWWs<<r   r   N)__name__
+__module____qualname____firstlineno__r   r"   __static_attributes__r   r   r   r
+   r
+      s    &=r   r
+   N)
+__future__r   &tycherion.application.plugins.registryr   r
+   r   r   r   <module>r+      s,    " A&i[9	= 	= :	=r   
+--- src\tycherion\domain\models\__pycache__\trend_following.cpython-313.pyc:END ---
 
 --- src\tycherion\ports\account.py:START ---
 from __future__ import annotations
