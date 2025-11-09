@@ -31,3 +31,7 @@ application:
     symbols: ["PETR4","VALE3","WIN$","WDO$"]
     pattern: null
     top_n: 20
+  portfolio:
+    allocator: "proportional"
+    balancer: "threshold"
+    threshold_weight: 0.25

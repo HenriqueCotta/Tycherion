@@ -8,7 +8,7 @@ class Trading(BaseModel):
     dry_run: bool = True
     require_demo: bool = True
     deviation_points: int = 10
-    volume_mode: str = "min"
+    volume_mode: str = "min"     # 'min' | 'fixed'
     fixed_volume: float = 0.01
 
 class Risk(BaseModel):
@@ -34,11 +34,17 @@ class CoverageCfg(BaseModel):
     pattern: str | None = None
     top_n: int = 20
 
+class PortfolioCfg(BaseModel):
+    allocator: str = "proportional"     # plugin name
+    balancer: str = "threshold"         # plugin name
+    threshold_weight: float = 0.25      # only rebalance if |w| >= threshold
+
 class ApplicationCfg(BaseModel):
     run_mode: RunMode = RunMode()
     playbook: str = "default"
     schedule: ScheduleCfg = ScheduleCfg()
     coverage: CoverageCfg = CoverageCfg()
+    portfolio: PortfolioCfg = PortfolioCfg()
 
 class AppConfig(BaseModel):
     timeframe: str
@@ -55,7 +61,7 @@ def load_config(path: str) -> AppConfig:
     if not p.exists():
         raise FileNotFoundError(f"Config not found: {path}")
     with open(path, "r", encoding="utf-8") as f:
-        raw = yaml.safe_load(f) | {}
+        raw = yaml.safe_load(f) or {}
     raw.setdefault("mt5", {})
     mt5_cfg = raw["mt5"] or {}
 

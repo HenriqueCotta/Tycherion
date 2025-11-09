@@ -3,7 +3,7 @@ from tycherion.application.plugins.registry import register_model
 
 @register_model(name="trend_following", tags={"default"})
 class TrendFollowing:
-    def requires(self): 
+    def requires(self):
         return {"trend","volatility"}
     def decide(self, indicators):
         tr = float(indicators.get("trend",{}).get("score",0.0))

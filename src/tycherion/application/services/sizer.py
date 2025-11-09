@@ -10,17 +10,9 @@ def symbol_min_volume(symbol: str) -> float:
     return steps * info.volume_step
 
 def volume_from_weight(symbol: str, weight: float, mode: str, fixed_volume: float) -> float:
-    """
-    MVP sizing:
-    
-     - 'min': use min volume if weight > 0; else 0.
-     
-     - 'fixed': scale fixed_volume by weight.
-    """
     weight = max(0.0, min(1.0, float(weight)))
     if weight < 1e-6:
         return 0.0
     if mode == 'fixed':
         return float(fixed_volume) * weight
-    # default: min
     return symbol_min_volume(symbol)
