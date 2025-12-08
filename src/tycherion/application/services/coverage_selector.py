@@ -36,3 +36,4 @@ def build_coverage(cfg: AppConfig, data: MarketDataPort, universe: UniversePort)
         scores.append((score, sym))
     scores.sort(reverse=True)
     return [sym for _, sym in scores[:top_n]]
+

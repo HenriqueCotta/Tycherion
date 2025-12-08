@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from tycherion.application.plugins.registry import register_allocator
-from tycherion.domain.portfolio.types import SignalsBySymbol, TargetAllocation
+from tycherion.domain.portfolio.entities import SignalsBySymbol, TargetAllocation
 
 
 @register_allocator(name="proportional", tags={"default"})
@@ -24,3 +24,4 @@ class ProportionalAllocator:
                 frac = abs(float(sig.signed)) / total
                 weights[sig.symbol] = frac if sig.signed > 0 else -frac
         return TargetAllocation(weights=weights)
+

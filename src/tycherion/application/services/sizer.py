@@ -16,3 +16,4 @@ def volume_from_weight(symbol: str, weight: float, mode: str, fixed_volume: floa
     if mode == 'fixed':
         return float(fixed_volume) * weight
     return symbol_min_volume(symbol)
+

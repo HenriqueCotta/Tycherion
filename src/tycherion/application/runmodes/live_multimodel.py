@@ -7,7 +7,7 @@ from typing import Dict
 from tycherion.shared.config import AppConfig
 from tycherion.ports.market_data import MarketDataPort
 from tycherion.ports.trading import TradingPort
-from tycherion.ports.account import AccountPort, Position
+from tycherion.ports.account import AccountPort
 from tycherion.ports.universe import UniversePort
 from tycherion.application.plugins.registry import (
     MODELS,
@@ -18,24 +18,21 @@ from tycherion.application.plugins.registry import (
 from tycherion.application.services.coverage_selector import build_coverage
 from tycherion.application.services.ensemble import combine
 from tycherion.application.services.order_planner import build_orders
-from tycherion.domain.portfolio.types import (
+from tycherion.domain.portfolio.entities import (
     Signal,
     SignalsBySymbol,
     PortfolioSnapshot,
-    PortfolioPosition,
+    Position,
 )
+from tycherion.domain.signals.entities import IndicatorOutput, ModelDecision
 
 
 def _build_portfolio_snapshot(account: AccountPort) -> PortfolioSnapshot:
     equity = float(account.equity())
-    positions: Dict[str, PortfolioPosition] = {}
+    positions: Dict[str, Position] = {}
     for p in account.positions():
-        # ports.account.Position has (symbol, volume, price)
-        positions[p.symbol] = PortfolioPosition(
-            symbol=p.symbol,
-            quantity=float(p.volume),
-            price=float(p.price),
-        )
+        # AccountPort already returns domain Position instances
+        positions[p.symbol] = p
     return PortfolioSnapshot(equity=equity, positions=positions)
 
 
@@ -46,8 +43,8 @@ def run_live_multimodel(
     account: AccountPort,
     universe: UniversePort,
 ) -> None:
-    """
-    Main live runmode:
+    """Main live runmode:
+
     - build coverage of symbols to analyse
     - compute indicators and model decisions per symbol
     - aggregate into a signal per symbol
@@ -118,8 +115,8 @@ def run_live_multimodel(
                 print(f"[{symbol}] no data.")
                 continue
 
-            # Build indicator bundle (key -> result dict)
-            bundle: Dict[str, dict] = {}
+            # Build indicator bundle (key -> IndicatorOutput)
+            bundle: Dict[str, IndicatorOutput] = {}
             for key in needed_keys:
                 ind = pick_indicator_for(key, playbook)
                 try:
@@ -129,19 +126,21 @@ def run_live_multimodel(
                         f"[{symbol}] indicator {key}:{getattr(ind, 'method', '?')} "
                         f"failed: {e}"
                     )
-                    bundle[key] = {"score": 0.0, "features": {}}
+                    bundle[key] = IndicatorOutput(score=0.0, features={})
 
-            decisions = []
+            decisions: list[ModelDecision] = []
             for model in active_models:
                 try:
                     decisions.append(model.decide(bundle))
                 except Exception as e:
                     print(f"[{symbol}] model {getattr(model, 'name', '?')} failed: {e}")
 
-            final = combine(decisions)
-            signed = float(final.get("signed", 0.0))
-            conf = float(final.get("confidence", 0.0))
-            signals[symbol] = Signal(symbol=symbol, signed=signed, confidence=conf)
+            agg  = combine(decisions)
+            signals[symbol] = Signal(
+                symbol=symbol, 
+                signed=agg.signed, 
+                confidence=agg.confidence,
+            )
 
         # 1) Allocation: signals + portfolio -> target allocation (weights)
         target_alloc = allocator.allocate(signals)  # TargetAllocation

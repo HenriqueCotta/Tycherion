@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from tycherion.application.plugins.registry import register_allocator
-from tycherion.domain.portfolio.types import SignalsBySymbol, TargetAllocation
+from tycherion.domain.portfolio.entities import SignalsBySymbol, TargetAllocation
 
 
 @register_allocator(name="equal_weight", tags={"default"})
@@ -26,3 +26,4 @@ class EqualWeightAllocator:
             else:
                 weights[sig.symbol] = 0.0
         return TargetAllocation(weights=weights)
+

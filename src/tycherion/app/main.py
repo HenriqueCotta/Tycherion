@@ -49,3 +49,4 @@ def run_app(config_path: str) -> None:
             raise SystemExit(f"Unknown run_mode: {run_mode}")
     finally:
         mt5.shutdown()
+

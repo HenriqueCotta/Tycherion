@@ -30,3 +30,4 @@ class MT5MarketData(MarketDataPort):
         df = pd.DataFrame(rates)
         df["time"] = pd.to_datetime(df["time"], unit="s", utc=True)
         return df
+

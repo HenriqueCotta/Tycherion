@@ -80,3 +80,4 @@ def load_config(path: str) -> AppConfig:
 
     raw["mt5"] = mt5_cfg
     return AppConfig.model_validate(raw)
+

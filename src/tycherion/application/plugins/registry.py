@@ -146,3 +146,4 @@ def auto_discover() -> None:
         f"allocators={len(ALLOCATORS)} "
         f"balancers={len(BALANCERS)}"
     )
+

@@ -82,3 +82,4 @@ class MT5Trader(TradingPort):
         res = mt5.order_send(request)
         ok = bool(res and res.retcode in (mt5.TRADE_RETCODE_DONE, mt5.TRADE_RETCODE_PLACED))
         return TradeResult(ok, getattr(res, "retcode", -4), getattr(res, "order", None), str(res))
+

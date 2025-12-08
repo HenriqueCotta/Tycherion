@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from tycherion.application.plugins.registry import register_balancer
-from tycherion.domain.portfolio.types import (
+from tycherion.domain.portfolio.entities import (
     PortfolioSnapshot,
     TargetAllocation,
     RebalanceInstruction,
@@ -42,3 +42,4 @@ class ThresholdBalancer:
                 )
             )
         return instructions
+

@@ -9,11 +9,12 @@ Symbol = str
 
 @dataclass
 class Signal:
-    """
-    Per-symbol signal produced by the models/ensemble.
+    """Per-symbol signal produced by the models/ensemble.
+
     signed: desired direction/intensity in [-1, 1]
     confidence: optional confidence level in [0, 1]
     """
+
     symbol: Symbol
     signed: float
     confidence: float = 1.0
@@ -23,12 +24,13 @@ SignalsBySymbol = Dict[Symbol, Signal]
 
 
 @dataclass
-class PortfolioPosition:
+class Position:
+    """Domain-level position in a single instrument.
+
+    quantity: number of shares/contracts/etc.
+    price: best available price estimate (e.g. last close or avg price).
     """
-    Snapshot of a single position in the portfolio, in abstract units
-    (shares, contracts, etc.). Price is the best estimate available
-    (e.g. last close, or average price).
-    """
+
     symbol: Symbol
     quantity: float
     price: float
@@ -36,12 +38,13 @@ class PortfolioPosition:
 
 @dataclass
 class PortfolioSnapshot:
-    """
-    Portfolio snapshot used by allocators/balancers at the domain level.
+    """Portfolio snapshot used by allocators/balancers at the domain level.
+
     Equity is the current account equity in account currency.
     """
+
     equity: float
-    positions: Dict[Symbol, PortfolioPosition]
+    positions: Dict[Symbol, Position]
 
     def weight_of(self, symbol: Symbol) -> float:
         pos = self.positions.get(symbol)
@@ -52,20 +55,21 @@ class PortfolioSnapshot:
 
 @dataclass
 class TargetAllocation:
-    """
-    Target portfolio allocation expressed as weights per symbol in [-1, 1].
+    """Target portfolio allocation expressed as weights per symbol in [-1, 1].
+
     Positive weights are long exposure, negative weights are short exposure.
     """
+
     weights: Dict[Symbol, float]
 
 
 @dataclass
 class RebalanceInstruction:
-    """
-    Domain-level rebalance instruction expressed in weights, not broker
+    """Domain-level rebalance instruction expressed in weights, not broker
     volumes. Conversion to concrete order sizes happens in the application
     layer (order planner).
     """
+
     symbol: Symbol
     from_weight: float
     to_weight: float

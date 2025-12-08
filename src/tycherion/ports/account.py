@@ -1,12 +1,9 @@
 from __future__ import annotations
-from dataclasses import dataclass
+
 from typing import Protocol, List
 
-@dataclass
-class Position:
-    symbol: str
-    volume: float
-    price: float
+from tycherion.domain.portfolio.entities import Position
+
 
 class AccountPort(Protocol):
     def is_demo(self) -> bool: ...

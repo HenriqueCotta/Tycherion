@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List
 
-from tycherion.domain.portfolio.types import PortfolioSnapshot, RebalanceInstruction
+from tycherion.domain.portfolio.entities import PortfolioSnapshot, RebalanceInstruction
 from tycherion.shared.config import Trading
 
 
@@ -57,3 +57,4 @@ def build_orders(
             )
         )
     return orders
+

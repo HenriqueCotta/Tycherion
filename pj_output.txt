@@ -16,98 +16,69 @@ Tycherion
 │   └── tycherion
 │       ├── adapters
 │       │   └── mt5
-│       │       ├── __pycache__
-│       │       │   ├── >>> account_mt5.cpython-313.pyc <<<
-│       │       │   ├── >>> market_data_mt5.cpython-313.pyc <<<
-│       │       │   ├── >>> trading_mt5.cpython-313.pyc <<<
-│       │       │   └── >>> universe_mt5.cpython-313.pyc <<<
+│       │       ├── __pycache__ (ignored)
 │       │       ├── >>> account_mt5.py <<<
 │       │       ├── >>> market_data_mt5.py <<<
 │       │       ├── >>> trading_mt5.py <<<
 │       │       └── >>> universe_mt5.py <<<
 │       ├── app
-│       │   ├── __pycache__
-│       │   │   └── >>> main.cpython-313.pyc <<<
+│       │   ├── __pycache__ (ignored)
 │       │   └── >>> main.py <<<
 │       ├── application
 │       │   ├── plugins
-│       │   │   ├── __pycache__
-│       │   │   │   └── >>> registry.cpython-313.pyc <<<
+│       │   │   ├── __pycache__ (ignored)
 │       │   │   └── >>> registry.py <<<
 │       │   ├── runmodes
-│       │   │   ├── __pycache__
-│       │   │   │   └── >>> live_multimodel.cpython-313.pyc <<<
+│       │   │   ├── __pycache__ (ignored)
 │       │   │   └── >>> live_multimodel.py <<<
 │       │   └── services
-│       │       ├── __pycache__
-│       │       │   ├── >>> coverage_selector.cpython-313.pyc <<<
-│       │       │   ├── >>> ensemble.cpython-313.pyc <<<
-│       │       │   ├── >>> order_planner.cpython-313.pyc <<<
-│       │       │   └── >>> sizer.cpython-313.pyc <<<
+│       │       ├── __pycache__ (ignored)
 │       │       ├── >>> coverage_selector.py <<<
 │       │       ├── >>> ensemble.py <<<
 │       │       ├── >>> order_planner.py <<<
 │       │       └── >>> sizer.py <<<
 │       ├── domain
 │       │   ├── >>> __init__.py <<<
-│       │   ├── __pycache__
-│       │   │   └── >>> __init__.cpython-313.pyc <<<
+│       │   ├── __pycache__ (ignored)
+│       │   ├── market
+│       │   │   ├── >>> __init__.py <<<
+│       │   │   └── >>> entities.py <<<
 │       │   ├── portfolio
 │       │   │   ├── >>> __init__.py <<<
-│       │   │   ├── __pycache__
-│       │   │   │   ├── >>> __init__.cpython-313.pyc <<<
-│       │   │   │   └── >>> types.cpython-313.pyc <<<
+│       │   │   ├── __pycache__ (ignored)
 │       │   │   ├── allocators
 │       │   │   │   ├── >>> __init__.py <<<
-│       │   │   │   ├── __pycache__
-│       │   │   │   │   ├── >>> __init__.cpython-313.pyc <<<
-│       │   │   │   │   ├── >>> equal_weight.cpython-313.pyc <<<
-│       │   │   │   │   └── >>> proportional.cpython-313.pyc <<<
+│       │   │   │   ├── __pycache__ (ignored)
 │       │   │   │   ├── >>> equal_weight.py <<<
 │       │   │   │   └── >>> proportional.py <<<
 │       │   │   ├── balancers
 │       │   │   │   ├── >>> __init__.py <<<
-│       │   │   │   ├── __pycache__
-│       │   │   │   │   ├── >>> __init__.cpython-313.pyc <<<
-│       │   │   │   │   └── >>> threshold.cpython-313.pyc <<<
+│       │   │   │   ├── __pycache__ (ignored)
 │       │   │   │   └── >>> threshold.py <<<
-│       │   │   └── >>> types.py <<<
+│       │   │   └── >>> entities.py <<<
 │       │   └── signals
 │       │       ├── >>> __init__.py <<<
-│       │       ├── __pycache__
-│       │       │   └── >>> __init__.cpython-313.pyc <<<
+│       │       ├── __pycache__ (ignored)
+│       │       ├── >>> entities.py <<<
 │       │       ├── indicators
 │       │       │   ├── >>> __init__.py <<<
-│       │       │   ├── __pycache__
-│       │       │   │   ├── >>> __init__.cpython-313.pyc <<<
-│       │       │   │   ├── >>> stretch_zscore.cpython-313.pyc <<<
-│       │       │   │   ├── >>> trend_donchian.cpython-313.pyc <<<
-│       │       │   │   └── >>> volatility_atr.cpython-313.pyc <<<
+│       │       │   ├── __pycache__ (ignored)
 │       │       │   ├── >>> stretch_zscore.py <<<
 │       │       │   ├── >>> trend_donchian.py <<<
 │       │       │   └── >>> volatility_atr.py <<<
 │       │       └── models
 │       │           ├── >>> __init__.py <<<
-│       │           ├── __pycache__
-│       │           │   ├── >>> __init__.cpython-313.pyc <<<
-│       │           │   ├── >>> mean_reversion.cpython-313.pyc <<<
-│       │           │   └── >>> trend_following.cpython-313.pyc <<<
+│       │           ├── __pycache__ (ignored)
 │       │           ├── >>> mean_reversion.py <<<
 │       │           └── >>> trend_following.py <<<
 │       ├── ports
-│       │   ├── __pycache__
-│       │   │   ├── >>> account.cpython-313.pyc <<<
-│       │   │   ├── >>> market_data.cpython-313.pyc <<<
-│       │   │   ├── >>> trading.cpython-313.pyc <<<
-│       │   │   └── >>> universe.cpython-313.pyc <<<
+│       │   ├── __pycache__ (ignored)
 │       │   ├── >>> account.py <<<
 │       │   ├── >>> market_data.py <<<
 │       │   ├── >>> trading.py <<<
 │       │   └── >>> universe.py <<<
 │       └── shared
-│           ├── __pycache__
-│           │   ├── >>> config.cpython-313.pyc <<<
-│           │   └── >>> decorators.cpython-313.pyc <<<
+│           ├── __pycache__ (ignored)
 │           ├── >>> config.py <<<
 │           └── >>> decorators.py <<<
 └── tycherion_guidelines.md (ignored)
@@ -233,8 +204,12 @@ if __name__ == "__main__":
 
 --- src\tycherion\adapters\mt5\account_mt5.py:START ---
 from __future__ import annotations
+
 import MetaTrader5 as mt5
-from tycherion.ports.account import AccountPort, Position
+
+from tycherion.ports.account import AccountPort
+from tycherion.domain.portfolio.entities import Position
+
 
 class MT5Account(AccountPort):
     def is_demo(self) -> bool:
@@ -249,12 +224,18 @@ class MT5Account(AccountPort):
         ai = mt5.account_info()
         return float(getattr(ai, "equity", 0.0) or 0.0)
 
-    def positions(self):
+    def positions(self) -> list[Position]:
         poss = mt5.positions_get()
-        out = []
+        out: list[Position] = []
         if poss:
             for p in poss:
-                out.append(Position(symbol=p.symbol, volume=float(p.volume or 0.0), price=float(p.price_open or 0.0)))
+                out.append(
+                    Position(
+                        symbol=p.symbol,
+                        quantity=float(getattr(p, "volume", 0.0) or 0.0),
+                        price=float(getattr(p, "price_open", 0.0) or 0.0),
+                    )
+                )
         return out
 
 --- src\tycherion\adapters\mt5\account_mt5.py:END ---
@@ -292,6 +273,7 @@ class MT5MarketData(MarketDataPort):
         df = pd.DataFrame(rates)
         df["time"] = pd.to_datetime(df["time"], unit="s", utc=True)
         return df
+
 
 --- src\tycherion\adapters\mt5\market_data_mt5.py:END ---
 
@@ -381,6 +363,7 @@ class MT5Trader(TradingPort):
         ok = bool(res and res.retcode in (mt5.TRADE_RETCODE_DONE, mt5.TRADE_RETCODE_PLACED))
         return TradeResult(ok, getattr(res, "retcode", -4), getattr(res, "order", None), str(res))
 
+
 --- src\tycherion\adapters\mt5\trading_mt5.py:END ---
 
 --- src\tycherion\adapters\mt5\universe_mt5.py:START ---
@@ -398,146 +381,8 @@ class MT5Universe(UniversePort):
         syms = mt5.symbols_get(pattern)
         return [s.name for s in syms]
 
+
 --- src\tycherion\adapters\mt5\universe_mt5.py:END ---
-
---- src\tycherion\adapters\mt5\__pycache__\account_mt5.cpython-313.pyc:START ---
-
-
-    4i                    >    S SK Jr  S SKrS SKJrJr   " S S\5      rg)    )annotationsN)AccountPortPositionc                  8    \ rS rSrSS jrS	S jrS	S jrS rSrg)
-
-MT5Account   c                    [         R                  " 5       n[        U=(       a    UR                  [         R                  :H  5      $ )N)mt5account_infobool
-trade_modeACCOUNT_TRADE_MODE_DEMOselfais     nC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\adapters\mt5\account_mt5.pyis_demoMT5Account.is_demo   s/    
-
-
-
-BG2==C,G,GGHH    c                j    [         R                  " 5       n[        [        USS5      =(       d    S5      $ )Nbalance        r
-   r   floatgetattrr   s     r   r   MT5Account.balance
-   s)    
-
-
-
-WRC07C88r   c                j    [         R                  " 5       n[        [        USS5      =(       d    S5      $ )Nequityr   r   r   s     r   r   MT5Account.equity   s)    
-
-
-
-WR3/6377r   c                   [         R                  " 5       n/ nU(       ae  U H_  nUR                  [        UR                  [        UR                  =(       d    S5      [        UR                  =(       d    S5      S95        Ma     U$ )Nr   )symbolvolumeprice)r
-   
-positions_getappendr   r!   r   r"   
-price_open)r   possoutps       r   	positionsMT5Account.positions   s`      "
-
-8188E!((/c<RZ_`a`l`l`spsZtuv 
-r    N)returnr   )r-   r   )	__name__
-__module____qualname____firstlineno__r   r   r   r*   __static_attributes__r,   r   r   r   r      s    I98r   r   )
-__future__r   MetaTrader5r
-   tycherion.ports.accountr   r   r   r,   r   r   <module>r6      s    "  9 r   
---- src\tycherion\adapters\mt5\__pycache__\account_mt5.cpython-313.pyc:END ---
-
---- src\tycherion\adapters\mt5\__pycache__\market_data_mt5.cpython-313.pyc:START ---
-
-
-    4iu                    
-   % S SK Jr  S SKJrJr  S SKJr  S SKrS SKr	S SK
-Jr  \	R                  \	R                  \	R                  \	R                  \	R                   \	R"                  \	R$                  S.rS\S'    " S	 S
-\5      rg)    )annotations)datetimetimezone)DictN)MarketDataPort)M1M5M15M30H1H4D1zDict[str, int]_TF_MAPc                      \ rS rSrSS jrSrg)
-MT5MarketData   c                   [         R                  UR                  5       5      nUc  [        SU 35      e[        R
-                  " XUR
-                  [        R                  5      UR
-                  [        R                  5      5      nUb  [        U5      S:X  a  [        R                  " / SQS9$ [        R                  " U5      n[        R                  " US   SSS9US'   U$ )	NzUnsupported timeframe: r   )timeopenhighlowclosetick_volumespreadreal_volume)columnsr   sT)unitutc)
-r   getupper
-ValueErrormt5copy_rates_range
-astimezoner   r   lenpd	DataFrameto_datetime)selfsymbol	timeframestartendtfratesdfs           rC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\adapters\mt5\market_data_mt5.pyget_barsMT5MarketData.get_bars   s    
-[[*
-+
-:6ykBCC$$X\\*NN8<<(
-
- =CJ!O<<(qrr
-\\%
- ^^BvJSdC6
-	     N)
-r+   strr,   r7   r-   r   r.   r   returnzpd.DataFrame)__name__
-__module____qualname____firstlineno__r3   __static_attributes__r6   r5   r2   r   r      s    
-r5   r   )
-__future__r   r   r   typingr   pandasr'   MetaTrader5r#   tycherion.ports.market_datar   TIMEFRAME_M1TIMEFRAME_M5
-TIMEFRAME_M15
-TIMEFRAME_M30TIMEFRAME_H1TIMEFRAME_H4TIMEFRAME_D1r   __annotations__r   r6   r5   r2   <module>rK      sr    " '    6 
-
-
-
-
-
-
-
-
-
-
-
-
-
- N r5   
---- src\tycherion\adapters\mt5\__pycache__\market_data_mt5.cpython-313.pyc:END ---
-
---- src\tycherion\adapters\mt5\__pycache__\trading_mt5.cpython-313.pyc:START ---
-
-
-    4ib                        S SK Jr  S SKJr  S SKJr  S SKrS SKJ	r	J
-r
-  S SKJrJ
-r
-  S SKJrJr  \ " S S	\	5      5       rg)
-    )annotations)	dataclass)OptionalN)TradingPortTradeResult)	demo_onlylogged)symbol_min_volumevolume_from_weightc                      \ rS rSr% SrS\S'   SrS\S'   SrS\S'   S	rS
-\S'   Sr	S
-\S'   SS jr
-\\SSS jj5       5       r
-\\SSS jj5       5       rSrg)	MT5Trader	   Tbooldry_runrequire_demo
-   intdeviation_pointsminstrvolume_modeg{Gz?floatfixed_volumec                b    Ub  [        U5      $ [        USU R                  U R                  5      $ )Ng      ?)r   r   r   r   )selfsymbolvolumes      nC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\adapters\mt5\trading_mt5.py_resolve_volumeMT5Trader._resolve_volume   s/    = !&#t/?/?ARARSS    Nc                   U R                   (       a  [        SSS S5      $ [        R                  " US5      (       d  [        SSS SU 35      $ [        R                  " U5      nU(       d  [        SSS S5      $ U R                  X5      nU[
-        U5      :  a  [
-        U5      n[        R                  U[        R                  UUR                  U R                  [        R                  [        R                  S	S
-S.
-n[        R                  " U5      nU(       a  UR                  [        R                  :w  a  [        S[!        USS
-5      S SU 35      $ [        R"                  " U5      n[%        U=(       a-    UR                  [        R                  [        R&                  4;   5      n[        U[!        USS5      [!        USS 5      [)        U5      5      $ )NTr   zDRY_RUN: buy skippedFsymbol_select failed: missing tick  z
-tycherion-buy
-actionr   typer   price	deviation	type_timetype_fillingmagiccommentretcodeorder_check failed: order)r   r   mt5
-symbol_selectsymbol_info_tickr   r
-   TRADE_ACTION_DEALORDER_TYPE_BUYaskr   ORDER_TIME_GTCORDER_FILLING_RETURNorder_checkr1   TRADE_RETCODE_DONEgetattr
-order_sendr   TRADE_RETCODE_PLACEDr   	r   r   r   tickvolrequestcheckresoks	            r   
-market_buyMT5Trader.market_buy   s    <<tQ.DEE  ..ub$2H0QRR##F+ub$??""62"6**#F+C++&&XX..++44&
- (
-
-)?)??ugeY&CTMabgahKijjnnW%
-#[#++#*@*@#BZBZ)[[
-\2wsIr:GCRV<WY\]`Yabbr!   c                   U R                   (       a  [        SSS S5      $ [        R                  " US5      (       d  [        SSS SU 35      $ [        R                  " U5      nU(       d  [        SSS S5      $ U R                  X5      nU[
-        U5      :  a  [
-        U5      n[        R                  U[        R                  UUR                  U R                  [        R                  [        R                  S	S
-S.
-n[        R                  " U5      nU(       a  UR                  [        R                  :w  a  [        S[!        USS
-5      S SU 35      $ [        R"                  " U5      n[%        U=(       a-    UR                  [        R                  [        R&                  4;   5      n[        U[!        USS5      [!        USS 5      [)        U5      5      $ )NTr   zDRY_RUN: sell skippedFr#   r$   r%   r&   r'   ztycherion-sellr(   r1   r2   r3   r4   r5   )r   r   r6   r7   r8   r   r
-   r9   ORDER_TYPE_SELLbidr   r<   r=   r>   r1   r?   r@   rA   r   rB   r   rC   s	            r   market_sellMT5Trader.market_sell6   s    <<tQ.EFF  ..ub$2H0QRR##F+ub$??""62"6**#F+C++''XX..++44'
- (
-
-)?)??ugeY&CTMabgahKijjnnW%
-#[#++#*@*@#BZBZ)[[
-\2wsIr:GCRV<WY\]`Yabbr!    )r   r   r   Optional[float]returnr   )N)r   r   r   rR   rS   r   )__name__
-__module____qualname____firstlineno__r   __annotations__r   r   r   r   r   r	   r   rJ   rO   __static_attributes__rQ   r!   r   r
-   r
-   	   sw    GTL$cKL%T
- c  c< c  cr!   r
-   )
-__future__r   dataclassesr   typingr   MetaTrader5r6   tycherion.ports.tradingr   r   tycherion.shared.decoratorsr   r	   $tycherion.application.services.sizerr
-   r   r
-   rQ   r!   r   <module>ra      s9    " !   < 9 V
-Jc Jc Jcr!   
---- src\tycherion\adapters\mt5\__pycache__\trading_mt5.cpython-313.pyc:END ---
-
---- src\tycherion\adapters\mt5\__pycache__\universe_mt5.cpython-313.pyc:START ---
-
-
-    4i                    F    S SK Jr  S SKrS SKJr  S SKJr   " S S\5      rg)    )annotationsN)List)UniversePortc                  (    \ rS rSrSS jrSS jrSrg)MT5Universe   c                    [         R                  " 5       nU Vs/ s H#  n[        USS5      (       d  M  UR                  PM%     sn$ s  snf )NvisibleF)mt5symbols_getgetattrname)selfsymsss      oC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\adapters\mt5\universe_mt5.pyvisible_symbolsMT5Universe.visible_symbols   s7      $E19e(DEEEs
-   AAc                p    [         R                  " U5      nU Vs/ s H  o3R                  PM     sn$ s  snf )N)r   r   r   )r   patternr   r   s       r   
-by_patternMT5Universe.by_pattern   s*    w' $%1%%%s   3 N)return	List[str])r   strr   r   )__name__
-__module____qualname____firstlineno__r   r   __static_attributes__r       r   r   r      s
-    F&r"   r   )	
-__future__r   MetaTrader5r   typingr   tycherion.ports.universer   r   r   r"   r   <module>r'      s    "   1&, &r"   
---- src\tycherion\adapters\mt5\__pycache__\universe_mt5.cpython-313.pyc:END ---
 
 --- src\tycherion\app\main.py:START ---
 from __future__ import annotations
@@ -592,39 +437,8 @@ def run_app(config_path: str) -> None:
     finally:
         mt5.shutdown()
 
+
 --- src\tycherion\app\main.py:END ---
-
---- src\tycherion\app\__pycache__\main.cpython-313.pyc:START ---
-
-
-    4iM                        S SK Jr  S SKrS SKJrJr  S SKJr  S SK	J
-r
-  S SKJr  S SK
-Jr  S SKJr  S S	KJr  SS
- jrS
-S jrg)    )annotationsN)load_config	AppConfig)
-MT5MarketData)	MT5Trader)
-MT5Account)MT5Universe)run_live_multimodel)registryc                \   [         R                  " U R                   R                  =(       d    S S9(       d!  [        S[         R                  " 5        35      eU R                   R
-                  (       a  U R                   R                  (       a  U R                   R                  (       a  [         R
-                  " [        U R                   R
-                  5      U R                   R                  U R                   R                  S9(       d!  [        S[         R                  " 5        35      eg g g g )N)pathzMT5 initialize failed: )loginpasswordserverzMT5 login failed: )	mt5
-initialize
-terminal_path
-SystemExit
-last_errorr   r   r   int)cfgs    ^C:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\app\main.py_ensure_initializedr      s    >>sww44<=23>>3C2DEFF
-ww}}))cggnnyycggmm$WW%%77>>
-
- 1#..2B1CDEE
- /=)}    c                   [        U 5      n[        R                  " 5         [        U5         [	        5       n[        UR                  R                  UR                  R                  UR                  R                  UR                  R                  UR                  R                  S9n[        5       n[        5       nUR                  R                  R                   =(       d    SR#                  5       nUS:X  a  [%        XX4U5        O['        SU 35      e [(        R*                  " 5         g ! [(        R*                  " 5         f = f)N)dry_runrequire_demodeviation_pointsvolume_modefixed_volume live_multimodelzUnknown run_mode: )r   	_registry
-auto_discoverr   r   r   tradingr   r   r   r   r    r   r	   applicationrun_modenamelowerr
-   r   r   shutdown)config_pathr   market_datatraderaccountuniverser'   s          r   run_appr0      s    
-k
-"C #oKK''11 [[99//11
- ,=OO,,117R>>@((&8L1(<== 
-M 	s   C(D, ,E)r   r   returnNone)r+   strr1   r2   )
-__future__r   MetaTrader5r   tycherion.shared.configr   r   &tycherion.adapters.mt5.market_data_mt5r   "tycherion.adapters.mt5.trading_mt5r   "tycherion.adapters.mt5.account_mt5r   #tycherion.adapters.mt5.universe_mt5r	   .tycherion.application.runmodes.live_multimodelr
-   tycherion.application.pluginsr   r#   r   r0    r   r   <module>r>      s+    "  : @ 8 9 ; N ?	Fr   
---- src\tycherion\app\__pycache__\main.cpython-313.pyc:END ---
 
 --- src\tycherion\application\plugins\registry.py:START ---
 from __future__ import annotations
@@ -776,84 +590,8 @@ def auto_discover() -> None:
         f"balancers={len(BALANCERS)}"
     )
 
+
 --- src\tycherion\application\plugins\registry.py:END ---
-
---- src\tycherion\application\plugins\__pycache__\registry.cpython-313.pyc:START ---
-
-
-    4i                        % S SK Jr  S SKJrJrJrJr  0 rS\S'   0 r	S\S'   0 r
-S\S'   0 rS\S'   0 rS	\S
-'   SS jr
-SS jrSS
- jrSS jrSS jrSSS jjrSS jrg)    )annotations)DictListCallableIterablezDict[str, List[object]]
-INDICATORSzDict[str, object]MODELS
-ALLOCATORS	BALANCERSzDict[str, str]DEFAULT_METHODc                   ^ ^^ U UU4S jnU$ )zq
-Register an indicator implementation for a given logical key (e.g. "trend")
-and method (e.g. "donchian_50_50").
-c                   > U " 5       nTUl         TUl        TUl        [        R	                  T/ 5      R                  U5        U $ N)keymethodtagsr   
-setdefaultappend)clsinstr   r   r   s     rC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\application\plugins\registry.pydeco register_indicator.<locals>.deco   s?    u	c2&--d3
-     )r   r   r   r   s   ``` r   register_indicatorr      s    
- Kr   c                   ^ ^ U U4S jnU$ )z%
-Register a per-symbol signal model.
-c                D   > U " 5       nTUl         TUl        U[        T'   U $ r   )namer   r	   r   r   r   r   s     r   r   register_model.<locals>.deco   s&    u		t
-r   r   r   r   r   s   `` r   register_modelr#           Kr   c                   ^ ^ U U4S jnU$ )z*
-Register a portfolio allocator strategy.
-c                D   > U " 5       nTUl         TUl        U[        T'   U $ r   )r   r   r
-   r    s     r   r    register_allocator.<locals>.deco+   s'    u		
-4
-r   r   r"   s   `` r   register_allocatorr(   '   r$   r   c                   ^ ^ U U4S jnU$ )z6
-Register a portfolio balancer / rebalancer strategy.
-c                D   > U " 5       nTUl         TUl        U[        T'   U $ r   )r   r   r   r    s     r   r   register_balancer.<locals>.deco8   s&    u			$
-r   r   r"   s   `` r   register_balancerr,   4   r$   r   c                    U[         U '   g r   )r   )r   r   s     r   set_default_indicator_methodr.   A   s     N3r   Nc           
-        [         R                  U / 5      n[        U5      nU(       d  [        SU < 35      eU(       a6  U Vs/ s H   nU[	        US[        5       5      ;   d  M  UPM"     nnU(       a  UnU Vs/ s H   nS[	        US[        5       5      ;   d  M  UPM"     nnU(       a  Un[        R                  U 5      nU(       a  U H  n[	        USS5      U:X  d  M  Us  $    US   $ s  snf s  snf )a  
-Pick an indicator instance for a given key and (optionally) playbook.
-Preference order:
-- indicators whose tags contain the playbook name
-- indicators whose tags contain "default"
-- otherwise, the first registered
-If DEFAULT_METHOD[key] is set, prefer that method among candidates.
-z!No indicators registered for key=r   defaultr   Nr   )r   getlistKeyErrorgetattrsetr   )r   playbook
-candidatesindtaggeddefaultsr   s          r   pick_indicator_forr;   E   s     $.>>#r#:Jj!J:3'BCC %
-%C7366 
-: 	 
- J "!VSU33 	z 
-  
- 
-
-
-$F
-CsHd+v5
-  a=-
-s   C*$C*9C/C/c                 t   SSK n SSKnSnU Hl  n U R                  U5      n[        USS5      nU(       d  M+  UR
-                  XdR                  S-   5       H  n U R                  UR                  5        M!     Mn     [	        S	[        S
- [        R                  5        5       5       S[        [        5       S[        [        5       S
-[        [        5       35        g! [         a  n[	        SU SU 35         SnAM  SnAff = f! [         a&  n[	        SUR                   SU 35         SnAM  SnAff = f)z
-Import all plugin modules so that their decorators run and fill the
-registries above. This is called once during application startup.
-r   N)z#tycherion.domain.signals.indicatorsztycherion.domain.signals.modelsz%tycherion.domain.portfolio.allocatorsz$tycherion.domain.portfolio.balancersz[plugins] base import failed: z -> __path__.z[plugins] import failed: z [plugins] discovered indicators=c              3  8   #    U  H  n[        U5      v   M     g 7fr   )len).0vs     r   	<genexpr> auto_discover.<locals>.<genexpr>   s     >*=Q#a&&*=s   z models=z allocators=z balancers=)	importlibpkgutil
-import_module	Exceptionprintr4   
-walk_packages__name__r   sumr   valuesr@   r	   r
-   r   )rE   rF   basesbasepkgepkg_pathmods           r   
-auto_discoverrT   n   s5   
- 
-E 	))$/C
- 3
-D1((<<#3EFC
-E''1 G " 
->**;*;*=>>? @f+ *o& '^$		&  	24&QC@A	  
-E1#((4sCDD
-Es/   CD
-D(C??D
-D7D22D7)r   strr   rU   r   set[str])r   rU   r   rV   )r   rU   r   rU   returnNoner   )r   rU   r6   z
-str | None)rW   rX   )
-__future__r   typingr   r   r   r   r   __annotations__r	   r
-   r   r   r   r#   r(   r,   r.   r;   rT   r   r   r   <module>r\      sh    " 1 1&(
-# (  "
- "!	 !!# #
-
-
-!&R&r   
---- src\tycherion\application\plugins\__pycache__\registry.cpython-313.pyc:END ---
 
 --- src\tycherion\application\runmodes\live_multimodel.py:START ---
 from __future__ import annotations
@@ -865,7 +603,7 @@ from typing import Dict
 from tycherion.shared.config import AppConfig
 from tycherion.ports.market_data import MarketDataPort
 from tycherion.ports.trading import TradingPort
-from tycherion.ports.account import AccountPort, Position
+from tycherion.ports.account import AccountPort
 from tycherion.ports.universe import UniversePort
 from tycherion.application.plugins.registry import (
     MODELS,
@@ -876,24 +614,21 @@ from tycherion.application.plugins.registry import (
 from tycherion.application.services.coverage_selector import build_coverage
 from tycherion.application.services.ensemble import combine
 from tycherion.application.services.order_planner import build_orders
-from tycherion.domain.portfolio.types import (
+from tycherion.domain.portfolio.entities import (
     Signal,
     SignalsBySymbol,
     PortfolioSnapshot,
-    PortfolioPosition,
+    Position,
 )
+from tycherion.domain.signals.entities import IndicatorOutput, ModelDecision
 
 
 def _build_portfolio_snapshot(account: AccountPort) -> PortfolioSnapshot:
     equity = float(account.equity())
-    positions: Dict[str, PortfolioPosition] = {}
+    positions: Dict[str, Position] = {}
     for p in account.positions():
-        # ports.account.Position has (symbol, volume, price)
-        positions[p.symbol] = PortfolioPosition(
-            symbol=p.symbol,
-            quantity=float(p.volume),
-            price=float(p.price),
-        )
+        # AccountPort already returns domain Position instances
+        positions[p.symbol] = p
     return PortfolioSnapshot(equity=equity, positions=positions)
 
 
@@ -904,8 +639,8 @@ def run_live_multimodel(
     account: AccountPort,
     universe: UniversePort,
 ) -> None:
-    """
-    Main live runmode:
+    """Main live runmode:
+
     - build coverage of symbols to analyse
     - compute indicators and model decisions per symbol
     - aggregate into a signal per symbol
@@ -976,8 +711,8 @@ def run_live_multimodel(
                 print(f"[{symbol}] no data.")
                 continue
 
-            # Build indicator bundle (key -> result dict)
-            bundle: Dict[str, dict] = {}
+            # Build indicator bundle (key -> IndicatorOutput)
+            bundle: Dict[str, IndicatorOutput] = {}
             for key in needed_keys:
                 ind = pick_indicator_for(key, playbook)
                 try:
@@ -987,19 +722,21 @@ def run_live_multimodel(
                         f"[{symbol}] indicator {key}:{getattr(ind, 'method', '?')} "
                         f"failed: {e}"
                     )
-                    bundle[key] = {"score": 0.0, "features": {}}
+                    bundle[key] = IndicatorOutput(score=0.0, features={})
 
-            decisions = []
+            decisions: list[ModelDecision] = []
             for model in active_models:
                 try:
                     decisions.append(model.decide(bundle))
                 except Exception as e:
                     print(f"[{symbol}] model {getattr(model, 'name', '?')} failed: {e}")
 
-            final = combine(decisions)
-            signed = float(final.get("signed", 0.0))
-            conf = float(final.get("confidence", 0.0))
-            signals[symbol] = Signal(symbol=symbol, signed=signed, confidence=conf)
+            agg  = combine(decisions)
+            signals[symbol] = Signal(
+                symbol=symbol, 
+                signed=agg.signed, 
+                confidence=agg.confidence,
+            )
 
         # 1) Allocation: signals + portfolio -> target allocation (weights)
         target_alloc = allocator.allocate(signals)  # TargetAllocation
@@ -1041,118 +778,6 @@ def run_live_multimodel(
 
 --- src\tycherion\application\runmodes\live_multimodel.py:END ---
 
---- src\tycherion\application\runmodes\__pycache__\live_multimodel.cpython-313.pyc:START ---
-
-
-    4i                        S SK Jr  S SKrS SKJrJrJr  S SKJr  S SKJ	r	  S SK
-Jr  S SKJ
-r
-  S SKJrJr  S S	KJr  S S
-KJrJrJrJr  S SKJr  S SKJr  S S
-KJr  S SKJrJ r J!r!J"r"  SS jr#            SS jr$g)    )annotationsN)datetime	timedeltatimezone)Dict)	AppConfig)MarketDataPort)TradingPort)AccountPortPosition)UniversePort)MODELS
-ALLOCATORS	BALANCERSpick_indicator_for)build_coverage)combine)build_orders)SignalSignalsBySymbolPortfolioSnapshotPortfolioPositionc                   [        U R                  5       5      n0 nU R                  5        HJ  n[        UR                  [        UR
-                  5      [        UR                  5      S9X#R                  '   ML     [        XS9$ )N)symbolquantityprice)equity	positions)floatr   r   r   r   volumer   r   )accountr   r   ps       zC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\application\runmodes\live_multimodel.py_build_portfolio_snapshotr$      sf    
-7>>#
-$F.0I
-
-
-
- /88188_.
-	(( ! F@@    c           
-       ^ ^^^^^^	^
-^ T R                   R                  =(       d    Sm[        R                  " 5        Vs/ s HS  nT[	        US[        5       5      ;   d5  S[	        US[        5       5      ;   d  [	        US[        5       5      (       a  MQ  UPMU     snmT(       d  [
-        S5      e[        R                  " T R                   R                  R                  5      m	T	(       d-  [
-        ST R                   R                  R                  < 35      e[        R                  " T R                   R                  R                  5      m
-T
-(       d-  [
-        ST R                   R                  R                  < 35      eSUUU	U
-U UUUU4	S jjnT R                   R                  R                  (       aI    U" 5         [        R                   " [#        ST R                   R                  R$                  5      5        MH  U" 5         gs  snf ! [&         a    [)        S5         g[*         a,  n[)        S	U5        [        R                   " S
-5         SnANVSnAff = f)
-a  
-Main live runmode:
-- build coverage of symbols to analyse
-- compute indicators and model decisions per symbol
-- aggregate into a signal per symbol
-- allocate target portfolio weights
-- compute rebalance instructions
-- translate into concrete orders and send to the broker
-defaulttagsz.No models registered for the current playbook.zAllocator not found: zBalancer not found: c                   >	 [        TT T#5      n TR                  5       nU Vs1 s H  o"R                  iM     nn[        [	        U 5      U-  5      n [        S[
-        U 5       SU  35        [        T5      n[        R                  " [        R                  5      nU[        TR                  S9-
-  n[	        5       nT H.  n UR                  5       n	UR!                  U	=(       d    / 5        M0     [        S[
-        T5       SU 35        0 n
-U  H  n T R#                  UTR$                  Xe5      nUb  UR&                  (       a  [        SU S35        MF  0 nU H1  n[)        UT!5      n UR+                  UR-                  5       5      X'   M3     / nT H$  n UR1                  UR3                  U5      5        M&     [5        U5      n[7        UR9                  SS5      5      n[7        UR9                  SS5      5      n[;        UUUS9X'   M     TR=                  U
-5      nTR?                  UUTR@                  RB                  RD                  S9n[        S[
-        U5       S35        [G        UUTRH                  5      n[        S[
-        U5       S35        U H  nURJ                  RM                  5       S:X  a%  T"RO                  UR                  URP                  S9nO$T"RS                  UR                  URP                  S9n[        SURJ                   SUR                   SURP                   SU 35        M     g s  snf ! [         a    [	        5       n	 GNf = f! [         a  n
-[        SU SU
- 35         S n
-A
-GMl  S n
-A
-ff = f! [         a5  n
-[        SU S	U S
-[/        USS5       S
-U
- 35        S0 S.X'    S n
-A
-GMd  S n
-A
-ff = f! [         a+  n
-[        SU S[/        USS5       S
-U
- 35         S n
-A
-GMc  S n
-A
-ff = f) Nz[coverage] z symbols -> )daysz[models] active=z needed_indicators=[z] failed to load data: z
-] no data.z] indicator :method?z	 failed: g        )scorefeaturesz] model namesigned
-confidence)r   r2   r3   )	portfoliotarget	thresholdz[rebalance] plan=z
- instructionsz	[orders] z orders to executeBUY)r    z[trade]  z vol=z -> )*r   r   r   sortedsetprintlenr$   r   nowr   utcr   
-lookback_daysrequires	Exceptionupdateget_bars	timeframeemptyr   computecopygetattrappenddecider   r   getr   allocateplanapplicationr4   threshold_weightr   tradingsideupper
-market_buyr    market_sell)$coveragecurrent_positionsr"   held_symbolsr4   endstartneeded_keysmreqsignalsr   dfebundlekeyind	decisionsmodelfinalr2   conftarget_allocrM   ordersodresr!   
-active_models	allocatorbalancercfgdataplaybooktraderuniverses$                              r#   	step_once&run_live_multimodel.<locals>.step_onceP   s   !#tX6 $--/*;<*;Q*;<#h-,67
-CM?,xjAB .g6	 ll8<<(iS%6%677 eA
-jjl 
-syb)  	 ]!3 44G}UV#%F
-]]63==%E
- zRXX&,- ')F"(h7A"%++bggi"8FK # I&Y$$U\\&%9: ' I&E599Xs34F<56D$F6dSGOE J !))'2 }}oo//@@  
- 	!#d)M:; is{{;
-	#f+&89:Bww}}%'''		"))'D((299(EHRWWIQryykryykcUKL [ ="  
-e
-  
-&!8<=
- ! AF8<uAgc8S6Q5R S##$#' -0R"@FKKA ! YAfXXgeVS.I-J)TUSVWXXYs_   L6 L;M&!N  O;MM
-M= M88M= 
-N?
-)N::N?
-O7O22O7   zStopping by keyboard.zLoop error:   N)returnNone)rN   rp   r   valuesrH   r:   RuntimeErrorr   rK   r4   rl   r   rm   schedulerun_forevertimesleepmaxinterval_secondsKeyboardInterruptr;   rA   )rn   ro   rq   r!   rr   r[   rs   r_   rk   rl   rm   rp   s   `````   @@@@r#   run_live_multimodelr   *   s     ''49H
-  Awq&#%0063511q&#%(	 	
- M KLLs88BBCI23??3L3L3V3V2YZ[[}}S__66??@H1#//2K2K2T2T1WXYYXM XMt ++
-
-
-3q#//":":"K"KLM  	sd % 
--. 
-mQ'
-
-1
-
-
-s,    AHH6AH
- 
-I!	I*"II)r!   r   rw   r   )rn   r   ro   r	   rq   r
-   r!   r   rr   r
-   rw   rx   )%
-__future__r   r}   r   r   r   typingr   tycherion.shared.configr   tycherion.ports.market_datar	   tycherion.ports.tradingr
-   tycherion.ports.accountr   r   tycherion.ports.universer
-   &tycherion.application.plugins.registryr   r   r   r   0tycherion.application.services.coverage_selectorr   'tycherion.application.services.ensembler   ,tycherion.application.services.order_plannerr    tycherion.domain.portfolio.typesr   r   r   r   r$   r    r%   r#   <module>r      s    "  2 2  - 6 / 9 1  L ; E 
-AL	L
-L 
-L 	L
- L 
-
-Lr%   
---- src\tycherion\application\runmodes\__pycache__\live_multimodel.cpython-313.pyc:END ---
-
 --- src\tycherion\application\services\coverage_selector.py:START ---
 from __future__ import annotations
 from datetime import datetime, timedelta, timezone
@@ -1193,29 +818,66 @@ def build_coverage(cfg: AppConfig, data: MarketDataPort, universe: UniversePort)
     scores.sort(reverse=True)
     return [sym for _, sym in scores[:top_n]]
 
+
 --- src\tycherion\application\services\coverage_selector.py:END ---
 
 --- src\tycherion\application\services\ensemble.py:START ---
-from __future__ import annotations
-from typing import List, Dict
+# application/services/ensemble.py (versão nova)
 
-def combine(decisions: List[Dict]) -> Dict:
+from __future__ import annotations
+
+from typing import List
+from tycherion.domain.signals.entities import ModelDecision, AggregatedDecision
+
+
+def combine(decisions: List[ModelDecision]) -> AggregatedDecision:
+    """
+    Combina uma lista de ModelDecision em uma decisão agregada única.
+    """
     if not decisions:
-        return {'side':'HOLD','weight':0.0,'confidence':0.0, 'signed': 0.0}
+        return AggregatedDecision(
+            side="HOLD",
+            weight=0.0,
+            confidence=0.0,
+            signed=0.0,
+        )
+
     num, den = 0.0, 0.0
     for d in decisions:
-        side = d.get('side','HOLD')
-        w = float(d.get('weight',0.0))
-        c = float(d.get('confidence',0.5))
-        signed = w if side == 'BUY' else (-w if side == 'SELL' else 0.0)
-        num += signed * max(0.0, min(1.0, c))
-        den += max(0.0, min(1.0, c))
+        side = (d.side or "HOLD").upper()
+        w = float(d.weight)
+        c = float(d.confidence if d.confidence is not None else 0.5)
+        c = max(0.0, min(1.0, c))
+
+        if side == "BUY":
+            signed = w
+        elif side == "SELL":
+            signed = -w
+        else:
+            signed = 0.0
+
+        num += signed * c
+        den += c
+
     if den <= 0:
-        return {'side':'HOLD','weight':0.0,'confidence':0.0, 'signed': 0.0}
+        return AggregatedDecision(
+            side="HOLD",
+            weight=0.0,
+            confidence=0.0,
+            signed=0.0,
+        )
+
     s = num / den
-    side = 'BUY' if s > 0.1 else ('SELL' if s < -0.1 else 'HOLD')
+    side = "BUY" if s > 0.1 else ("SELL" if s < -0.1 else "HOLD")
     weight = min(1.0, abs(s))
-    return {'side': side, 'weight': weight, 'confidence': min(1.0, den/len(decisions)), 'signed': s}
+    confidence = min(1.0, den / max(1, len(decisions)))
+
+    return AggregatedDecision(
+        side=side,
+        weight=weight,
+        confidence=confidence,
+        signed=s,
+    )
 
 --- src\tycherion\application\services\ensemble.py:END ---
 
@@ -1225,7 +887,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List
 
-from tycherion.domain.portfolio.types import PortfolioSnapshot, RebalanceInstruction
+from tycherion.domain.portfolio.entities import PortfolioSnapshot, RebalanceInstruction
 from tycherion.shared.config import Trading
 
 
@@ -1280,6 +942,7 @@ def build_orders(
         )
     return orders
 
+
 --- src\tycherion\application\services\order_planner.py:END ---
 
 --- src\tycherion\application\services\sizer.py:START ---
@@ -1302,125 +965,62 @@ def volume_from_weight(symbol: str, weight: float, mode: str, fixed_volume: floa
         return float(fixed_volume) * weight
     return symbol_min_volume(symbol)
 
+
 --- src\tycherion\application\services\sizer.py:END ---
-
---- src\tycherion\application\services\__pycache__\coverage_selector.cpython-313.pyc:START ---
-
-
-    4i                    Z    S SK Jr  S SKJrJrJr  S SKrS SKJr  S SK	J
-r
-  S SKJr  SS jr
-g)	    )annotations)datetime	timedeltatimezoneN)	AppConfig)MarketDataPort)UniversePortc                r   U R                   R                  R                  nUS:X  aF  [        [        R                  U R                   R                  R                  =(       d    / 5      5      nOhUS:X  a  UR                  5       nOQUS:X  a;  U R                   R                  R                  =(       d    SnUR                  U5      nOUR                  5       nU R                   R                  R                  =(       d    SnUS::  d  [        U5      U::  a  U$ [        R                  " [        R                  5      nU[!        [#        U R$                  S5      S9-
-  n/ n	US S  H  n
- UR'                  XR(                  X5      nUR*                  (       a  S	nON[-        [.        R0                  " US
-   SS9R3                  S5      R5                  S
-5      R7                  5       5      n U	R;                  X45        M     U	R=                  SS9  U	S U  V
-V
-s/ s H  u  pU
-PM	     sn
-n
-$ ! [8         a    S	n NMf = fs  sn
-n
-f )Nstaticmarket_watchpattern*r      )daysi,  g        tick_volumecoerce)errorsd   T)reverse)applicationcoveragesourcelistdictfromkeyssymbolsvisible_symbolsr
-   
-by_patterntop_nlenr   nowr   utcr   min
-lookback_daysget_bars	timeframeemptyfloatpd
-to_numericfillnatailmean	Exceptionappendsort)cfgdatauniversesrcbasepattr   endstartscoressymdfscore_s                 |C:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\application\services\coverage_selector.pybuild_coverager?      s   
-
-//
-"
-"
-)
-)C
-hDMM#//":":"B"B"HbIJ		'')			''//63""4('')OO$$**/aEzSY%'
-,,x||
-$C)S%6%6!;<<E&(FDSz	sMM5>BxxbmmB},=hOVVWXY^^_bchhjk 	
-
-ul#  KKK$Ven-nFACn--	  	E	 .s   $/H!A
-H!H3!H0/H0)r1   r   r2   r   r3   r	   returnz	list[str])
-__future__r   r   r   r   pandasr)   tycherion.shared.configr   tycherion.ports.market_datar   tycherion.ports.universer	   r?        r>   <module>rH      s    " 2 2  - 6 1.rG   
---- src\tycherion\application\services\__pycache__\coverage_selector.cpython-313.pyc:END ---
-
---- src\tycherion\application\services\__pycache__\ensemble.cpython-313.pyc:START ---
-
-
-    4iF                    *    S SK Jr  S SKJrJr  SS jrg)    )annotations)ListDictc           
-        U (       d  SSSSS.$ Su  pU  H  nUR                  SS5      n[        UR                  SS5      5      n[        UR                  SS5      5      nUS	:X  a  UO
-US
-:X  a  U* OSnX[        S[        SU5      5      -  -
-  nU[        S[        SU5      5      -
-  nM     US::  a  SSSSS.$ X-  nUS
-:  a  S	O	US:  a  S
-OSn[        S[	        U5      5      n	XI[        SU[        U 5      -  5      US.$ )NHOLD        )sideweight
-confidencesigned)r   r   r	   r
-   r   g      ?BUYSELLg      ?r   g?g)getfloatmaxminabslen)
-	decisionsnumdendr	   wcr   sr
-   s
-             sC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\application\services\ensemble.pycombiner      s	   ssKKHC
-uuVF#!%%%&!%%S)*em1"CCS!---s3C$$
-  axssKK	AG5AH&&D
-c!f
-F#c3s9~CU:Vbcdd    N)r   z
-List[Dict]returnr   )
-__future__r   typingr   r   r    r   r   <module>r#      s    " er   
---- src\tycherion\application\services\__pycache__\ensemble.cpython-313.pyc:END ---
-
---- src\tycherion\application\services\__pycache__\order_planner.cpython-313.pyc:START ---
-
-
-    4id                    |    S SK Jr  S SKJr  S SKJr  S SKJrJr  S SK	J
-r
-  \ " S S5      5       r        S
-S jrg	)    )annotations)	dataclass)List)PortfolioSnapshotRebalanceInstruction)Tradingc                  4    \ rS rSr% S\S'   S\S'   S\S'   Srg)	SuggestedOrder
-   strsymbolsidefloatvolume N)__name__
-__module____qualname____firstlineno____annotations____static_attributes__r       xC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\application\services\order_planner.pyr
-   r
-   
-   s    K
-
-IMr   r
-   c           	     p   SSK JnJn  / nU H  n[        [	        UR
-                  5      5      nUS::  a  M)  U" UR                  UUR                  UR                  5      nU" UR                  5      n	[        X5      nUS::  a  Mw  UR                  [        UR                  UR                  US95        M     U$ )z
-Convert domain-level rebalance instructions (expressed in weights) into
-concrete order suggestions with broker volumes. This is the point where
-we cross from the pure portfolio domain into broker-specific constraints.
-r   )volume_from_weightsymbol_min_volumeg        )r
-   r   r   )
-$tycherion.application.services.sizerr   r   absr   delta_weightr
-   volume_modefixed_volumemaxappendr
-   r   )
-	portfolioplantrading_cfgr   r   ordersinstrwvolmin_vols
-             r   build_ordersr,      s    
- $&F 
-e(()*8 LL
-##$$	
- $ELL1##:
-
-||ZZ
-	
-% 2 Mr   N)r$   r   r%   zList[RebalanceInstruction]r&   r   returnzList[SuggestedOrder])
-__future__r   dataclassesr   typingr    tycherion.domain.portfolio.typesr   r   tycherion.shared.configr   r
-   r,   r   r   r   <module>r3      sV    " !  T +   * *
-$* * 	*r   
---- src\tycherion\application\services\__pycache__\order_planner.cpython-313.pyc:END ---
-
---- src\tycherion\application\services\__pycache__\sizer.cpython-313.pyc:START ---
-
-
-    4iL                    ,    S SK Jr  S SKrSS jrSS jrg)    )annotationsNc                    [         R                  " U 5      nU(       d  g[        UR                  UR                  5      n[        X!R                  -  5      nX1R                  -  $ )N        )mt5symbol_infomax
-volume_minvolume_stepround)symbolinfovstepss       pC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\application\services\sizer.pysymbol_min_volumer      sN    ??6"DDOOT--.A!&&&'E####    c           	         [        S[        S[        U5      5      5      nUS:  a  gUS:X  a  [        U5      U-  $ [        U 5      $ )Nr   g      ?gư>fixed)r   minfloatr   )r   weightmodefixed_volumes       r   volume_from_weightr      sE    
-c#uV}-
-.F
-}w\"V++V$$r   )r   strreturnr   )
-r   r   r   r   r   r   r   r   r   r   )
-__future__r   MetaTrader5r   r   r    r   r   <module>r       s    " $%r   
---- src\tycherion\application\services\__pycache__\sizer.cpython-313.pyc:END ---
 
 --- src\tycherion\domain\__init__.py:START ---
 
 --- src\tycherion\domain\__init__.py:END ---
 
---- src\tycherion\domain\portfolio\types.py:START ---
+--- src\tycherion\domain\market\entities.py:START ---
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+from typing import NewType
+
+Symbol = NewType("Symbol", str)
+
+
+class AssetClass(str, Enum):
+    EQUITY = "equity"
+    FUTURE = "future"
+    FX = "fx"
+    OTHER = "other"
+
+
+@dataclass
+class Instrument:
+    """Domain representation of a tradable instrument (stock, future, FX, etc.)."""
+
+    symbol: Symbol
+    asset_class: AssetClass
+    currency: str
+    lot_size: float
+    min_volume: float
+    volume_step: float
+
+
+@dataclass
+class Bar:
+    """Minimal OHLCV bar used by indicators and models when not using DataFrame."""
+
+    symbol: Symbol
+    time: datetime
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: float
+
+--- src\tycherion\domain\market\entities.py:END ---
+
+--- src\tycherion\domain\market\__init__.py:START ---
+
+--- src\tycherion\domain\market\__init__.py:END ---
+
+--- src\tycherion\domain\portfolio\entities.py:START ---
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -1432,11 +1032,12 @@ Symbol = str
 
 @dataclass
 class Signal:
-    """
-    Per-symbol signal produced by the models/ensemble.
+    """Per-symbol signal produced by the models/ensemble.
+
     signed: desired direction/intensity in [-1, 1]
     confidence: optional confidence level in [0, 1]
     """
+
     symbol: Symbol
     signed: float
     confidence: float = 1.0
@@ -1446,12 +1047,13 @@ SignalsBySymbol = Dict[Symbol, Signal]
 
 
 @dataclass
-class PortfolioPosition:
+class Position:
+    """Domain-level position in a single instrument.
+
+    quantity: number of shares/contracts/etc.
+    price: best available price estimate (e.g. last close or avg price).
     """
-    Snapshot of a single position in the portfolio, in abstract units
-    (shares, contracts, etc.). Price is the best estimate available
-    (e.g. last close, or average price).
-    """
+
     symbol: Symbol
     quantity: float
     price: float
@@ -1459,12 +1061,13 @@ class PortfolioPosition:
 
 @dataclass
 class PortfolioSnapshot:
-    """
-    Portfolio snapshot used by allocators/balancers at the domain level.
+    """Portfolio snapshot used by allocators/balancers at the domain level.
+
     Equity is the current account equity in account currency.
     """
+
     equity: float
-    positions: Dict[Symbol, PortfolioPosition]
+    positions: Dict[Symbol, Position]
 
     def weight_of(self, symbol: Symbol) -> float:
         pos = self.positions.get(symbol)
@@ -1475,27 +1078,28 @@ class PortfolioSnapshot:
 
 @dataclass
 class TargetAllocation:
-    """
-    Target portfolio allocation expressed as weights per symbol in [-1, 1].
+    """Target portfolio allocation expressed as weights per symbol in [-1, 1].
+
     Positive weights are long exposure, negative weights are short exposure.
     """
+
     weights: Dict[Symbol, float]
 
 
 @dataclass
 class RebalanceInstruction:
-    """
-    Domain-level rebalance instruction expressed in weights, not broker
+    """Domain-level rebalance instruction expressed in weights, not broker
     volumes. Conversion to concrete order sizes happens in the application
     layer (order planner).
     """
+
     symbol: Symbol
     from_weight: float
     to_weight: float
     delta_weight: float
     side: str  # "BUY" | "SELL"
 
---- src\tycherion\domain\portfolio\types.py:END ---
+--- src\tycherion\domain\portfolio\entities.py:END ---
 
 --- src\tycherion\domain\portfolio\__init__.py:START ---
 
@@ -1505,7 +1109,7 @@ class RebalanceInstruction:
 from __future__ import annotations
 
 from tycherion.application.plugins.registry import register_allocator
-from tycherion.domain.portfolio.types import SignalsBySymbol, TargetAllocation
+from tycherion.domain.portfolio.entities import SignalsBySymbol, TargetAllocation
 
 
 @register_allocator(name="equal_weight", tags={"default"})
@@ -1531,13 +1135,14 @@ class EqualWeightAllocator:
                 weights[sig.symbol] = 0.0
         return TargetAllocation(weights=weights)
 
+
 --- src\tycherion\domain\portfolio\allocators\equal_weight.py:END ---
 
 --- src\tycherion\domain\portfolio\allocators\proportional.py:START ---
 from __future__ import annotations
 
 from tycherion.application.plugins.registry import register_allocator
-from tycherion.domain.portfolio.types import SignalsBySymbol, TargetAllocation
+from tycherion.domain.portfolio.entities import SignalsBySymbol, TargetAllocation
 
 
 @register_allocator(name="proportional", tags={"default"})
@@ -1561,63 +1166,18 @@ class ProportionalAllocator:
                 weights[sig.symbol] = frac if sig.signed > 0 else -frac
         return TargetAllocation(weights=weights)
 
+
 --- src\tycherion\domain\portfolio\allocators\proportional.py:END ---
 
 --- src\tycherion\domain\portfolio\allocators\__init__.py:START ---
 
 --- src\tycherion\domain\portfolio\allocators\__init__.py:END ---
 
---- src\tycherion\domain\portfolio\allocators\__pycache__\equal_weight.cpython-313.pyc:START ---
-
-
-    4i                    V    S SK Jr  S SKJr  S SKJrJr  \" SS1S9 " S S5      5       rg	)
-    )annotations)register_allocator)SignalsBySymbolTargetAllocationequal_weightdefault)nametagsc                  "    \ rS rSrSrSS jrSrg)EqualWeightAllocator   z
-Simple allocator: gives the same absolute weight to all symbols that have
-a non-zero signal. Longs get +w, shorts get -w, holds get 0.
-c                   UR                  5        Vs/ s H)  n[        [        UR                  5      5      S:  d  M'  UPM+     nnU(       d	  [	        0 S9$ S[        [        U5      5      -  n0 nUR                  5        HR  nUR                  S:  a  XEUR                  '   M#  UR                  S:  a  U* XVR                  '   MD  SXVR                  '   MT     [	        US9$ s  snf )Ngư>)weightsg      ?r   g        )valuesabsfloatsignedr   lensymbol)selfsignalssnonzerowr   sigs          ډC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\domain\portfolio\allocation\allocators\equal_weight.pyallocateEqualWeightAllocator.allocate
-   s    %nn.N.#eAHHo2F2M1.N#B//%G%%$&>>#CzzA~&'
-
-#a'(b
-
-#&)
-
-#
- $  00 Os
-   &CC N)r   r   returnr   )__name__
-__module____qualname____firstlineno____doc__r   __static_attributes__r       r   r   r      s    1r'   r   N)
-__future__r   &tycherion.application.plugins.registryr    tycherion.domain.portfolio.typesr   r   r   r   r'   r   <module>r+      s0    " E N yk:1 1 ;1r'   
---- src\tycherion\domain\portfolio\allocators\__pycache__\equal_weight.cpython-313.pyc:END ---
-
---- src\tycherion\domain\portfolio\allocators\__pycache__\proportional.cpython-313.pyc:START ---
-
-
-    4i                    V    S SK Jr  S SKJr  S SKJrJr  \" SS1S9 " S S5      5       rg	)
-    )annotations)register_allocator)SignalsBySymbolTargetAllocationproportionaldefault)nametagsc                  "    \ rS rSrSrSS jrSrg)ProportionalAllocator   z
-Allocator that gives each symbol a weight proportional to the absolute
-value of its signal. Signals are normalised so that the sum of absolute
-weights is 1. Longs get +w, shorts get -w.
-c                h   [        S UR                  5        5       5      nUS::  a	  [        0 S9$ 0 nUR                  5        He  nUR                  S:X  a  SX4R                  '   M#  [        [
-        UR                  5      5      U-  nUR                  S:  a  UOU* X4R                  '   Mg     [        US9$ )Nc              3  ^   #    U  H#  n[        [        UR                  5      5      v   M%     g 7f)N)absfloatsigned).0ss     ډC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\domain\portfolio\allocation\allocators\proportional.py	<genexpr>1ProportionalAllocator.allocate.<locals>.<genexpr>   s"     C2BQCahh((2Bs   +-g&.>)weightsr   g        )sumvaluesr   r   symbolr   r   )selfsignalstotalr   sigfracs         r   allocateProportionalAllocator.allocate   s    C'..2BCCD=#B//$&>>#CzzQ&)
-
-#5,-5.1jj1nd4%
-
-# $  00     N)r   r   returnr   )__name__
-__module____qualname____firstlineno____doc__r!   __static_attributes__r$   r#   r   r   r      s    
-1r#   r   N)
-__future__r   &tycherion.application.plugins.registryr    tycherion.domain.portfolio.typesr   r   r   r$   r#   r   <module>r/      s0    " E N yk:1 1 ;1r#   
---- src\tycherion\domain\portfolio\allocators\__pycache__\proportional.cpython-313.pyc:END ---
-
---- src\tycherion\domain\portfolio\allocators\__pycache__\__init__.cpython-313.pyc:START ---
-
-
-    4i                           g )N r       څC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\domain\portfolio\allocation\allocators\__init__.py<module>r      s   r   
---- src\tycherion\domain\portfolio\allocators\__pycache__\__init__.cpython-313.pyc:END ---
-
 --- src\tycherion\domain\portfolio\balancers\threshold.py:START ---
 from __future__ import annotations
 
 from tycherion.application.plugins.registry import register_balancer
-from tycherion.domain.portfolio.types import (
+from tycherion.domain.portfolio.entities import (
     PortfolioSnapshot,
     TargetAllocation,
     RebalanceInstruction,
@@ -1659,105 +1219,60 @@ class ThresholdBalancer:
             )
         return instructions
 
+
 --- src\tycherion\domain\portfolio\balancers\threshold.py:END ---
 
 --- src\tycherion\domain\portfolio\balancers\__init__.py:START ---
 
 --- src\tycherion\domain\portfolio\balancers\__init__.py:END ---
 
---- src\tycherion\domain\portfolio\balancers\__pycache__\threshold.cpython-313.pyc:START ---
+--- src\tycherion\domain\signals\entities.py:START ---
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Dict
 
 
-    4i                    Z    S SK Jr  S SKJr  S SKJrJrJr  \" SS1S9 " S S5      5       rg	)
-    )annotations)register_balancer)PortfolioSnapshotTargetAllocationRebalanceInstruction	thresholddefault)nametagsc                  6    \ rS rSrSr S       SS jjrSrg)ThresholdBalancer   z
-Domain-level balancer: generates rebalance instructions whenever the
-difference between current and target weight is greater than or equal
-to a configured threshold.
-c                   [        S[        S[        U5      5      5      n/ n[        UR                  R                  5       5      [        UR                  R                  5       5      -  n[        U5       H}  n[        UR                  U5      5      n[        UR                  R                  US5      5      nX-
-  n	[        U	5      U:  a  MW  U	S:  a  SOSn
-UR                  [        UUUU	U
-S95        M     U$ )Ng        g      ?r   BUYSELL)symbolfrom_weight	to_weightdelta_weightside)
-maxminfloatsetweightskeys	positionssorted	weight_ofgetabsappendr   )self	portfoliotargetr   instructionssymbolssym	current_wtarget_wdeltar   s              ڄC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\domain\portfolio\rebalance\balancers\threshold.pyplanThresholdBalancer.plan   s     SeI&678	35fnn))+,s93F3F3K3K3M/NN'?Ci11#67IV^^//S9:H(E5zI%!AI56D$ )&!&
- #       N)g      ?)r$   r   r%   r   r   r   returnzlist[RebalanceInstruction])__name__
-__module____qualname____firstlineno____doc__r-   __static_attributes__r0   r/   r,   r
-   r
-      s<      	$ ! 	
- 
-$ r/   r
-   N)	
-__future__r   &tycherion.application.plugins.registryr    tycherion.domain.portfolio.typesr   r   r   r
-   r0   r/   r,   <module>r;      s7    " D  9+6    7 r/   
---- src\tycherion\domain\portfolio\balancers\__pycache__\threshold.cpython-313.pyc:END ---
+@dataclass
+class IndicatorOutput:
+    """Standard output of an indicator for a single symbol.
 
---- src\tycherion\domain\portfolio\balancers\__pycache__\__init__.cpython-313.pyc:START ---
+    - score: aggregated metric in [-1, 1] (by convention in this project)
+    - features: extra numeric features that models may consume.
+    """
+
+    score: float
+    features: Dict[str, float]
 
 
-    4i                           g )N r       ڃC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\domain\portfolio\rebalance\balancers\__init__.py<module>r      s   r   
---- src\tycherion\domain\portfolio\balancers\__pycache__\__init__.cpython-313.pyc:END ---
+@dataclass
+class ModelDecision:
+    """Per-model decision for a single symbol.
 
---- src\tycherion\domain\portfolio\__pycache__\types.cpython-313.pyc:START ---
+    side: "BUY" | "SELL" | "HOLD"
+    weight: relative intensity (usually in [0, 1])
+    confidence: confidence level in [0, 1]
+    """
 
+    side: str
+    weight: float
+    confidence: float
 
-    4i                        S SK Jr  S SKJr  S SKJr  \r\ " S S5      5       r\\\4   r	\ " S S5      5       r
-\ " S S	5      5       r\ " S
- S5      5       r\ " S S
-5      5       r
-g)    )annotations)	dataclass)Dictc                  <    \ rS rSr% SrS\S'   S\S'   SrS\S'   S	rg
-)Signal
-   z
-Per-symbol signal produced by the models/ensemble.
-signed: desired direction/intensity in [-1, 1]
-confidence: optional confidence level in [0, 1]
-Symbolsymbolfloatsignedg      ?
-confidence N)__name__
-__module____qualname____firstlineno____doc____annotations__r
-   __static_attributes__r       lC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\domain\portfolio\types.pyr   r   
-   s    
- 
-NMJr   r   c                  8    \ rS rSr% SrS\S'   S\S'   S\S'   Srg	)
-PortfolioPosition   z
-Snapshot of a single position in the portfolio, in abstract units
-(shares, contracts, etc.). Price is the best estimate available
-(e.g. last close, or average price).
-r	   r
-   r   quantitypricer   Nr   r   r   r   r   r   r   r   r   r   r   r      s    
- 
-NOLr   r   c                  8    \ rS rSr% SrS\S'   S\S'   S
-S jrSrg	)PortfolioSnapshot%   z
-Portfolio snapshot used by allocators/balancers at the domain level.
-Equity is the current account equity in account currency.
-r   equityzDict[Symbol, PortfolioPosition]	positionsc                    U R                   R                  U5      nU(       a  U R                  S::  a  g[        UR                  UR
-                  -  5      [        U R                  5      -  $ )Nr   g        )r"   getr!   r   r   r   )selfr
-   poss      r   	weight_ofPortfolioSnapshot.weight_of.   sM    nn  (dkkQ&S\\CII-.t{{1CCCr   r   N)r
-   r	   returnr   )r   r   r   r   r   r   r'   r   r   r   r   r   r   %   s     
-M..Dr   r   c                  $    \ rS rSr% SrS\S'   Srg)TargetAllocation5   z
-Target portfolio allocation expressed as weights per symbol in [-1, 1].
-Positive weights are long exposure, negative weights are short exposure.
-zDict[Symbol, float]weightsr   Nr   r   r   r   r+   r+   5   s     ! r   r+   c                  L    \ rS rSr% SrS\S'   S\S'   S\S'   S\S'   S	\S
-'   Srg)
-RebalanceInstruction>   z
-Domain-level rebalance instruction expressed in weights, not broker
-volumes. Conversion to concrete order sizes happens in the application
-layer (order planner).
-r	   r
-   r   from_weight	to_weightdelta_weightstrsider   Nr   r   r   r   r/   r/   >   s%    
- 
-N
+@dataclass
+class AggregatedDecision:
+    """
+    Decisão agregada (ensemble) de todos os models para um símbolo.
 
-Ir   r/   N)
-__future__r   dataclassesr   typingr   r4   r	   r   SignalsBySymbolr   r   r+   r/   r   r   r   <module>r:      s    " !  
-
-    vv~&    D D D ! ! ! 
- 
- 
-r   
---- src\tycherion\domain\portfolio\__pycache__\types.cpython-313.pyc:END ---
-
---- src\tycherion\domain\portfolio\__pycache__\__init__.cpython-313.pyc:START ---
-
-
-    4i                           g )N r       oC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\domain\portfolio\__init__.py<module>r      s   r   
---- src\tycherion\domain\portfolio\__pycache__\__init__.cpython-313.pyc:END ---
+    side       -> direção final ("BUY"/"SELL"/"HOLD")
+    weight     -> intensidade em [0, 1]
+    confidence -> confiança em [0, 1]
+    signed     -> direção * intensidade em [-1, 1]
+    """
+    side: str
+    weight: float
+    confidence: float
+    signed: float
+--- src\tycherion\domain\signals\entities.py:END ---
 
 --- src\tycherion\domain\signals\__init__.py:START ---
 
@@ -1765,37 +1280,47 @@ __future__r   dataclassesr   typingr   r4   r	   r   SignalsBySymbolr   
 
 --- src\tycherion\domain\signals\indicators\stretch_zscore.py:START ---
 from __future__ import annotations
+
 import pandas as pd
+
 from tycherion.application.plugins.registry import register_indicator
+from tycherion.domain.signals.entities import IndicatorOutput
+
 
 @register_indicator(key="stretch", method="zscore_20", tags={"default"})
 class StretchZScore20:
     period = 20
-    def compute(self, df: pd.DataFrame) -> dict:
+
+    def compute(self, df: pd.DataFrame) -> IndicatorOutput:
         if df.empty or len(df) < self.period:
-            return {"score":0.0,"features":{}}
+            return IndicatorOutput(score=0.0, features={})
         close = df["close"].astype(float)
         ma = close.rolling(self.period).mean()
         sd = close.rolling(self.period).std(ddof=0).replace(0, 1e-9)
         z = (close - ma) / sd
         zval = float(z.iloc[-1])
         score = max(-1.0, min(1.0, -zval / 3.0))
-        return {"score": score, "features": {"z": zval}}
+        return IndicatorOutput(score=score, features={"z": zval})
 
 --- src\tycherion\domain\signals\indicators\stretch_zscore.py:END ---
 
 --- src\tycherion\domain\signals\indicators\trend_donchian.py:START ---
 from __future__ import annotations
+
 import pandas as pd
+
 from tycherion.application.plugins.registry import register_indicator
+from tycherion.domain.signals.entities import IndicatorOutput
+
 
 @register_indicator(key="trend", method="donchian_50_50", tags={"default"})
 class TrendDonchian5050:
     high_n = 50
     low_n = 50
-    def compute(self, df: pd.DataFrame) -> dict:
+
+    def compute(self, df: pd.DataFrame) -> IndicatorOutput:
         if df.empty or len(df) < max(self.high_n, self.low_n):
-            return {"score":0.0,"features":{}}
+            return IndicatorOutput(score=0.0, features={})
         hh = df["high"].rolling(self.high_n).max()
         ll = df["low"].rolling(self.low_n).min()
         mid = (hh + ll) / 2.0
@@ -1803,31 +1328,41 @@ class TrendDonchian5050:
         pos = (df["close"] - mid) / (rng / 2.0)
         score = float(pos.iloc[-1])
         score = max(-1.0, min(1.0, score))
-        return {"score": score, "features": {"upper": float(hh.iloc[-1]), "lower": float(ll.iloc[-1])}}
+        return IndicatorOutput(
+            score=score,
+            features={"upper": float(hh.iloc[-1]), "lower": float(ll.iloc[-1])},
+        )
 
 --- src\tycherion\domain\signals\indicators\trend_donchian.py:END ---
 
 --- src\tycherion\domain\signals\indicators\volatility_atr.py:START ---
 from __future__ import annotations
+
 import pandas as pd
+
 from tycherion.application.plugins.registry import register_indicator
+from tycherion.domain.signals.entities import IndicatorOutput
+
 
 @register_indicator(key="volatility", method="atr_14", tags={"default"})
 class VolATR14:
     period = 14
-    def compute(self, df: pd.DataFrame) -> dict:
+
+    def compute(self, df: pd.DataFrame) -> IndicatorOutput:
         if df.empty or len(df) < self.period + 1:
-            return {"score":0.0,"features":{}}
+            return IndicatorOutput(score=0.0, features={})
         high = df["high"].astype(float)
         low = df["low"].astype(float)
         close = df["close"].astype(float)
         prev_close = close.shift(1)
         tr = (high - low).abs()
-        tr = pd.concat([tr, (high - prev_close).abs(), (low - prev_close).abs()], axis=1).max(axis=1)
+        tr = pd.concat(
+            [tr, (high - prev_close).abs(), (low - prev_close).abs()], axis=1
+        ).max(axis=1)
         atr = tr.rolling(self.period).mean()
         val = float(atr.iloc[-1])
         score = 1.0 / (1.0 + val) if val > 0 else 0.0
-        return {"score": score, "features": {"atr": val}}
+        return IndicatorOutput(score=score, features={"atr": val})
 
 --- src\tycherion\domain\signals\indicators\volatility_atr.py:END ---
 
@@ -1835,146 +1370,65 @@ class VolATR14:
 
 --- src\tycherion\domain\signals\indicators\__init__.py:END ---
 
---- src\tycherion\domain\signals\indicators\__pycache__\stretch_zscore.cpython-313.pyc:START ---
-
-
-    4i                    P    S SK Jr  S SKrS SKJr  \" SSS1S9 " S S	5      5       rg)
-    )annotationsN)register_indicatorstretch	zscore_20default)keymethodtagsc                  "    \ rS rSrSrSS jrSrg)StretchZScore20      c                   UR                   (       d  [        U5      U R                  :  a  S0 S.$ US   R                  [        5      nUR                  U R                  5      R
-                  5       nUR                  U R                  5      R                  SS9R                  SS5      nX#-
-  U-  n[	        UR                  S   5      n[        S[        S	U* S
--  5      5      nUSU0S.$ )Ng        )scorefeaturescloser   )ddofg&.>g      g      ?g      @z)emptylenperiodastypefloatrollingmeanstdreplaceilocmaxmin)selfdfr   masdr   zvalr   s           ~C:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\domain\signals\indicators\stretch_zscore.pycomputeStretchZScore20.compute   s    
-88s2w,2..7""5)
-]]4;;
-'
-,
-,
-.
-]]4;;
-'
-+
-+
-+
-3
-;
-;At
-D
-Z2QVVBZ D#cD53;/0S$K88     N)r#   zpd.DataFramereturndict)__name__
-__module____qualname____firstlineno__r   r(   __static_attributes__r+   r*   r'   r   r      s    
-F	9r*   r   )
-__future__r   pandaspd&tycherion.application.plugins.registryr   r   r+   r*   r'   <module>r7      s1    "  E	+YKH9 9 I9r*   
---- src\tycherion\domain\signals\indicators\__pycache__\stretch_zscore.cpython-313.pyc:END ---
-
---- src\tycherion\domain\signals\indicators\__pycache__\trend_donchian.cpython-313.pyc:START ---
-
-
-    4i3                    P    S SK Jr  S SKrS SKJr  \" SSS1S9 " S S	5      5       rg)
-    )annotationsN)register_indicatortrenddonchian_50_50default)keymethodtagsc                  &    \ rS rSrSrSrSS jrSrg)TrendDonchian5050   2   c                N   UR                   (       d-  [        U5      [        U R                  U R                  5      :  a  S0 S.$ US   R                  U R                  5      R                  5       nUS   R                  U R                  5      R
-                  5       nX#-   S-  nX#-
-  R                  SS5      nUS   U-
-  US-  -  n[        UR                  S	   5      n[        S
-[
-        SU5      5      nU[        UR                  S	   5      [        UR                  S	   5      S.S.$ )
-Ng        )scorefeatureshighlowg       @r   g&.>closeg      g      ?)upperlower)
-emptylenmaxhigh_nlow_nrollingminreplacefloatiloc)selfdfhhllmidrngposr   s           ~C:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\domain\signals\indicators\trend_donchian.pycomputeTrendDonchian5050.compute	   s    
-88s2wT[[$**!==2..
-Z
-
-
-,
-0
-0
-2
-Y
-
-tzz
-*
-.
-.
-0w#ow4('{S S3Y/chhrl#D#c5/*eBGGBK6HSXY[Y`Y`acYdSe,fgg     N)r#   zpd.DataFramereturndict)__name__
-__module____qualname____firstlineno__r   r   r*   __static_attributes__r-   r,   r)   r   r      s    
-FE
-hr,   r   )
-__future__r   pandaspd&tycherion.application.plugins.registryr   r   r-   r,   r)   <module>r9      s5    "  E(8	{K
-h 
-h L
-hr,   
---- src\tycherion\domain\signals\indicators\__pycache__\trend_donchian.cpython-313.pyc:END ---
-
---- src\tycherion\domain\signals\indicators\__pycache__\volatility_atr.cpython-313.pyc:START ---
-
-
-    4iZ                    P    S SK Jr  S SKrS SKJr  \" SSS1S9 " S S	5      5       rg)
-    )annotationsN)register_indicator
-volatilityatr_14default)keymethodtagsc                  "    \ rS rSrSrSS jrSrg)VolATR14      c                v   UR                   (       d  [        U5      U R                  S-   :  a  S0 S.$ US   R                  [        5      nUS   R                  [        5      nUS   R                  [        5      nUR                  S5      nX#-
-  R
-                  5       n[        R                  " XbU-
-  R
-                  5       X5-
-  R
-                  5       /SS9R                  SS9nUR                  U R                  5      R                  5       n[	        UR                  S   5      nUS	:  a  S
-S
-U-   -  OSn	U	SU0S.$ )N   g        )scorefeatureshighlowclose)axisr   g      ?atr)
-emptylenperiodastypefloatshiftabspdconcatmaxrollingmeaniloc)
-selfdfr   r   r   
-prev_closetrr   valr   s
-             ~C:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\domain\signals\indicators\volatility_atr.pycomputeVolATR14.compute   s   
-88s2wq02..&z  'iu%7""5)[[^
-j
-
-
-
-YYJ.3358H7M7M7OPWX
-Y
-]
-]cd
-]
-ejj%**,CHHRL!%(1WsSy!#UCL99     N)r'   zpd.DataFramereturndict)__name__
-__module____qualname____firstlineno__r   r,   __static_attributes__r/   r.   r+   r   r      s    
-F:r.   r   )
-__future__r   pandasr    &tycherion.application.plugins.registryr   r   r/   r.   r+   <module>r:      s1    "  EXYKH: : I:r.   
---- src\tycherion\domain\signals\indicators\__pycache__\volatility_atr.cpython-313.pyc:END ---
-
---- src\tycherion\domain\signals\indicators\__pycache__\__init__.cpython-313.pyc:START ---
-
-
-    4i                           g )N r       xC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\domain\signals\indicators\__init__.py<module>r      s   r   
---- src\tycherion\domain\signals\indicators\__pycache__\__init__.cpython-313.pyc:END ---
-
 --- src\tycherion\domain\signals\models\mean_reversion.py:START ---
 from __future__ import annotations
+
+from typing import Dict
+
 from tycherion.application.plugins.registry import register_model
+from tycherion.domain.signals.entities import IndicatorOutput, ModelDecision
+
 
 @register_model(name="mean_reversion", tags={"default"})
 class MeanReversion:
-    def requires(self):
-        return {"stretch","volatility"}
-    def decide(self, indicators):
-        z = float(indicators.get("stretch",{}).get("features",{}).get("z", 0.0))
+    def requires(self) -> set[str]:
+        return {"stretch", "volatility"}
+
+    def decide(self, indicators: Dict[str, IndicatorOutput]) -> ModelDecision:
+        stretch = indicators.get("stretch") if indicators is not None else None
+        z = float(stretch.features.get("z", 0.0)) if stretch else 0.0
+
         if z <= -2.0:
-            w = min(1.0, abs(z)/3.0)
-            return {"side":"BUY","weight": w, "confidence":0.6}
+            w = min(1.0, abs(z) / 3.0)
+            return ModelDecision(side="BUY", weight=w, confidence=0.6)
         if z >= 2.0:
-            w = min(1.0, abs(z)/3.0)
-            return {"side":"SELL","weight": w, "confidence":0.6}
-        return {"side":"HOLD","weight":0.0,"confidence":0.4}
+            w = min(1.0, abs(z) / 3.0)
+            return ModelDecision(side="SELL", weight=w, confidence=0.6)
+        return ModelDecision(side="HOLD", weight=0.0, confidence=0.4)
 
 --- src\tycherion\domain\signals\models\mean_reversion.py:END ---
 
 --- src\tycherion\domain\signals\models\trend_following.py:START ---
 from __future__ import annotations
+
+from typing import Dict
+
 from tycherion.application.plugins.registry import register_model
+from tycherion.domain.signals.entities import IndicatorOutput, ModelDecision
+
 
 @register_model(name="trend_following", tags={"default"})
 class TrendFollowing:
-    def requires(self):
-        return {"trend","volatility"}
-    def decide(self, indicators):
-        tr = float(indicators.get("trend",{}).get("score",0.0))
+    def requires(self) -> set[str]:
+        return {"trend", "volatility"}
+
+    def decide(self, indicators: Dict[str, IndicatorOutput]) -> ModelDecision:
+        trend = indicators.get("trend") if indicators is not None else None
+        tr = float(trend.score) if trend else 0.0
+
         if tr > 0.2:
-            return {"side":"BUY","weight": min(1.0, 0.5 + tr*0.5),"confidence":0.7}
+            return ModelDecision(
+                side="BUY",
+                weight=min(1.0, 0.5 + tr * 0.5),
+                confidence=0.7,
+            )
         if tr < -0.2:
-            return {"side":"SELL","weight": min(1.0, 0.5 + (-tr)*0.5),"confidence":0.7}
-        return {"side":"HOLD","weight":0.0,"confidence":0.3}
+            return ModelDecision(
+                side="SELL",
+                weight=min(1.0, 0.5 + (-tr) * 0.5),
+                confidence=0.7,
+            )
+        return ModelDecision(side="HOLD", weight=0.0, confidence=0.3)
 
 --- src\tycherion\domain\signals\models\trend_following.py:END ---
 
@@ -1982,81 +1436,13 @@ class TrendFollowing:
 
 --- src\tycherion\domain\signals\models\__init__.py:END ---
 
---- src\tycherion\domain\signals\models\__pycache__\mean_reversion.cpython-313.pyc:START ---
-
-
-    4i                    F    S SK Jr  S SKJr  \" SS1S9 " S S5      5       rg)	    )annotations)register_modelmean_reversiondefault)nametagsc                       \ rS rSrS rS rSrg)
-MeanReversion   c                
-    SS1$ )Nstretch
-volatility )selfs    zC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\domain\signals\models\mean_reversion.pyrequiresMeanReversion.requires   s
-    ,''    c                   [        UR                  S0 5      R                  S0 5      R                  SS5      5      nUS::  a  [        S[        U5      S-  5      nSUS	S
-.$ US:  a  [        S[        U5      S-  5      nSUS	S
-.$ S
-SSS
-.$ )Nr
-   featureszg        g       g      ?g      @BUYg333333?)sideweight
-confidenceg       @SELLHOLDg?)floatgetminabs)r   
-indicatorsr   ws       r   decideMeanReversion.decide   s    *..2.22:bAEEc3OP9CQ$A 13??8CQ$A!AC@@s<<r   r   N)__name__
-__module____qualname____firstlineno__r   r$   __static_attributes__r   r   r   r
-   r
-      s    (=r   r
-   N)
-__future__r   &tycherion.application.plugins.registryr   r
-   r   r   r   <module>r-      s,    " A%YK8= = 9=r   
---- src\tycherion\domain\signals\models\__pycache__\mean_reversion.cpython-313.pyc:END ---
-
---- src\tycherion\domain\signals\models\__pycache__\trend_following.cpython-313.pyc:START ---
-
-
-    4ij                    F    S SK Jr  S SKJr  \" SS1S9 " S S5      5       rg)	    )annotations)register_modeltrend_followingdefault)nametagsc                       \ rS rSrS rS rSrg)TrendFollowing   c                
-    SS1$ )Ntrend
-volatility )selfs    {C:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\domain\signals\models\trend_following.pyrequiresTrendFollowing.requires   s
-    %%    c                    [        UR                  S0 5      R                  SS5      5      nUS:  a  S[        SSUS-  -   5      SS	.$ US
-:  a  S[        SSU* S-  -   5      SS	.$ SSS
-S	.$ )Nr
-   scoreg        g?BUYg      ?g      ?gffffff?)sideweight
-confidencegɿSELLHOLDg333333?)floatgetmin)r   
-indicatorstrs      r   decideTrendFollowing.decide   sz    
-:>>'"-11'#>
-?
-8 3sC"S&L+AsSS
-9!CSRC9_,ESVWWs<<r   r   N)__name__
-__module____qualname____firstlineno__r   r"   __static_attributes__r   r   r   r
-   r
-      s    &=r   r
-   N)
-__future__r   &tycherion.application.plugins.registryr   r
-   r   r   r   <module>r+      s,    " A&i[9	= 	= :	=r   
---- src\tycherion\domain\signals\models\__pycache__\trend_following.cpython-313.pyc:END ---
-
---- src\tycherion\domain\signals\models\__pycache__\__init__.cpython-313.pyc:START ---
-
-
-    4i                           g )N r       tC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\domain\signals\models\__init__.py<module>r      s   r   
---- src\tycherion\domain\signals\models\__pycache__\__init__.cpython-313.pyc:END ---
-
---- src\tycherion\domain\signals\__pycache__\__init__.cpython-313.pyc:START ---
-
-
-    4i                           g )N r       mC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\domain\signals\__init__.py<module>r      s   r   
---- src\tycherion\domain\signals\__pycache__\__init__.cpython-313.pyc:END ---
-
---- src\tycherion\domain\__pycache__\__init__.cpython-313.pyc:START ---
-
-
-    4i                           g )N r       eC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\domain\__init__.py<module>r      s   r   
---- src\tycherion\domain\__pycache__\__init__.cpython-313.pyc:END ---
-
 --- src\tycherion\ports\account.py:START ---
 from __future__ import annotations
-from dataclasses import dataclass
+
 from typing import Protocol, List
 
-@dataclass
-class Position:
-    symbol: str
-    volume: float
-    price: float
+from tycherion.domain.portfolio.entities import Position
+
 
 class AccountPort(Protocol):
     def is_demo(self) -> bool: ...
@@ -2074,6 +1460,7 @@ import pandas as pd
 
 class MarketDataPort(Protocol):
     def get_bars(self, symbol: str, timeframe: str, start: datetime, end: datetime) -> pd.DataFrame: ...
+
 
 --- src\tycherion\ports\market_data.py:END ---
 
@@ -2093,6 +1480,7 @@ class TradingPort(Protocol):
     def market_buy(self, symbol: str, volume: Optional[float] = None) -> TradeResult: ...
     def market_sell(self, symbol: str, volume: Optional[float] = None) -> TradeResult: ...
 
+
 --- src\tycherion\ports\trading.py:END ---
 
 --- src\tycherion\ports\universe.py:START ---
@@ -2103,60 +1491,8 @@ class UniversePort(Protocol):
     def visible_symbols(self) -> List[str]: ...
     def by_pattern(self, pattern: str) -> List[str]: ...
 
+
 --- src\tycherion\ports\universe.py:END ---
-
---- src\tycherion\ports\__pycache__\account.cpython-313.pyc:START ---
-
-
-    4im                    `    S SK Jr  S SKJr  S SKJrJr  \ " S S5      5       r " S S\5      rg)	    )annotations)	dataclass)ProtocolListc                  4    \ rS rSr% S\S'   S\S'   S\S'   Srg)	Position   strsymbolfloatvolumeprice N)__name__
-__module____qualname____firstlineno____annotations____static_attributes__r       cC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\ports\account.pyr   r      s    KMLr   r   c                  <    \ rS rSrSS jrS	S jrS	S jrS
-S jrSrg)AccountPort   c                    g Nr   selfs    r   is_demoAccountPort.is_demo       sr   c                    g r   r   r   s    r   balanceAccountPort.balance
-   s    r   c                    g r   r   r   s    r   equityAccountPort.equity   r!   r   c                    g r   r   r   s    r   	positionsAccountPort.positions   s    3r   r   N)returnbool)r+   r   )r+   zList[Position])	r   r   r   r   r   r#   r&   r)   r   r   r   r   r   r      s    "#".r   r   N)	
-__future__r   dataclassesr   typingr   r   r   r   r   r   r   <module>r0      s1    " ! !
-  
-/( /r   
---- src\tycherion\ports\__pycache__\account.cpython-313.pyc:END ---
-
---- src\tycherion\ports\__pycache__\market_data.cpython-313.pyc:START ---
-
-
-    4i                     F    S SK Jr  S SKJr  S SKJr  S SKr " S S\5      rg)    )annotations)Protocol)datetimeNc                      \ rS rSrSS jrSrg)MarketDataPort   c                    g )N )selfsymbol	timeframestartends        gC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\ports\market_data.pyget_barsMarketDataPort.get_bars   s    eh    r
-   N)
-r   strr
-   r   r   r   r   r   returnzpd.DataFrame)__name__
-__module____qualname____firstlineno__r   __static_attributes__r
-   r   r   r   r      s    hr   r   )
-__future__r   typingr   r   pandaspdr   r
-   r   r   <module>r      s    "   iX ir   
---- src\tycherion\ports\__pycache__\market_data.cpython-313.pyc:END ---
-
---- src\tycherion\ports\__pycache__\trading.cpython-313.pyc:START ---
-
-
-    4i                    `    S SK Jr  S SKJr  S SKJrJr  \ " S S5      5       r " S S\5      rg)	    )annotations)	dataclass)ProtocolOptionalc                  >    \ rS rSr% S\S'   S\S'   S\S'   S\S	'   S
-rg)TradeResult   boolokintretcodez
-Optional[int]orderstrmessage N)__name__
-__module____qualname____firstlineno____annotations____static_attributes__r       cC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\ports\trading.pyr   r      s    H
-L
-Lr   r   c                  0    \ rS rSrSSS jjrSSS jjrSrg)TradingPort   Nc                    g Nr   selfsymbolvolumes      r   
-market_buyTradingPort.market_buy
-   s    VYr   c                    g r   r   r   s      r   market_sellTradingPort.market_sell   s    WZr   r   r   )r!   r   r"   zOptional[float]returnr   )r   r   r   r   r#   r&   r   r   r   r   r   r      s    YZZr   r   N)	
-__future__r   dataclassesr   typingr   r   r   r   r   r   r   <module>r,      s3    " ! %
-  [( [r   
---- src\tycherion\ports\__pycache__\trading.cpython-313.pyc:END ---
-
---- src\tycherion\ports\__pycache__\universe.cpython-313.pyc:START ---
-
-
-    4i                     6    S SK Jr  S SKJrJr   " S S\5      rg)    )annotations)ProtocolListc                  (    \ rS rSrSS jrSS jrSrg)UniversePort   c                    g N )selfs    dC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\ports\universe.pyvisible_symbolsUniversePort.visible_symbols   s    C    c                    g r
-   r   )r   patterns     r
-   
-by_patternUniversePort.by_pattern   s    Sr   r   N)return	List[str])r   strr   r   )__name__
-__module____qualname____firstlineno__r   r   __static_attributes__r   r   r
-   r   r      s    /8r   r   N)
-__future__r   typingr   r   r   r   r   r
-   <module>r      s    " !98 9r   
---- src\tycherion\ports\__pycache__\universe.cpython-313.pyc:END ---
 
 --- src\tycherion\shared\config.py:START ---
 from __future__ import annotations
@@ -2242,6 +1578,7 @@ def load_config(path: str) -> AppConfig:
     raw["mt5"] = mt5_cfg
     return AppConfig.model_validate(raw)
 
+
 --- src\tycherion\shared\config.py:END ---
 
 --- src\tycherion\shared\decorators.py:START ---
@@ -2273,68 +1610,5 @@ def logged(fn):
             raise
     return wrapper
 
+
 --- src\tycherion\shared\decorators.py:END ---
-
---- src\tycherion\shared\__pycache__\config.cpython-313.pyc:START ---
-
-
-    4i[
-                       S SK Jr  S SKJr  S SKJr  S SKrS SKrS SKJ	r	   " S S\5      r
- " S S	\5      r " S
- S\5      r " S S
-\5      r
- " S S\5      r " S S\5      r " S S\5      r " S S\5      r " S S\5      rSS jrg)    )annotations)	BaseModel)OptionalN)load_dotenvc                  \    \ rS rSr% SrS\S'   SrS\S'   SrS\S'   S	rS
-\S'   Sr	S
-\S'   Sr
-g)Trading   Tbooldry_runrequire_demo
-   intdeviation_pointsminstrvolume_modeg{Gz?floatfixed_volume N)__name__
-__module____qualname____firstlineno__r   __annotations__r   r   r   r   __static_attributes__r       cC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\shared\config.pyr   r      s5    GTL$cKL%r   r   c                  2    \ rS rSr% SrS\S'   SrS\S'   Srg)	Risk   g      ?r   risk_per_trade_pctg       @max_daily_loss_pctr   N)r   r   r   r   r!   r   r"   r   r   r   r   r   r      s     ## ##r   r   c                  N    \ rS rSr% SrS\S'   SrS\S'   SrS\S'   SrS\S'   S	r	g)
-MT5   Nz
-Optional[str]
-terminal_pathserverz
-Optional[int]loginpasswordr   )
-r   r   r   r   r&   r   r'   r(   r)   r   r   r   r   r$   r$      s*    #'M=' FM E="Hm"r   r$   c                  $    \ rS rSr% SrS\S'   Srg)RunMode   live_multimodelr   namer   N)r   r   r   r   r.   r   r   r   r   r   r+   r+      s    !D#!r   r+   c                  2    \ rS rSr% SrS\S'   SrS\S'   Srg	)
-ScheduleCfg   Fr
-   run_forever<   r   interval_secondsr   N)r   r   r   r   r2   r   r4   r   r   r   r   r0   r0      s    Kcr   r0   c                  N    \ rS rSr% SrS\S'   / rS\S'   SrS\S	'   S
-rS\S'   S
-r	g)CoverageCfg   market_watchr   sourcez	list[str]symbolsNz
-str | Nonepattern   r   top_nr   )
-r   r   r   r   r9   r   r:   r;   r=   r   r   r   r   r6   r6      s)     FC GYGZE3Or   r6   c                  @    \ rS rSr% SrS\S'   SrS\S'   SrS\S	'   S
-rg)PortfolioCfg%   proportionalr   	allocator	thresholdbalancerg      ?r   threshold_weightr   N)	r   r   r   r   rB   r   rD   rE   r   r   r   r   r?   r?   %   s!    #Is#Hc"e"r   r?   c                      \ rS rSr% \" 5       rS\S'   SrS\S'   \" 5       r	S\S'   \
-" 5       rS	\S
-'   \" 5       r
-S\S'   S
-rg)ApplicationCfg*   r+   run_modedefaultr   playbookr0   scheduler6   coverager?   	portfolior   N)r   r   r   r   r+   rI   r   rK   r0   rL   r6   rM   r?   rN   r   r   r   r   rG   rG   *   s<    	Hg!Hc'MHk)'MHk)*nI|,r   rG   c                      \ rS rSr% S\S'   S\S'   \" 5       rS\S'   \" 5       rS\S	'   \	" 5       r
-S
-\S'   \" 5       rS\S
-'   Sr
-g)	AppConfig1   r   	timeframer   
-lookback_daysr   tradingr   riskr$   mt5rG   applicationr   N)r   r   r   r   r   r   rT   r   rU   r$   rV   rG   rW   r   r   r   r   rP   rP   1   s>    NyGW D$uC"0"2K2r   rP   c                \   [        SS9  SS KnUR                  U 5      nUR                  5       (       d  [	        SU  35      e[        U SSS9 n[        R                  " U5      =(       d    0 nS S S 5        WR                  S0 5        US   =(       d    0 nS	 n[        R                  " S
-5      n[        R                  " S5      n[        R                  " S5      n	[        R                  " S
-5      n
-U" UR                  S5      U5      US'   U" UR                  S5      U5      US'   U" UR                  S5      U	(       a   U	R                  5       (       a  [        U	5      OS 5      US'   U" UR                  S5      U
-5      US'   XTS'   [        R                  U5      $ ! , (       d  f       GN6= f)NF)overrider   zConfig not found: rzutf-8)encodingrV   c                "    U S;   a  US;  a  U$ U $ )N)N r   )Nr]   r   )yaml_valenv_vals     r   coalesceload_config.<locals>.coalesceD   s    #}4
-9RwaYaar   MT5_TERMINAL_PATH
-MT5_SERVER	MT5_LOGINMT5_PASSWORDr&   r'   r(   r)   )r   pathlibPathexistsFileNotFoundErroropenyaml	safe_load
-setdefaultosgetenvgetisdigitr   rP   model_validate)pathrf   pfrawmt5_cfgr`   env_terminal
-env_server	env_loginenv_passs              r   load_configr|   9   se   TA88::"4TF ;<<	
-dC'	*annQ%2 
-+NN5"%jBGb 9901L99\*J99[)I99^,H'O(DlSGO'H(=jQGH'G(<Xafofwfwfyfyc)n  @D   EGG'J(?hOGJJ##C((' 
-+	*s   
- F
-F+)rs   r   returnrP   )
-__future__r   pydanticr   typingr   rn   rk   dotenvr   r   r   r$   r+   r0   r6   r?   rG   rP   r|   r   r   r   <module>r      s    "    i $9 $#) #"i ") ) #9 #
--Y -3	 3)r   
---- src\tycherion\shared\__pycache__\config.cpython-313.pyc:END ---
-
---- src\tycherion\shared\__pycache__\decorators.cpython-313.pyc:START ---
-
-
-    4i&                    0    S SK Jr  S SKJr  S SKrS rS rg)    )annotationswrapsNc                0   ^  [        T 5      U 4S j5       nU$ )Nc                   > [        U SS5      nU(       aE  [        R                  " 5       nU(       a  UR                  [        R                  :w  a  [        S5      eT" U /UQ70 UD6$ )Nrequire_demoTz&Blocked: only allowed in DEMO account.)getattrmt5account_info
-trade_modeACCOUNT_TRADE_MODE_DEMORuntimeError)selfargskwargsrequireaifns        gC:\Users\henri\Documents\My_Codes_United\Personal_Projects\Tycherion\src\tycherion\shared\decorators.pywrapperdemo_only.<locals>.wrapper   sW    $5!!#B#*E*EE"#KLL$((((    r   r   r   s   ` r   	demo_onlyr      s     
-2Y) ) Nr   c                0   ^  [        T 5      U 4S j5       nU$ )Nc                    > TR                   n T" U 0 UD6n[        U SU 35        U$ ! [         a  n[        U SU 35        e S nAff = f)Nz: ok -> z: error -> )__qualname__print	Exception)r   r   namereser   s        r   r   logged.<locals>.wrapper   s^    	d%f%CTF(3%()J 	TF+aS)*	s   ) 
-A	AA	r   r   s   ` r   loggedr$      s     
-2Y  Nr   )
-__future__r   	functoolsr   MetaTrader5r
-   r   r$    r   r   <module>r)      s    "  	r   
---- src\tycherion\shared\__pycache__\decorators.cpython-313.pyc:END ---
