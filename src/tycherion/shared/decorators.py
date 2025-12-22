@@ -25,4 +25,3 @@ def logged(fn):
             print(f"{name}: error -> {e}")
             raise
     return wrapper
-

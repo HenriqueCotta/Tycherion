@@ -42,6 +42,7 @@ Tycherion
 │       │   ├── __pycache__ (ignored)
 │       │   ├── market
 │       │   │   ├── >>> __init__.py <<<
+│       │   │   ├── __pycache__ (ignored)
 │       │   │   └── >>> entities.py <<<
 │       │   ├── portfolio
 │       │   │   ├── >>> __init__.py <<<
@@ -180,11 +181,17 @@ application:
   schedule:
     run_forever: true
     interval_seconds: 60
+
   coverage:
     source: "static"
-    symbols: ["PETR4","VALE3","WIN$","WDO$"]
+    symbols: ["PETR4", "VALE3", "WIN$", "WDO$"]
     pattern: null
-    top_n: 20
+
+  models:
+    pipeline:
+      - "trend_following"
+      - "mean_reversion"
+
   portfolio:
     allocator: "proportional"
     balancer: "threshold"
@@ -273,8 +280,6 @@ class MT5MarketData(MarketDataPort):
         df = pd.DataFrame(rates)
         df["time"] = pd.to_datetime(df["time"], unit="s", utc=True)
         return df
-
-
 --- src\tycherion\adapters\mt5\market_data_mt5.py:END ---
 
 --- src\tycherion\adapters\mt5\trading_mt5.py:START ---
@@ -363,7 +368,6 @@ class MT5Trader(TradingPort):
         ok = bool(res and res.retcode in (mt5.TRADE_RETCODE_DONE, mt5.TRADE_RETCODE_PLACED))
         return TradeResult(ok, getattr(res, "retcode", -4), getattr(res, "order", None), str(res))
 
-
 --- src\tycherion\adapters\mt5\trading_mt5.py:END ---
 
 --- src\tycherion\adapters\mt5\universe_mt5.py:START ---
@@ -380,7 +384,6 @@ class MT5Universe(UniversePort):
     def by_pattern(self, pattern: str) -> List[str]:
         syms = mt5.symbols_get(pattern)
         return [s.name for s in syms]
-
 
 --- src\tycherion\adapters\mt5\universe_mt5.py:END ---
 
@@ -436,7 +439,6 @@ def run_app(config_path: str) -> None:
             raise SystemExit(f"Unknown run_mode: {run_mode}")
     finally:
         mt5.shutdown()
-
 
 --- src\tycherion\app\main.py:END ---
 
@@ -568,7 +570,7 @@ def auto_discover() -> None:
     for base in bases:
         try:
             pkg = importlib.import_module(base)
-        except Exception as e:  # pragma: no cover - defensive
+        except Exception as e:
             print(f"[plugins] base import failed: {base} -> {e}")
             continue
 
@@ -579,7 +581,7 @@ def auto_discover() -> None:
         for mod in pkgutil.walk_packages(pkg_path, pkg.__name__ + "."):
             try:
                 importlib.import_module(mod.name)
-            except Exception as e:  # pragma: no cover - defensive
+            except Exception as e:
                 print(f"[plugins] import failed: {mod.name} -> {e}")
 
     print(
@@ -590,7 +592,6 @@ def auto_discover() -> None:
         f"balancers={len(BALANCERS)}"
     )
 
-
 --- src\tycherion\application\plugins\registry.py:END ---
 
 --- src\tycherion\application\runmodes\live_multimodel.py:START ---
@@ -598,9 +599,9 @@ from __future__ import annotations
 
 import time
 from datetime import datetime, timedelta, timezone
-from typing import Dict
+from typing import Dict, List, Tuple
 
-from tycherion.shared.config import AppConfig
+from tycherion.shared.config import AppConfig, PipelineStageCfg
 from tycherion.ports.market_data import MarketDataPort
 from tycherion.ports.trading import TradingPort
 from tycherion.ports.account import AccountPort
@@ -620,16 +621,52 @@ from tycherion.domain.portfolio.entities import (
     PortfolioSnapshot,
     Position,
 )
-from tycherion.domain.signals.entities import IndicatorOutput, ModelDecision
+from tycherion.domain.signals.entities import (
+    IndicatorOutput,
+    ModelDecision,
+    SymbolState,
+    ModelStageResult,
+)
 
 
 def _build_portfolio_snapshot(account: AccountPort) -> PortfolioSnapshot:
     equity = float(account.equity())
     positions: Dict[str, Position] = {}
     for p in account.positions():
-        # AccountPort already returns domain Position instances
         positions[p.symbol] = p
     return PortfolioSnapshot(equity=equity, positions=positions)
+
+
+def _decision_to_score(d: ModelDecision) -> float:
+    """Map a ModelDecision into a numeric score in [-1, 1]."""
+    side = (d.side or "HOLD").upper()
+    w = float(d.weight or 0.0)
+    w = max(0.0, min(1.0, w))
+    if side == "BUY":
+        s = w
+    elif side == "SELL":
+        s = -w
+    else:
+        s = 0.0
+    return max(-1.0, min(1.0, s))
+
+
+def _resolve_pipeline(cfg: AppConfig) -> List[Tuple[PipelineStageCfg, object]]:
+    stages = list(cfg.application.models.pipeline or [])
+    if not stages:
+        raise RuntimeError(
+            "No model pipeline configured. Please set application.models.pipeline in your YAML."
+        )
+
+    pipeline: List[Tuple[PipelineStageCfg, object]] = []
+    for stage in stages:
+        name = stage.name
+        model = MODELS.get(name)
+        if not model:
+            available = ", ".join(sorted(MODELS.keys()))
+            raise RuntimeError(f"Model not found: {name!r}. Available models: {available}")
+        pipeline.append((stage, model))
+    return pipeline
 
 
 def run_live_multimodel(
@@ -639,28 +676,8 @@ def run_live_multimodel(
     account: AccountPort,
     universe: UniversePort,
 ) -> None:
-    """Main live runmode:
-
-    - build coverage of symbols to analyse
-    - compute indicators and model decisions per symbol
-    - aggregate into a signal per symbol
-    - allocate target portfolio weights
-    - compute rebalance instructions
-    - translate into concrete orders and send to the broker
-    """
+    """Live runmode executing an ordered model pipeline per symbol."""
     playbook = cfg.application.playbook or "default"
-
-    # Select active models for the current playbook
-    active_models = [
-        m
-        for m in MODELS.values()
-        if playbook in getattr(m, "tags", set())
-        or "default" in getattr(m, "tags", set())
-        or not getattr(m, "tags", set())
-    ]
-
-    if not active_models:
-        raise RuntimeError("No models registered for the current playbook.")
 
     allocator = ALLOCATORS.get(cfg.application.portfolio.allocator)
     if not allocator:
@@ -670,89 +687,134 @@ def run_live_multimodel(
     if not balancer:
         raise RuntimeError(f"Balancer not found: {cfg.application.portfolio.balancer!r}")
 
-    def step_once() -> None:
-        # Build symbol universe
-        coverage = build_coverage(cfg, data, universe)
+    pipeline = _resolve_pipeline(cfg)
+    print(f"[models] pipeline={[stage.name for stage, _ in pipeline]}")
+    print(f"[plugins] available_models={len(MODELS)}")
 
-        # Ensure we never ignore current positions
+    def step_once() -> None:
+        # 1) Structural symbol universe from coverage + ensure held symbols are included
+        coverage = build_coverage(cfg, data, universe)
         current_positions = account.positions()
         held_symbols = {p.symbol for p in current_positions}
         coverage = sorted(set(coverage) | held_symbols)
-
         print(f"[coverage] {len(coverage)} symbols -> {coverage}")
 
-        # Build portfolio snapshot (before new trades)
+        # 2) Initialise per-symbol state
+        states: Dict[str, SymbolState] = {
+            sym: SymbolState(symbol=sym, is_held=(sym in held_symbols))
+            for sym in coverage
+        }
+
+        # 3) Portfolio snapshot (before new trades)
         portfolio = _build_portfolio_snapshot(account)
 
-        # Time window for analysis
+        # 4) Time window for analysis
         end = datetime.now(timezone.utc)
         start = end - timedelta(days=cfg.lookback_days)
 
-        # Determine which indicators we need for all active models
-        needed_keys = set()
-        for m in active_models:
+        # 5) Determine which indicators we need for the whole pipeline
+        needed_keys: set[str] = set()
+        for _, model in pipeline:
             try:
-                req = m.requires()
+                needed_keys.update(model.requires() or set())
             except Exception:
-                req = set()
-            needed_keys.update(req or [])
-        print(f"[models] active={len(active_models)} needed_indicators={needed_keys}")
+                pass
+        print(f"[indicators] needed_keys={sorted(needed_keys)}")
 
-        signals: SignalsBySymbol = {}
+        # 6) Per-symbol model pipeline
+        for symbol, state in states.items():
+            if not state.alive and not state.is_held:
+                continue
 
-        for symbol in coverage:
             try:
                 df = data.get_bars(symbol, cfg.timeframe, start, end)
             except Exception as e:
-                print(f"[{symbol}] failed to load data: {e}")
+                print(f"[{symbol}] data error: {e}")
+                state.notes["data_error"] = 1.0
+                if not state.is_held:
+                    state.alive = False
                 continue
 
             if df is None or df.empty:
                 print(f"[{symbol}] no data.")
+                state.notes["no_data"] = 1.0
+                if not state.is_held:
+                    state.alive = False
                 continue
 
-            # Build indicator bundle (key -> IndicatorOutput)
+            # Compute indicators once and share across models
             bundle: Dict[str, IndicatorOutput] = {}
             for key in needed_keys:
                 ind = pick_indicator_for(key, playbook)
                 try:
                     bundle[key] = ind.compute(df.copy())
                 except Exception as e:
-                    print(
-                        f"[{symbol}] indicator {key}:{getattr(ind, 'method', '?')} "
-                        f"failed: {e}"
-                    )
+                    print(f"[{symbol}] indicator {key}:{getattr(ind, 'method', '?')} failed: {e}")
                     bundle[key] = IndicatorOutput(score=0.0, features={})
 
-            decisions: list[ModelDecision] = []
-            for model in active_models:
+            stage_decisions: list[ModelDecision] = []
+
+            for stage_cfg, model in pipeline:
+                if not state.alive and not state.is_held:
+                    break
+
+                stage_name = stage_cfg.name
                 try:
-                    decisions.append(model.decide(bundle))
+                    decision: ModelDecision = model.decide(bundle)
                 except Exception as e:
-                    print(f"[{symbol}] model {getattr(model, 'name', '?')} failed: {e}")
+                    print(f"[{symbol}] model {stage_name} failed: {e}")
+                    decision = ModelDecision(side="HOLD", weight=0.0, confidence=0.0)
+                    state.notes[f"model_error_{stage_name}"] = 1.0
 
-            agg  = combine(decisions)
-            signals[symbol] = Signal(
-                symbol=symbol, 
-                signed=agg.signed, 
-                confidence=agg.confidence,
-            )
+                stage_decisions.append(decision)
 
-        # 1) Allocation: signals + portfolio -> target allocation (weights)
-        target_alloc = allocator.allocate(signals)  # TargetAllocation
+                score = _decision_to_score(decision)
+                state.pipeline_results.append(
+                    ModelStageResult(model_name=stage_name, score=score)
+                )
 
-        # 2) Balancing: current portfolio + target allocation -> rebalance plan
+                threshold = (
+                    float(stage_cfg.drop_threshold)
+                    if stage_cfg.drop_threshold is not None
+                    else float(getattr(model, "drop_threshold", -1.0))
+                )
+
+                if score < threshold:
+                    if state.is_held:
+                        # Held symbols are never silently discarded. Keep going, but record the fact.
+                        state.notes[f"below_threshold_{stage_name}"] = 1.0
+                    else:
+                        state.alive = False
+                        state.notes[f"dropped_by_{stage_name}"] = 1.0
+                        break
+
+            agg = combine(stage_decisions)
+            state.alpha_score = float(agg.signed)
+            state.notes["final_confidence"] = float(agg.confidence)
+            state.notes["final_side"] = 1.0 if agg.side == "BUY" else (-1.0 if agg.side == "SELL" else 0.0)
+
+        # 7) Convert states into SignalsBySymbol for the allocator
+        signals: SignalsBySymbol = {}
+        for symbol, state in states.items():
+            if not state.alive and not state.is_held:
+                continue
+            signed = float(state.alpha_score)
+            confidence = float(state.notes.get("final_confidence", 1.0))
+            signals[symbol] = Signal(symbol=symbol, signed=signed, confidence=confidence)
+
+        # 8) Allocation -> target weights
+        target_alloc = allocator.allocate(signals)
+
+        # 9) Balancing -> rebalance plan
         plan = balancer.plan(
             portfolio=portfolio,
             target=target_alloc,
             threshold=cfg.application.portfolio.threshold_weight,
         )
-
         print(f"[rebalance] plan={len(plan)} instructions")
 
-        # 3) Order sizing: rebalance plan -> concrete orders with volumes
+        # 10) Orders -> execution
         orders = build_orders(portfolio, plan, cfg.trading)
-
         print(f"[orders] {len(orders)} orders to execute")
 
         for od in orders:
@@ -780,44 +842,41 @@ def run_live_multimodel(
 
 --- src\tycherion\application\services\coverage_selector.py:START ---
 from __future__ import annotations
-from datetime import datetime, timedelta, timezone
-import pandas as pd
+
 from tycherion.shared.config import AppConfig
 from tycherion.ports.market_data import MarketDataPort
 from tycherion.ports.universe import UniversePort
 
-def build_coverage(cfg: AppConfig, data: MarketDataPort, universe: UniversePort) -> list[str]:
-    src = cfg.application.coverage.source
+
+def _build_base_coverage(cfg: AppConfig, universe: UniversePort) -> list[str]:
+    """Build the *structural* universe of symbols.
+
+    Coverage is intentionally dumb. It only answers: *which* symbols should be
+    considered, based on the configured source. Any kind of "smart filtering"
+    (liquidity, regimes, sanity checks, alpha, etc.) must live in the model
+    pipeline, not here.
+    """
+    src = (cfg.application.coverage.source or "").lower()
     if src == "static":
-        base = list(dict.fromkeys(cfg.application.coverage.symbols or []))
-    elif src == "market_watch":
-        base = universe.visible_symbols()
-    elif src == "pattern":
+        # Remove duplicates while preserving order
+        return list(dict.fromkeys(cfg.application.coverage.symbols or []))
+    if src == "market_watch":
+        return universe.visible_symbols()
+    if src == "pattern":
         patt = cfg.application.coverage.pattern or "*"
-        base = universe.by_pattern(patt)
-    else:
-        base = universe.visible_symbols()
+        return universe.by_pattern(patt)
+    return universe.visible_symbols()
 
-    top_n = cfg.application.coverage.top_n or 0
-    if top_n <= 0 or len(base) <= top_n:
-        return base
 
-    end = datetime.now(timezone.utc)
-    start = end - timedelta(days=min(cfg.lookback_days, 15))
-    scores: list[tuple[float, str]] = []
-    for sym in base[:300]:
-        try:
-            df = data.get_bars(sym, cfg.timeframe, start, end)
-            if df.empty:
-                score = 0.0
-            else:
-                score = float(pd.to_numeric(df["tick_volume"], errors="coerce").fillna(0).tail(100).mean())
-        except Exception:
-            score = 0.0
-        scores.append((score, sym))
-    scores.sort(reverse=True)
-    return [sym for _, sym in scores[:top_n]]
+def build_coverage(cfg: AppConfig, data: MarketDataPort, universe: UniversePort) -> list[str]:
+    """Build the list of symbols to analyse in this run.
 
+    NOTE: `data` is kept in the signature for backward compatibility, but is
+    intentionally unused. The universe thinning that previously depended on
+    recent `tick_volume` (coverage.top_n) is deprecated and removed.
+    """
+    _ = data  # explicit unused
+    return _build_base_coverage(cfg, universe)
 
 --- src\tycherion\application\services\coverage_selector.py:END ---
 
@@ -942,7 +1001,6 @@ def build_orders(
         )
     return orders
 
-
 --- src\tycherion\application\services\order_planner.py:END ---
 
 --- src\tycherion\application\services\sizer.py:START ---
@@ -965,10 +1023,10 @@ def volume_from_weight(symbol: str, weight: float, mode: str, fixed_volume: floa
         return float(fixed_volume) * weight
     return symbol_min_volume(symbol)
 
-
 --- src\tycherion\application\services\sizer.py:END ---
 
 --- src\tycherion\domain\__init__.py:START ---
+
 
 --- src\tycherion\domain\__init__.py:END ---
 
@@ -1017,6 +1075,7 @@ class Bar:
 --- src\tycherion\domain\market\entities.py:END ---
 
 --- src\tycherion\domain\market\__init__.py:START ---
+
 
 --- src\tycherion\domain\market\__init__.py:END ---
 
@@ -1103,6 +1162,7 @@ class RebalanceInstruction:
 
 --- src\tycherion\domain\portfolio\__init__.py:START ---
 
+
 --- src\tycherion\domain\portfolio\__init__.py:END ---
 
 --- src\tycherion\domain\portfolio\allocators\equal_weight.py:START ---
@@ -1135,7 +1195,6 @@ class EqualWeightAllocator:
                 weights[sig.symbol] = 0.0
         return TargetAllocation(weights=weights)
 
-
 --- src\tycherion\domain\portfolio\allocators\equal_weight.py:END ---
 
 --- src\tycherion\domain\portfolio\allocators\proportional.py:START ---
@@ -1166,10 +1225,10 @@ class ProportionalAllocator:
                 weights[sig.symbol] = frac if sig.signed > 0 else -frac
         return TargetAllocation(weights=weights)
 
-
 --- src\tycherion\domain\portfolio\allocators\proportional.py:END ---
 
 --- src\tycherion\domain\portfolio\allocators\__init__.py:START ---
+
 
 --- src\tycherion\domain\portfolio\allocators\__init__.py:END ---
 
@@ -1219,18 +1278,18 @@ class ThresholdBalancer:
             )
         return instructions
 
-
 --- src\tycherion\domain\portfolio\balancers\threshold.py:END ---
 
 --- src\tycherion\domain\portfolio\balancers\__init__.py:START ---
+
 
 --- src\tycherion\domain\portfolio\balancers\__init__.py:END ---
 
 --- src\tycherion\domain\signals\entities.py:START ---
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Dict
+from dataclasses import dataclass, field
+from typing import Dict, List
 
 
 @dataclass
@@ -1272,9 +1331,40 @@ class AggregatedDecision:
     weight: float
     confidence: float
     signed: float
+
+
+@dataclass
+class ModelStageResult:
+    """Result for a symbol at a specific model stage in the pipeline."""
+
+    model_name: str
+    score: float
+
+
+@dataclass
+class SymbolState:
+    """Mutable per-symbol state that flows through the analysis pipeline.
+
+    This is intentionally generic so we can reuse it for universe filters,
+    macro models and per-symbol alpha models over time.
+    """
+    symbol: str
+    is_held: bool = False      # True if the symbol is currently in the portfolio
+    alive: bool = True         # If False and not held, the symbol can be dropped from the pipeline
+
+    base_score: float = 0.0    # Optional starting score (e.g. from simple filters)
+    sanity_score: float = 0.0  # Data-quality / tradability / liquidity score
+    macro_score: float = 0.0   # Macro / regime score for this symbol
+    alpha_score: float = 0.0   # Final alpha-like score, typically coming from signal models
+
+    pipeline_results: List[ModelStageResult] = field(default_factory=list)
+
+    notes: Dict[str, float] = field(default_factory=dict)
+
 --- src\tycherion\domain\signals\entities.py:END ---
 
 --- src\tycherion\domain\signals\__init__.py:START ---
+
 
 --- src\tycherion\domain\signals\__init__.py:END ---
 
@@ -1368,6 +1458,7 @@ class VolATR14:
 
 --- src\tycherion\domain\signals\indicators\__init__.py:START ---
 
+
 --- src\tycherion\domain\signals\indicators\__init__.py:END ---
 
 --- src\tycherion\domain\signals\models\mean_reversion.py:START ---
@@ -1434,6 +1525,7 @@ class TrendFollowing:
 
 --- src\tycherion\domain\signals\models\__init__.py:START ---
 
+
 --- src\tycherion\domain\signals\models\__init__.py:END ---
 
 --- src\tycherion\ports\account.py:START ---
@@ -1461,7 +1553,6 @@ import pandas as pd
 class MarketDataPort(Protocol):
     def get_bars(self, symbol: str, timeframe: str, start: datetime, end: datetime) -> pd.DataFrame: ...
 
-
 --- src\tycherion\ports\market_data.py:END ---
 
 --- src\tycherion\ports\trading.py:START ---
@@ -1480,7 +1571,6 @@ class TradingPort(Protocol):
     def market_buy(self, symbol: str, volume: Optional[float] = None) -> TradeResult: ...
     def market_sell(self, symbol: str, volume: Optional[float] = None) -> TradeResult: ...
 
-
 --- src\tycherion\ports\trading.py:END ---
 
 --- src\tycherion\ports\universe.py:START ---
@@ -1491,13 +1581,12 @@ class UniversePort(Protocol):
     def visible_symbols(self) -> List[str]: ...
     def by_pattern(self, pattern: str) -> List[str]: ...
 
-
 --- src\tycherion\ports\universe.py:END ---
 
 --- src\tycherion\shared\config.py:START ---
 from __future__ import annotations
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, field_validator
+from typing import Optional, Any
 import os, yaml
 from dotenv import load_dotenv
 
@@ -1529,7 +1618,43 @@ class CoverageCfg(BaseModel):
     source: str = "market_watch"
     symbols: list[str] = []
     pattern: str | None = None
-    top_n: int = 20
+
+
+class PipelineStageCfg(BaseModel):
+    """Configuration of a single stage in the model pipeline."""
+
+    name: str
+    drop_threshold: float | None = None
+
+
+class ModelsCfg(BaseModel):
+    """Application-level model selection.
+
+    `pipeline` defines an ordered list of models to run per symbol. The order
+    is the order of execution. Each stage can optionally define a
+    `drop_threshold` used to discard non-held symbols early.
+    """
+
+    pipeline: list[PipelineStageCfg] = []
+
+    @field_validator("pipeline", mode="before")
+    @classmethod
+    def _coerce_pipeline(cls, v: Any):
+        # Accept both:
+        # - pipeline: ["trend_following", "mean_reversion"]
+        # - pipeline: [{name: "...", drop_threshold: ...}, ...]
+        if v is None:
+            return []
+        if isinstance(v, list):
+            out: list[Any] = []
+            for item in v:
+                if isinstance(item, str):
+                    out.append({"name": item})
+                else:
+                    out.append(item)
+            return out
+        return v
+
 
 class PortfolioCfg(BaseModel):
     allocator: str = "proportional"     # plugin name
@@ -1541,6 +1666,7 @@ class ApplicationCfg(BaseModel):
     playbook: str = "default"
     schedule: ScheduleCfg = ScheduleCfg()
     coverage: CoverageCfg = CoverageCfg()
+    models: ModelsCfg = ModelsCfg()
     portfolio: PortfolioCfg = PortfolioCfg()
 
 class AppConfig(BaseModel):
@@ -1578,7 +1704,6 @@ def load_config(path: str) -> AppConfig:
     raw["mt5"] = mt5_cfg
     return AppConfig.model_validate(raw)
 
-
 --- src\tycherion\shared\config.py:END ---
 
 --- src\tycherion\shared\decorators.py:START ---
@@ -1609,6 +1734,5 @@ def logged(fn):
             print(f"{name}: error -> {e}")
             raise
     return wrapper
-
 
 --- src\tycherion\shared\decorators.py:END ---

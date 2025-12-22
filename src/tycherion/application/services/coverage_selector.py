@@ -1,39 +1,36 @@
 from __future__ import annotations
-from datetime import datetime, timedelta, timezone
-import pandas as pd
+
 from tycherion.shared.config import AppConfig
 from tycherion.ports.market_data import MarketDataPort
 from tycherion.ports.universe import UniversePort
 
-def build_coverage(cfg: AppConfig, data: MarketDataPort, universe: UniversePort) -> list[str]:
-    src = cfg.application.coverage.source
+
+def _build_base_coverage(cfg: AppConfig, universe: UniversePort) -> list[str]:
+    """Build the *structural* universe of symbols.
+
+    Coverage is intentionally dumb. It only answers: *which* symbols should be
+    considered, based on the configured source. Any kind of "smart filtering"
+    (liquidity, regimes, sanity checks, alpha, etc.) must live in the model
+    pipeline, not here.
+    """
+    src = (cfg.application.coverage.source or "").lower()
     if src == "static":
-        base = list(dict.fromkeys(cfg.application.coverage.symbols or []))
-    elif src == "market_watch":
-        base = universe.visible_symbols()
-    elif src == "pattern":
+        # Remove duplicates while preserving order
+        return list(dict.fromkeys(cfg.application.coverage.symbols or []))
+    if src == "market_watch":
+        return universe.visible_symbols()
+    if src == "pattern":
         patt = cfg.application.coverage.pattern or "*"
-        base = universe.by_pattern(patt)
-    else:
-        base = universe.visible_symbols()
+        return universe.by_pattern(patt)
+    return universe.visible_symbols()
 
-    top_n = cfg.application.coverage.top_n or 0
-    if top_n <= 0 or len(base) <= top_n:
-        return base
 
-    end = datetime.now(timezone.utc)
-    start = end - timedelta(days=min(cfg.lookback_days, 15))
-    scores: list[tuple[float, str]] = []
-    for sym in base[:300]:
-        try:
-            df = data.get_bars(sym, cfg.timeframe, start, end)
-            if df.empty:
-                score = 0.0
-            else:
-                score = float(pd.to_numeric(df["tick_volume"], errors="coerce").fillna(0).tail(100).mean())
-        except Exception:
-            score = 0.0
-        scores.append((score, sym))
-    scores.sort(reverse=True)
-    return [sym for _, sym in scores[:top_n]]
+def build_coverage(cfg: AppConfig, data: MarketDataPort, universe: UniversePort) -> list[str]:
+    """Build the list of symbols to analyse in this run.
 
+    NOTE: `data` is kept in the signature for backward compatibility, but is
+    intentionally unused. The universe thinning that previously depended on
+    recent `tick_volume` (coverage.top_n) is deprecated and removed.
+    """
+    _ = data  # explicit unused
+    return _build_base_coverage(cfg, universe)

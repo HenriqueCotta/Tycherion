@@ -24,4 +24,3 @@ class ProportionalAllocator:
                 frac = abs(float(sig.signed)) / total
                 weights[sig.symbol] = frac if sig.signed > 0 else -frac
         return TargetAllocation(weights=weights)
-

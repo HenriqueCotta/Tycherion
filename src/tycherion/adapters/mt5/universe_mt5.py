@@ -11,4 +11,3 @@ class MT5Universe(UniversePort):
     def by_pattern(self, pattern: str) -> List[str]:
         syms = mt5.symbols_get(pattern)
         return [s.name for s in syms]
-

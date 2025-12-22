@@ -125,7 +125,7 @@ def auto_discover() -> None:
     for base in bases:
         try:
             pkg = importlib.import_module(base)
-        except Exception as e:  # pragma: no cover - defensive
+        except Exception as e:
             print(f"[plugins] base import failed: {base} -> {e}")
             continue
 
@@ -136,7 +136,7 @@ def auto_discover() -> None:
         for mod in pkgutil.walk_packages(pkg_path, pkg.__name__ + "."):
             try:
                 importlib.import_module(mod.name)
-            except Exception as e:  # pragma: no cover - defensive
+            except Exception as e:
                 print(f"[plugins] import failed: {mod.name} -> {e}")
 
     print(
@@ -146,4 +146,3 @@ def auto_discover() -> None:
         f"allocators={len(ALLOCATORS)} "
         f"balancers={len(BALANCERS)}"
     )
-

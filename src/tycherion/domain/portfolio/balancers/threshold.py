@@ -42,4 +42,3 @@ class ThresholdBalancer:
                 )
             )
         return instructions
-

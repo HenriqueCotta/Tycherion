@@ -1,6 +1,6 @@
 from __future__ import annotations
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, field_validator
+from typing import Optional, Any
 import os, yaml
 from dotenv import load_dotenv
 
@@ -32,7 +32,43 @@ class CoverageCfg(BaseModel):
     source: str = "market_watch"
     symbols: list[str] = []
     pattern: str | None = None
-    top_n: int = 20
+
+
+class PipelineStageCfg(BaseModel):
+    """Configuration of a single stage in the model pipeline."""
+
+    name: str
+    drop_threshold: float | None = None
+
+
+class ModelsCfg(BaseModel):
+    """Application-level model selection.
+
+    `pipeline` defines an ordered list of models to run per symbol. The order
+    is the order of execution. Each stage can optionally define a
+    `drop_threshold` used to discard non-held symbols early.
+    """
+
+    pipeline: list[PipelineStageCfg] = []
+
+    @field_validator("pipeline", mode="before")
+    @classmethod
+    def _coerce_pipeline(cls, v: Any):
+        # Accept both:
+        # - pipeline: ["trend_following", "mean_reversion"]
+        # - pipeline: [{name: "...", drop_threshold: ...}, ...]
+        if v is None:
+            return []
+        if isinstance(v, list):
+            out: list[Any] = []
+            for item in v:
+                if isinstance(item, str):
+                    out.append({"name": item})
+                else:
+                    out.append(item)
+            return out
+        return v
+
 
 class PortfolioCfg(BaseModel):
     allocator: str = "proportional"     # plugin name
@@ -44,6 +80,7 @@ class ApplicationCfg(BaseModel):
     playbook: str = "default"
     schedule: ScheduleCfg = ScheduleCfg()
     coverage: CoverageCfg = CoverageCfg()
+    models: ModelsCfg = ModelsCfg()
     portfolio: PortfolioCfg = PortfolioCfg()
 
 class AppConfig(BaseModel):
@@ -80,4 +117,3 @@ def load_config(path: str) -> AppConfig:
 
     raw["mt5"] = mt5_cfg
     return AppConfig.model_validate(raw)
-

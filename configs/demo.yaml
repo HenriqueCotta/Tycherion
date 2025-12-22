@@ -26,11 +26,17 @@ application:
   schedule:
     run_forever: true
     interval_seconds: 60
+
   coverage:
     source: "static"
-    symbols: ["PETR4","VALE3","WIN$","WDO$"]
+    symbols: ["PETR4", "VALE3", "WIN$", "WDO$"]
     pattern: null
-    top_n: 20
+
+  models:
+    pipeline:
+      - "trend_following"
+      - "mean_reversion"
+
   portfolio:
     allocator: "proportional"
     balancer: "threshold"

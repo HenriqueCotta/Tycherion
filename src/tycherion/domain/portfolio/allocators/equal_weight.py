@@ -26,4 +26,3 @@ class EqualWeightAllocator:
             else:
                 weights[sig.symbol] = 0.0
         return TargetAllocation(weights=weights)
-
