@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from tycherion.domain.signals.indicators.base import BaseIndicator
 import pandas as pd
 
 from tycherion.application.plugins.registry import register_indicator
@@ -7,7 +8,7 @@ from tycherion.domain.signals.entities import IndicatorOutput
 
 
 @register_indicator(key="volatility", method="atr_14", tags={"default"})
-class VolATR14:
+class VolATR14(BaseIndicator):
     period = 14
 
     def compute(self, df: pd.DataFrame) -> IndicatorOutput:

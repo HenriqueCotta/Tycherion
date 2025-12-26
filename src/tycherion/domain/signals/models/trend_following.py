@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from tycherion.domain.signals.models.base import SignalModel
 from typing import Dict
 
 from tycherion.application.plugins.registry import register_model
@@ -7,7 +8,7 @@ from tycherion.domain.signals.entities import IndicatorOutput, ModelDecision
 
 
 @register_model(name="trend_following", tags={"default"})
-class TrendFollowing:
+class TrendFollowing(SignalModel):
     def requires(self) -> set[str]:
         return {"trend", "volatility"}
 
@@ -28,3 +29,4 @@ class TrendFollowing:
                 confidence=0.7,
             )
         return ModelDecision(side="HOLD", weight=0.0, confidence=0.3)
+

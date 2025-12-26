@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+from tycherion.domain.portfolio.allocators.base import BaseAllocator
 from tycherion.application.plugins.registry import register_allocator
 from tycherion.domain.portfolio.entities import SignalsBySymbol, TargetAllocation
 
 
 @register_allocator(name="proportional", tags={"default"})
-class ProportionalAllocator:
+class ProportionalAllocator(BaseAllocator):
     """
     Allocator that gives each symbol a weight proportional to the absolute
     value of its signal. Signals are normalised so that the sum of absolute

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from tycherion.domain.portfolio.balancers.base import BaseBalancer
 from tycherion.application.plugins.registry import register_balancer
 from tycherion.domain.portfolio.entities import (
     PortfolioSnapshot,
@@ -9,7 +10,7 @@ from tycherion.domain.portfolio.entities import (
 
 
 @register_balancer(name="threshold", tags={"default"})
-class ThresholdBalancer:
+class ThresholdBalancer(BaseBalancer):
     """
     Domain-level balancer: generates rebalance instructions whenever the
     difference between current and target weight is greater than or equal

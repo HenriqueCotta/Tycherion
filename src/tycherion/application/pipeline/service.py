@@ -13,6 +13,8 @@ from tycherion.domain.signals.entities import (
     ModelStageResult,
     SymbolState,
 )
+from tycherion.domain.signals.models.base import SignalModel
+from tycherion.domain.signals.indicators.base import BaseIndicator
 from tycherion.ports.market_data import MarketDataPort
 
 from .config import PipelineConfig, PipelineStageConfig
@@ -23,18 +25,13 @@ class TelemetrySink(Protocol):
     def emit(self, event: str, payload: Dict[str, Any]) -> None: ...
 
 
-class ModelLike(Protocol):
-    def requires(self) -> set[str]: ...
-    def decide(self, indicators: Dict[str, IndicatorOutput]) -> ModelDecision: ...
-
-
 @dataclass(slots=True)
 class ModelPipelineService:
     """Façade that runs the ordered per-symbol model pipeline."""
 
     market_data: MarketDataPort
-    model_registry: Mapping[str, ModelLike]
-    indicator_picker: Callable[[str, Optional[str]], Any]  # returns indicator instance with .compute(df)
+    model_registry: Mapping[str, SignalModel]
+    indicator_picker: Callable[[str, Optional[str]], BaseIndicator]
     timeframe: str
     lookback_days: int
     playbook: str | None = None
@@ -122,8 +119,8 @@ class ModelPipelineService:
             stage_stats=stage_stats,
         )
 
-    def _resolve_models(self, pipeline_config: PipelineConfig) -> list[Tuple[PipelineStageConfig, ModelLike]]:
-        pipeline: list[Tuple[PipelineStageConfig, ModelLike]] = []
+    def _resolve_models(self, pipeline_config: PipelineConfig) -> list[Tuple[PipelineStageConfig, SignalModel]]:
+        pipeline: list[Tuple[PipelineStageConfig, SignalModel]] = []
         for stage in pipeline_config.stages:
             name = stage.name
             model = self.model_registry.get(name)
@@ -168,7 +165,7 @@ class ModelPipelineService:
         self,
         symbol: str,
         stage_cfg: PipelineStageConfig,
-        model: ModelLike,
+        model: SignalModel,
         indicators: Dict[str, IndicatorOutput],
         state: SymbolState,
     ) -> float:
@@ -206,3 +203,4 @@ class ModelPipelineService:
         except Exception:
             # never break the run due to telemetry
             return
+

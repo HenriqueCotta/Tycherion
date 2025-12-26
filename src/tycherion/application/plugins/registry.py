@@ -1,10 +1,15 @@
 from __future__ import annotations
 from typing import Dict, List, Callable, Iterable
 
-INDICATORS: Dict[str, List[object]] = {}
-MODELS: Dict[str, object] = {}
-ALLOCATORS: Dict[str, object] = {}
-BALANCERS: Dict[str, object] = {}
+from tycherion.domain.signals.indicators.base import BaseIndicator
+from tycherion.domain.signals.models.base import SignalModel
+from tycherion.domain.portfolio.allocators.base import BaseAllocator
+from tycherion.domain.portfolio.balancers.base import BaseBalancer
+
+INDICATORS: Dict[str, List[BaseIndicator]] = {}
+MODELS: Dict[str, SignalModel] = {}
+ALLOCATORS: Dict[str, BaseAllocator] = {}
+BALANCERS: Dict[str, BaseBalancer] = {}
 DEFAULT_METHOD: Dict[str, str] = {}
 
 
@@ -66,7 +71,7 @@ def set_default_indicator_method(key: str, method: str) -> None:
     DEFAULT_METHOD[key] = method
 
 
-def pick_indicator_for(key: str, playbook: str | None = None):
+def pick_indicator_for(key: str, playbook: str | None = None) -> BaseIndicator:
     """
     Pick an indicator instance for a given key and (optionally) playbook.
     Preference order:
@@ -75,7 +80,7 @@ def pick_indicator_for(key: str, playbook: str | None = None):
     - otherwise, the first registered
     If DEFAULT_METHOD[key] is set, prefer that method among candidates.
     """
-    candidates: Iterable[object] = INDICATORS.get(key, [])
+    candidates: Iterable[BaseIndicator] = INDICATORS.get(key, [])
     candidates = list(candidates)
     if not candidates:
         raise KeyError(f"No indicators registered for key={key!r}")

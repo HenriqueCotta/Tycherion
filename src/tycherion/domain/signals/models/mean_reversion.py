@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from tycherion.domain.signals.models.base import SignalModel
 from typing import Dict
 
 from tycherion.application.plugins.registry import register_model
@@ -7,7 +8,7 @@ from tycherion.domain.signals.entities import IndicatorOutput, ModelDecision
 
 
 @register_model(name="mean_reversion", tags={"default"})
-class MeanReversion:
+class MeanReversion(SignalModel):
     def requires(self) -> set[str]:
         return {"stretch", "volatility"}
 
@@ -22,3 +23,4 @@ class MeanReversion:
             w = min(1.0, abs(z) / 3.0)
             return ModelDecision(side="SELL", weight=w, confidence=0.6)
         return ModelDecision(side="HOLD", weight=0.0, confidence=0.4)
+

@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+from tycherion.domain.portfolio.allocators.base import BaseAllocator
 from tycherion.application.plugins.registry import register_allocator
 from tycherion.domain.portfolio.entities import SignalsBySymbol, TargetAllocation
 
 
 @register_allocator(name="equal_weight", tags={"default"})
-class EqualWeightAllocator:
+class EqualWeightAllocator(BaseAllocator):
     """
     Simple allocator: gives the same absolute weight to all symbols that have
     a non-zero signal. Longs get +w, shorts get -w, holds get 0.

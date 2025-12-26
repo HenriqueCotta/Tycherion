@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from tycherion.domain.signals.indicators.base import BaseIndicator
 import pandas as pd
 
 from tycherion.application.plugins.registry import register_indicator
@@ -7,7 +8,7 @@ from tycherion.domain.signals.entities import IndicatorOutput
 
 
 @register_indicator(key="stretch", method="zscore_20", tags={"default"})
-class StretchZScore20:
+class StretchZScore20(BaseIndicator):
     period = 20
 
     def compute(self, df: pd.DataFrame) -> IndicatorOutput:

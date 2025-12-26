@@ -72,3 +72,4 @@ class SymbolState:
     pipeline_results: List[ModelStageResult] = field(default_factory=list)
 
     notes: Dict[str, float] = field(default_factory=dict)
+

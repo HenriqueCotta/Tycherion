@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from tycherion.domain.signals.indicators.base import BaseIndicator
 import pandas as pd
 
 from tycherion.application.plugins.registry import register_indicator
@@ -7,7 +8,7 @@ from tycherion.domain.signals.entities import IndicatorOutput
 
 
 @register_indicator(key="trend", method="donchian_50_50", tags={"default"})
-class TrendDonchian5050:
+class TrendDonchian5050(BaseIndicator):
     high_n = 50
     low_n = 50
 
