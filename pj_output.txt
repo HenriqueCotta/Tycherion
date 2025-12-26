@@ -4,6 +4,8 @@ Tycherion
 ├── .git (ignored)
 ├── .gitignore (ignored)
 ├── .venv (ignored)
+├── .vscode
+│   └── >>> settings.json <<<
 ├── README.md (ignored)
 ├── configs
 │   └── >>> demo.yaml <<<
@@ -21,10 +23,13 @@ Tycherion
 │       │       ├── >>> market_data_mt5.py <<<
 │       │       ├── >>> trading_mt5.py <<<
 │       │       └── >>> universe_mt5.py <<<
-│       ├── app
-│       │   ├── __pycache__ (ignored)
-│       │   └── >>> main.py <<<
 │       ├── application
+│       │   ├── pipeline
+│       │   │   ├── >>> __init__.py <<<
+│       │   │   ├── __pycache__ (ignored)
+│       │   │   ├── >>> config.py <<<
+│       │   │   ├── >>> result.py <<<
+│       │   │   └── >>> service.py <<<
 │       │   ├── plugins
 │       │   │   ├── __pycache__ (ignored)
 │       │   │   └── >>> registry.py <<<
@@ -37,6 +42,9 @@ Tycherion
 │       │       ├── >>> ensemble.py <<<
 │       │       ├── >>> order_planner.py <<<
 │       │       └── >>> sizer.py <<<
+│       ├── bootstrap
+│       │   ├── __pycache__ (ignored)
+│       │   └── >>> main.py <<<
 │       ├── domain
 │       │   ├── >>> __init__.py <<<
 │       │   ├── __pycache__ (ignored)
@@ -152,6 +160,14 @@ typing-extensions>=4.12
 
 --- requirements.txt:END ---
 
+--- .vscode\settings.json:START ---
+{
+    "python.analysis.extraPaths": [
+        "./src"
+    ]
+}
+--- .vscode\settings.json:END ---
+
 --- configs\demo.yaml:START ---
 timeframe: "H1"
 
@@ -203,7 +219,7 @@ application:
 import sys, pathlib
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
-from tycherion.app.main import run_app
+from tycherion.bootstrap.main import run_app
 if __name__ == "__main__":
     run_app(config_path=str(ROOT / "configs" / "demo.yaml"))
 
@@ -387,60 +403,293 @@ class MT5Universe(UniversePort):
 
 --- src\tycherion\adapters\mt5\universe_mt5.py:END ---
 
---- src\tycherion\app\main.py:START ---
+--- src\tycherion\application\pipeline\config.py:START ---
 from __future__ import annotations
 
-import MetaTrader5 as mt5
+from dataclasses import dataclass
+from typing import Iterable, List
 
-from tycherion.shared.config import load_config, AppConfig
-from tycherion.adapters.mt5.market_data_mt5 import MT5MarketData
-from tycherion.adapters.mt5.trading_mt5 import MT5Trader
-from tycherion.adapters.mt5.account_mt5 import MT5Account
-from tycherion.adapters.mt5.universe_mt5 import MT5Universe
-from tycherion.application.runmodes.live_multimodel import run_live_multimodel
-from tycherion.application.plugins import registry as _registry
+from tycherion.shared.config import AppConfig, PipelineStageCfg
 
 
-def _ensure_initialized(cfg: AppConfig) -> None:
-    if not mt5.initialize(path=cfg.mt5.terminal_path or None):
-        raise SystemExit(f"MT5 initialize failed: {mt5.last_error()}")
-    if cfg.mt5.login and cfg.mt5.password and cfg.mt5.server:
-        if not mt5.login(
-            login=int(cfg.mt5.login),
-            password=cfg.mt5.password,
-            server=cfg.mt5.server,
-        ):
-            raise SystemExit(f"MT5 login failed: {mt5.last_error()}")
+@dataclass(frozen=True, slots=True)
+class PipelineStageConfig:
+    """Configuration of a single pipeline stage (application-level, YAML-agnostic)."""
+
+    name: str
+    drop_threshold: float | None = None
 
 
-def run_app(config_path: str) -> None:
-    cfg = load_config(config_path)
+@dataclass(frozen=True, slots=True)
+class PipelineConfig:
+    """Internal normalized pipeline configuration.
 
-    # Discover all indicators, models, allocators and balancers
-    _registry.auto_discover()
+    This object is the only thing the pipeline execution should consume.
+    It is intentionally decoupled from YAML and Pydantic.
+    """
 
-    _ensure_initialized(cfg)
-    try:
-        market_data = MT5MarketData()
-        trader = MT5Trader(
-            dry_run=cfg.trading.dry_run,
-            require_demo=cfg.trading.require_demo,
-            deviation_points=cfg.trading.deviation_points,
-            volume_mode=cfg.trading.volume_mode,
-            fixed_volume=cfg.trading.fixed_volume,
+    stages: List[PipelineStageConfig]
+
+
+def build_pipeline_config(cfg: AppConfig) -> PipelineConfig:
+    """Build a PipelineConfig from the current AppConfig.
+
+    The AppConfig is created by YAML/adapters, but the rest of the application
+    should not read YAML-derived structures directly.
+    """
+    stages_in: Iterable[PipelineStageCfg] = cfg.application.models.pipeline or []
+    stages: list[PipelineStageConfig] = []
+    for st in stages_in:
+        stages.append(
+            PipelineStageConfig(
+                name=str(st.name),
+                drop_threshold=(float(st.drop_threshold) if st.drop_threshold is not None else None),
+            )
         )
-        account = MT5Account()
-        universe = MT5Universe()
+    if not stages:
+        raise RuntimeError(
+            "No model pipeline configured. Please set application.models.pipeline in your YAML."
+        )
+    return PipelineConfig(stages=stages)
 
-        run_mode = (cfg.application.run_mode.name or "").lower()
-        if run_mode == "live_multimodel":
-            run_live_multimodel(cfg, market_data, trader, account, universe)
+--- src\tycherion\application\pipeline\config.py:END ---
+
+--- src\tycherion\application\pipeline\result.py:START ---
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Dict
+
+from tycherion.domain.portfolio.entities import SignalsBySymbol
+from tycherion.domain.signals.entities import SymbolState
+
+from .config import PipelineConfig
+
+
+@dataclass(frozen=True, slots=True)
+class PipelineRunResult:
+    pipeline_config: PipelineConfig
+    states_by_symbol: Dict[str, SymbolState]
+    signals_by_symbol: SignalsBySymbol
+    stage_stats: Dict[str, int]
+
+--- src\tycherion\application\pipeline\result.py:END ---
+
+--- src\tycherion\application\pipeline\service.py:START ---
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
+from typing import Callable, Dict, Mapping, Optional, Protocol, Tuple, Any
+
+import pandas as pd
+
+from tycherion.domain.portfolio.entities import PortfolioSnapshot, Signal, SignalsBySymbol
+from tycherion.domain.signals.entities import (
+    IndicatorOutput,
+    ModelDecision,
+    ModelStageResult,
+    SymbolState,
+)
+from tycherion.ports.market_data import MarketDataPort
+
+from .config import PipelineConfig, PipelineStageConfig
+from .result import PipelineRunResult
+
+
+class TelemetrySink(Protocol):
+    def emit(self, event: str, payload: Dict[str, Any]) -> None: ...
+
+
+class ModelLike(Protocol):
+    def requires(self) -> set[str]: ...
+    def decide(self, indicators: Dict[str, IndicatorOutput]) -> ModelDecision: ...
+
+
+@dataclass(slots=True)
+class ModelPipelineService:
+    """Façade that runs the ordered per-symbol model pipeline."""
+
+    market_data: MarketDataPort
+    model_registry: Mapping[str, ModelLike]
+    indicator_picker: Callable[[str, Optional[str]], Any]  # returns indicator instance with .compute(df)
+    timeframe: str
+    lookback_days: int
+    playbook: str | None = None
+    telemetry_sink: TelemetrySink | None = None
+
+    def run(
+        self,
+        universe_symbols: list[str],
+        portfolio_snapshot: PortfolioSnapshot,
+        pipeline_config: PipelineConfig,
+    ) -> PipelineRunResult:
+        held_symbols = set(portfolio_snapshot.positions.keys())
+
+        # 1) Init per-symbol state
+        states: Dict[str, SymbolState] = {
+            sym: SymbolState(symbol=sym, is_held=(sym in held_symbols))
+            for sym in universe_symbols
+        }
+
+        # 2) Resolve models
+        resolved = self._resolve_models(pipeline_config)
+
+        # 3) Determine indicator needs once for the whole pipeline
+        needed_keys: set[str] = set()
+        for _, model in resolved:
+            try:
+                needed_keys.update(model.requires() or set())
+            except Exception:
+                # a model might not implement requires()
+                pass
+
+        # 4) Time window for analysis
+        end = datetime.now(timezone.utc)
+        start = end - timedelta(days=int(self.lookback_days))
+
+        stage_stats: Dict[str, int] = {st.name: 0 for st in pipeline_config.stages}
+
+        for symbol, state in states.items():
+            if not state.alive and not state.is_held:
+                continue
+
+            df = self._safe_get_bars(symbol, start, end, state)
+            if df is None or df.empty:
+                if not state.is_held:
+                    state.alive = False
+                continue
+
+            bundle = self._compute_indicators(df, needed_keys, state)
+
+            # Pipeline execution per stage
+            for stage_cfg, model in resolved:
+                if not state.alive and not state.is_held:
+                    break
+
+                score = self._run_stage(symbol, stage_cfg, model, bundle, state)
+
+                # Drop policy
+                if stage_cfg.drop_threshold is not None and score < float(stage_cfg.drop_threshold):
+                    if state.is_held:
+                        state.notes[f"below_threshold_{stage_cfg.name}"] = 1.0
+                        continue
+                    state.alive = False
+                    state.notes[f"dropped_by_{stage_cfg.name}"] = 1.0
+                    stage_stats[stage_cfg.name] = int(stage_stats.get(stage_cfg.name, 0)) + 1
+                    break
+
+            # Final signal fields (simple v1 rule: last stage score)
+            last_score = float(state.pipeline_results[-1].score) if state.pipeline_results else 0.0
+            state.alpha_score = last_score
+            state.notes["final_confidence"] = abs(last_score)
+
+        # 5) Convert states into SignalsBySymbol
+        signals: SignalsBySymbol = {}
+        for symbol, state in states.items():
+            if not state.alive and not state.is_held:
+                continue
+            signed = float(state.alpha_score)
+            confidence = float(state.notes.get("final_confidence", abs(signed)))
+            signals[symbol] = Signal(symbol=symbol, signed=signed, confidence=confidence)
+
+        return PipelineRunResult(
+            pipeline_config=pipeline_config,
+            states_by_symbol=states,
+            signals_by_symbol=signals,
+            stage_stats=stage_stats,
+        )
+
+    def _resolve_models(self, pipeline_config: PipelineConfig) -> list[Tuple[PipelineStageConfig, ModelLike]]:
+        pipeline: list[Tuple[PipelineStageConfig, ModelLike]] = []
+        for stage in pipeline_config.stages:
+            name = stage.name
+            model = self.model_registry.get(name)
+            if model is None:
+                available = ", ".join(sorted(self.model_registry.keys()))
+                raise RuntimeError(f"Model not found: {name!r}. Available models: {available}")
+            pipeline.append((stage, model))
+        return pipeline
+
+    def _safe_get_bars(
+        self,
+        symbol: str,
+        start: datetime,
+        end: datetime,
+        state: SymbolState,
+    ) -> pd.DataFrame | None:
+        try:
+            return self.market_data.get_bars(symbol, self.timeframe, start, end)
+        except Exception as e:
+            state.notes["data_error"] = 1.0
+            self._telemetry("data_error", {"symbol": symbol, "error": str(e)})
+            return None
+
+    def _compute_indicators(
+        self,
+        df: pd.DataFrame,
+        needed_keys: set[str],
+        state: SymbolState,
+    ) -> Dict[str, IndicatorOutput]:
+        bundle: Dict[str, IndicatorOutput] = {}
+        for key in needed_keys:
+            try:
+                ind = self.indicator_picker(key, self.playbook)
+                bundle[key] = ind.compute(df.copy())
+            except Exception as e:
+                state.notes[f"indicator_error_{key}"] = 1.0
+                self._telemetry("indicator_error", {"key": key, "error": str(e)})
+                bundle[key] = IndicatorOutput(score=0.0, features={})
+        return bundle
+
+    def _run_stage(
+        self,
+        symbol: str,
+        stage_cfg: PipelineStageConfig,
+        model: ModelLike,
+        indicators: Dict[str, IndicatorOutput],
+        state: SymbolState,
+    ) -> float:
+        stage_name = stage_cfg.name
+        try:
+            decision = model.decide(indicators)
+        except Exception as e:
+            state.notes[f"model_error_{stage_name}"] = 1.0
+            self._telemetry("model_error", {"symbol": symbol, "model": stage_name, "error": str(e)})
+            decision = ModelDecision(side="HOLD", weight=0.0, confidence=0.0)
+
+        score = self._decision_to_score(decision)
+        state.pipeline_results.append(ModelStageResult(model_name=stage_name, score=score))
+        return score
+
+    @staticmethod
+    def _decision_to_score(d: ModelDecision) -> float:
+        """Map a ModelDecision into a numeric score in [-1, 1]."""
+        side = (d.side or "HOLD").upper()
+        w = float(d.weight or 0.0)
+        w = max(0.0, min(1.0, w))
+        if side == "BUY":
+            s = w
+        elif side == "SELL":
+            s = -w
         else:
-            raise SystemExit(f"Unknown run_mode: {run_mode}")
-    finally:
-        mt5.shutdown()
+            s = 0.0
+        return max(-1.0, min(1.0, s))
 
---- src\tycherion\app\main.py:END ---
+    def _telemetry(self, event: str, payload: Dict[str, Any]) -> None:
+        if self.telemetry_sink is None:
+            return
+        try:
+            self.telemetry_sink.emit(event, payload)
+        except Exception:
+            # never break the run due to telemetry
+            return
+
+--- src\tycherion\application\pipeline\service.py:END ---
+
+--- src\tycherion\application\pipeline\__init__.py:START ---
+
+--- src\tycherion\application\pipeline\__init__.py:END ---
 
 --- src\tycherion\application\plugins\registry.py:START ---
 from __future__ import annotations
@@ -598,35 +847,26 @@ def auto_discover() -> None:
 from __future__ import annotations
 
 import time
-from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Tuple
+from typing import Dict
 
-from tycherion.shared.config import AppConfig, PipelineStageCfg
-from tycherion.ports.market_data import MarketDataPort
+from tycherion.shared.config import AppConfig
 from tycherion.ports.trading import TradingPort
 from tycherion.ports.account import AccountPort
 from tycherion.ports.universe import UniversePort
+
 from tycherion.application.plugins.registry import (
-    MODELS,
     ALLOCATORS,
     BALANCERS,
-    pick_indicator_for,
 )
 from tycherion.application.services.coverage_selector import build_coverage
-from tycherion.application.services.ensemble import combine
 from tycherion.application.services.order_planner import build_orders
 from tycherion.domain.portfolio.entities import (
-    Signal,
-    SignalsBySymbol,
     PortfolioSnapshot,
     Position,
 )
-from tycherion.domain.signals.entities import (
-    IndicatorOutput,
-    ModelDecision,
-    SymbolState,
-    ModelStageResult,
-)
+
+from tycherion.application.pipeline.config import build_pipeline_config
+from tycherion.application.pipeline.service import ModelPipelineService
 
 
 def _build_portfolio_snapshot(account: AccountPort) -> PortfolioSnapshot:
@@ -637,47 +877,14 @@ def _build_portfolio_snapshot(account: AccountPort) -> PortfolioSnapshot:
     return PortfolioSnapshot(equity=equity, positions=positions)
 
 
-def _decision_to_score(d: ModelDecision) -> float:
-    """Map a ModelDecision into a numeric score in [-1, 1]."""
-    side = (d.side or "HOLD").upper()
-    w = float(d.weight or 0.0)
-    w = max(0.0, min(1.0, w))
-    if side == "BUY":
-        s = w
-    elif side == "SELL":
-        s = -w
-    else:
-        s = 0.0
-    return max(-1.0, min(1.0, s))
-
-
-def _resolve_pipeline(cfg: AppConfig) -> List[Tuple[PipelineStageCfg, object]]:
-    stages = list(cfg.application.models.pipeline or [])
-    if not stages:
-        raise RuntimeError(
-            "No model pipeline configured. Please set application.models.pipeline in your YAML."
-        )
-
-    pipeline: List[Tuple[PipelineStageCfg, object]] = []
-    for stage in stages:
-        name = stage.name
-        model = MODELS.get(name)
-        if not model:
-            available = ", ".join(sorted(MODELS.keys()))
-            raise RuntimeError(f"Model not found: {name!r}. Available models: {available}")
-        pipeline.append((stage, model))
-    return pipeline
-
-
 def run_live_multimodel(
     cfg: AppConfig,
-    data: MarketDataPort,
     trader: TradingPort,
     account: AccountPort,
     universe: UniversePort,
+    pipeline_service: ModelPipelineService,
 ) -> None:
-    """Live runmode executing an ordered model pipeline per symbol."""
-    playbook = cfg.application.playbook or "default"
+    """Live runmode that delegates per-symbol pipeline execution to ModelPipelineService."""
 
     allocator = ALLOCATORS.get(cfg.application.portfolio.allocator)
     if not allocator:
@@ -687,125 +894,31 @@ def run_live_multimodel(
     if not balancer:
         raise RuntimeError(f"Balancer not found: {cfg.application.portfolio.balancer!r}")
 
-    pipeline = _resolve_pipeline(cfg)
-    print(f"[models] pipeline={[stage.name for stage, _ in pipeline]}")
-    print(f"[plugins] available_models={len(MODELS)}")
+    pipeline_config = build_pipeline_config(cfg)
+    print(f"[models] pipeline={[st.name for st in pipeline_config.stages]}")
 
     def step_once() -> None:
-        # 1) Structural symbol universe from coverage + ensure held symbols are included
-        coverage = build_coverage(cfg, data, universe)
-        current_positions = account.positions()
-        held_symbols = {p.symbol for p in current_positions}
-        coverage = sorted(set(coverage) | held_symbols)
-        print(f"[coverage] {len(coverage)} symbols -> {coverage}")
-
-        # 2) Initialise per-symbol state
-        states: Dict[str, SymbolState] = {
-            sym: SymbolState(symbol=sym, is_held=(sym in held_symbols))
-            for sym in coverage
-        }
-
-        # 3) Portfolio snapshot (before new trades)
+        # 1) Structural universe from coverage + ensure held symbols are included
+        coverage = build_coverage(cfg, pipeline_service.market_data, universe)
         portfolio = _build_portfolio_snapshot(account)
+        held_symbols = set(portfolio.positions.keys())
+        universe_symbols = sorted(set(coverage) | held_symbols)
+        print(f"[coverage] {len(universe_symbols)} symbols -> {universe_symbols}")
 
-        # 4) Time window for analysis
-        end = datetime.now(timezone.utc)
-        start = end - timedelta(days=cfg.lookback_days)
+        # 2) Run pipeline (single entrypoint)
+        result = pipeline_service.run(
+            universe_symbols=universe_symbols,
+            portfolio_snapshot=portfolio,
+            pipeline_config=pipeline_config,
+        )
 
-        # 5) Determine which indicators we need for the whole pipeline
-        needed_keys: set[str] = set()
-        for _, model in pipeline:
-            try:
-                needed_keys.update(model.requires() or set())
-            except Exception:
-                pass
-        print(f"[indicators] needed_keys={sorted(needed_keys)}")
+        if result.stage_stats:
+            print(f"[pipeline] stage_stats={result.stage_stats}")
 
-        # 6) Per-symbol model pipeline
-        for symbol, state in states.items():
-            if not state.alive and not state.is_held:
-                continue
+        # 3) Allocation -> target weights
+        target_alloc = allocator.allocate(result.signals_by_symbol)
 
-            try:
-                df = data.get_bars(symbol, cfg.timeframe, start, end)
-            except Exception as e:
-                print(f"[{symbol}] data error: {e}")
-                state.notes["data_error"] = 1.0
-                if not state.is_held:
-                    state.alive = False
-                continue
-
-            if df is None or df.empty:
-                print(f"[{symbol}] no data.")
-                state.notes["no_data"] = 1.0
-                if not state.is_held:
-                    state.alive = False
-                continue
-
-            # Compute indicators once and share across models
-            bundle: Dict[str, IndicatorOutput] = {}
-            for key in needed_keys:
-                ind = pick_indicator_for(key, playbook)
-                try:
-                    bundle[key] = ind.compute(df.copy())
-                except Exception as e:
-                    print(f"[{symbol}] indicator {key}:{getattr(ind, 'method', '?')} failed: {e}")
-                    bundle[key] = IndicatorOutput(score=0.0, features={})
-
-            stage_decisions: list[ModelDecision] = []
-
-            for stage_cfg, model in pipeline:
-                if not state.alive and not state.is_held:
-                    break
-
-                stage_name = stage_cfg.name
-                try:
-                    decision: ModelDecision = model.decide(bundle)
-                except Exception as e:
-                    print(f"[{symbol}] model {stage_name} failed: {e}")
-                    decision = ModelDecision(side="HOLD", weight=0.0, confidence=0.0)
-                    state.notes[f"model_error_{stage_name}"] = 1.0
-
-                stage_decisions.append(decision)
-
-                score = _decision_to_score(decision)
-                state.pipeline_results.append(
-                    ModelStageResult(model_name=stage_name, score=score)
-                )
-
-                threshold = (
-                    float(stage_cfg.drop_threshold)
-                    if stage_cfg.drop_threshold is not None
-                    else float(getattr(model, "drop_threshold", -1.0))
-                )
-
-                if score < threshold:
-                    if state.is_held:
-                        # Held symbols are never silently discarded. Keep going, but record the fact.
-                        state.notes[f"below_threshold_{stage_name}"] = 1.0
-                    else:
-                        state.alive = False
-                        state.notes[f"dropped_by_{stage_name}"] = 1.0
-                        break
-
-            agg = combine(stage_decisions)
-            state.alpha_score = float(agg.signed)
-            state.notes["final_confidence"] = float(agg.confidence)
-            state.notes["final_side"] = 1.0 if agg.side == "BUY" else (-1.0 if agg.side == "SELL" else 0.0)
-
-        # 7) Convert states into SignalsBySymbol for the allocator
-        signals: SignalsBySymbol = {}
-        for symbol, state in states.items():
-            if not state.alive and not state.is_held:
-                continue
-            signed = float(state.alpha_score)
-            confidence = float(state.notes.get("final_confidence", 1.0))
-            signals[symbol] = Signal(symbol=symbol, signed=signed, confidence=confidence)
-
-        # 8) Allocation -> target weights
-        target_alloc = allocator.allocate(signals)
-
-        # 9) Balancing -> rebalance plan
+        # 4) Balancing -> rebalance plan
         plan = balancer.plan(
             portfolio=portfolio,
             target=target_alloc,
@@ -813,7 +926,7 @@ def run_live_multimodel(
         )
         print(f"[rebalance] plan={len(plan)} instructions")
 
-        # 10) Orders -> execution
+        # 5) Orders -> execution
         orders = build_orders(portfolio, plan, cfg.trading)
         print(f"[orders] {len(orders)} orders to execute")
 
@@ -1024,6 +1137,72 @@ def volume_from_weight(symbol: str, weight: float, mode: str, fixed_volume: floa
     return symbol_min_volume(symbol)
 
 --- src\tycherion\application\services\sizer.py:END ---
+
+--- src\tycherion\bootstrap\main.py:START ---
+from __future__ import annotations
+
+import MetaTrader5 as mt5
+
+from tycherion.shared.config import load_config, AppConfig
+from tycherion.adapters.mt5.market_data_mt5 import MT5MarketData
+from tycherion.adapters.mt5.trading_mt5 import MT5Trader
+from tycherion.adapters.mt5.account_mt5 import MT5Account
+from tycherion.adapters.mt5.universe_mt5 import MT5Universe
+
+from tycherion.application.plugins import registry as _registry
+from tycherion.application.pipeline.service import ModelPipelineService
+from tycherion.application.runmodes.live_multimodel import run_live_multimodel
+
+
+def _ensure_initialized(cfg: AppConfig) -> None:
+    if not mt5.initialize(path=cfg.mt5.terminal_path or None):
+        raise SystemExit(f"MT5 initialize failed: {mt5.last_error()}")
+    if cfg.mt5.login and cfg.mt5.password and cfg.mt5.server:
+        if not mt5.login(
+            login=int(cfg.mt5.login),
+            password=cfg.mt5.password,
+            server=cfg.mt5.server,
+        ):
+            raise SystemExit(f"MT5 login failed: {mt5.last_error()}")
+
+
+def run_app(config_path: str) -> None:
+    cfg = load_config(config_path)
+
+    # Discover all indicators, models, allocators and balancers
+    _registry.auto_discover()
+
+    _ensure_initialized(cfg)
+    try:
+        market_data = MT5MarketData()
+        trader = MT5Trader(
+            dry_run=cfg.trading.dry_run,
+            require_demo=cfg.trading.require_demo,
+            deviation_points=cfg.trading.deviation_points,
+            volume_mode=cfg.trading.volume_mode,
+            fixed_volume=cfg.trading.fixed_volume,
+        )
+        account = MT5Account()
+        universe = MT5Universe()
+
+        pipeline_service = ModelPipelineService(
+            market_data=market_data,
+            model_registry=_registry.MODELS,
+            indicator_picker=_registry.pick_indicator_for,
+            timeframe=cfg.timeframe,
+            lookback_days=cfg.lookback_days,
+            playbook=cfg.application.playbook,
+        )
+
+        run_mode = (cfg.application.run_mode.name or "").lower()
+        if run_mode == "live_multimodel":
+            run_live_multimodel(cfg, trader, account, universe, pipeline_service)
+        else:
+            raise SystemExit(f"Unknown run_mode: {run_mode}")
+    finally:
+        mt5.shutdown()
+
+--- src\tycherion\bootstrap\main.py:END ---
 
 --- src\tycherion\domain\__init__.py:START ---
 

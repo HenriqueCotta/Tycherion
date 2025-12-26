@@ -7,8 +7,10 @@ from tycherion.adapters.mt5.market_data_mt5 import MT5MarketData
 from tycherion.adapters.mt5.trading_mt5 import MT5Trader
 from tycherion.adapters.mt5.account_mt5 import MT5Account
 from tycherion.adapters.mt5.universe_mt5 import MT5Universe
-from tycherion.application.runmodes.live_multimodel import run_live_multimodel
+
 from tycherion.application.plugins import registry as _registry
+from tycherion.application.pipeline.service import ModelPipelineService
+from tycherion.application.runmodes.live_multimodel import run_live_multimodel
 
 
 def _ensure_initialized(cfg: AppConfig) -> None:
@@ -42,9 +44,18 @@ def run_app(config_path: str) -> None:
         account = MT5Account()
         universe = MT5Universe()
 
+        pipeline_service = ModelPipelineService(
+            market_data=market_data,
+            model_registry=_registry.MODELS,
+            indicator_picker=_registry.pick_indicator_for,
+            timeframe=cfg.timeframe,
+            lookback_days=cfg.lookback_days,
+            playbook=cfg.application.playbook,
+        )
+
         run_mode = (cfg.application.run_mode.name or "").lower()
         if run_mode == "live_multimodel":
-            run_live_multimodel(cfg, market_data, trader, account, universe)
+            run_live_multimodel(cfg, trader, account, universe, pipeline_service)
         else:
             raise SystemExit(f"Unknown run_mode: {run_mode}")
     finally:
