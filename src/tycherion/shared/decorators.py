@@ -1,6 +1,9 @@
 from __future__ import annotations
 from functools import wraps
+import logging
 import MetaTrader5 as mt5
+
+_log = logging.getLogger(__name__)
 
 def demo_only(fn):
     @wraps(fn)
@@ -19,9 +22,9 @@ def logged(fn):
         name = fn.__qualname__
         try:
             res = fn(*args, **kwargs)
-            print(f"{name}: ok -> {res}")
+            _log.debug("%s: ok -> %s", name, res)
             return res
         except Exception as e:
-            print(f"{name}: error -> {e}")
+            _log.exception("%s: error", name)
             raise
     return wrapper

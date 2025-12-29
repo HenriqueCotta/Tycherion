@@ -54,3 +54,4 @@ def combine(decisions: List[ModelDecision]) -> AggregatedDecision:
         confidence=confidence,
         signed=s,
     )
+

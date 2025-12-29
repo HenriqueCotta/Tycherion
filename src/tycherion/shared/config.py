@@ -83,6 +83,29 @@ class ApplicationCfg(BaseModel):
     models: ModelsCfg = ModelsCfg()
     portfolio: PortfolioCfg = PortfolioCfg()
 
+
+class TelemetrySinkCfg(BaseModel):
+    enabled: bool = True
+    channels: list[str] = ["audit", "ops"]
+    min_level: str = "INFO"  # DEBUG/INFO/WARN/ERROR
+
+
+class TelemetryCfg(BaseModel):
+    """Telemetry configuration (bootstrap/application concern, not domain)."""
+
+    # DB execution journal
+    db_enabled: bool = True
+    db_path: Optional[str] = None
+    db_channels: list[str] = ["audit", "ops"]
+    db_min_level: str = "INFO"
+    db_batch_size: int = 50
+
+    # Console sink
+    console_enabled: bool = False
+    console_channels: list[str] = ["ops"]
+    console_min_level: str = "INFO"
+
+
 class AppConfig(BaseModel):
     timeframe: str
     lookback_days: int
@@ -90,6 +113,7 @@ class AppConfig(BaseModel):
     risk: Risk = Risk()
     mt5: MT5 = MT5()
     application: ApplicationCfg = ApplicationCfg()
+    telemetry: TelemetryCfg = TelemetryCfg()
 
 def load_config(path: str) -> AppConfig:
     load_dotenv(override=False)

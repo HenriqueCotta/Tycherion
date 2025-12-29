@@ -17,12 +17,18 @@ Tycherion
 ├── src
 │   └── tycherion
 │       ├── adapters
-│       │   └── mt5
+│       │   ├── mt5
+│       │   │   ├── __pycache__ (ignored)
+│       │   │   ├── >>> account_mt5.py <<<
+│       │   │   ├── >>> market_data_mt5.py <<<
+│       │   │   ├── >>> trading_mt5.py <<<
+│       │   │   └── >>> universe_mt5.py <<<
+│       │   └── telemetry
+│       │       ├── >>> __init__.py <<<
 │       │       ├── __pycache__ (ignored)
-│       │       ├── >>> account_mt5.py <<<
-│       │       ├── >>> market_data_mt5.py <<<
-│       │       ├── >>> trading_mt5.py <<<
-│       │       └── >>> universe_mt5.py <<<
+│       │       ├── >>> console.py <<<
+│       │       ├── >>> db_journal.py <<<
+│       │       └── >>> memory.py <<<
 │       ├── application
 │       │   ├── pipeline
 │       │   │   ├── >>> __init__.py <<<
@@ -36,12 +42,18 @@ Tycherion
 │       │   ├── runmodes
 │       │   │   ├── __pycache__ (ignored)
 │       │   │   └── >>> live_multimodel.py <<<
-│       │   └── services
+│       │   ├── services
+│       │   │   ├── __pycache__ (ignored)
+│       │   │   ├── >>> coverage_selector.py <<<
+│       │   │   ├── >>> ensemble.py <<<
+│       │   │   ├── >>> order_planner.py <<<
+│       │   │   └── >>> sizer.py <<<
+│       │   └── telemetry
+│       │       ├── >>> __init__.py <<<
 │       │       ├── __pycache__ (ignored)
-│       │       ├── >>> coverage_selector.py <<<
-│       │       ├── >>> ensemble.py <<<
-│       │       ├── >>> order_planner.py <<<
-│       │       └── >>> sizer.py <<<
+│       │       ├── >>> event_factory.py <<<
+│       │       ├── >>> hub.py <<<
+│       │       └── >>> run_context.py <<<
 │       ├── bootstrap
 │       │   ├── __pycache__ (ignored)
 │       │   └── >>> main.py <<<
@@ -50,7 +62,6 @@ Tycherion
 │       │   ├── __pycache__ (ignored)
 │       │   ├── market
 │       │   │   ├── >>> __init__.py <<<
-│       │   │   ├── __pycache__ (ignored)
 │       │   │   └── >>> entities.py <<<
 │       │   ├── portfolio
 │       │   │   ├── >>> __init__.py <<<
@@ -58,11 +69,13 @@ Tycherion
 │       │   │   ├── allocators
 │       │   │   │   ├── >>> __init__.py <<<
 │       │   │   │   ├── __pycache__ (ignored)
+│       │   │   │   ├── >>> base.py <<<
 │       │   │   │   ├── >>> equal_weight.py <<<
 │       │   │   │   └── >>> proportional.py <<<
 │       │   │   ├── balancers
 │       │   │   │   ├── >>> __init__.py <<<
 │       │   │   │   ├── __pycache__ (ignored)
+│       │   │   │   ├── >>> base.py <<<
 │       │   │   │   └── >>> threshold.py <<<
 │       │   │   └── >>> entities.py <<<
 │       │   └── signals
@@ -72,24 +85,29 @@ Tycherion
 │       │       ├── indicators
 │       │       │   ├── >>> __init__.py <<<
 │       │       │   ├── __pycache__ (ignored)
+│       │       │   ├── >>> base.py <<<
 │       │       │   ├── >>> stretch_zscore.py <<<
 │       │       │   ├── >>> trend_donchian.py <<<
 │       │       │   └── >>> volatility_atr.py <<<
 │       │       └── models
 │       │           ├── >>> __init__.py <<<
 │       │           ├── __pycache__ (ignored)
+│       │           ├── >>> base.py <<<
 │       │           ├── >>> mean_reversion.py <<<
 │       │           └── >>> trend_following.py <<<
 │       ├── ports
 │       │   ├── __pycache__ (ignored)
 │       │   ├── >>> account.py <<<
 │       │   ├── >>> market_data.py <<<
+│       │   ├── >>> telemetry.py <<<
 │       │   ├── >>> trading.py <<<
 │       │   └── >>> universe.py <<<
 │       └── shared
 │           ├── __pycache__ (ignored)
 │           ├── >>> config.py <<<
 │           └── >>> decorators.py <<<
+├── tests
+│   └── >>> test_telemetry.py <<<
 └── tycherion_guidelines.md (ignored)
 
 
@@ -212,6 +230,17 @@ application:
     allocator: "proportional"
     balancer: "threshold"
     threshold_weight: 0.25
+
+telemetry:
+  db_enabled: false
+  db_min_level: "INFO"
+  db_channels: ["audit", "ops"]        # adicione "debug" se quiser persistir debug
+  db_batch_size: 50
+  # db_path: "./data/execution_journal.sqlite3"  # opcional
+
+  console_enabled: true
+  console_min_level: "INFO"
+  console_channels: ["ops"]            # adicione "debug" para ver debug no terminal
 
 --- configs\demo.yaml:END ---
 
@@ -403,6 +432,253 @@ class MT5Universe(UniversePort):
 
 --- src\tycherion\adapters\mt5\universe_mt5.py:END ---
 
+--- src\tycherion\adapters\telemetry\console.py:START ---
+from __future__ import annotations
+
+import sys
+from dataclasses import dataclass, field
+from typing import Any, Mapping
+
+from tycherion.ports.telemetry import TelemetryEvent, TelemetryLevel, TelemetrySink
+
+
+def _short(v: Any, limit: int = 80) -> str:
+    s = str(v)
+    return s if len(s) <= limit else (s[: limit - 1] + "…")
+
+
+def _summarize(event: TelemetryEvent) -> str:
+    scope = dict(event.scope or {})
+    payload = dict(event.payload or {})
+
+    # Prefer common identifiers
+    parts: list[str] = []
+    for k in ("stage", "symbol", "model"):
+        if k in scope and scope[k] not in (None, ""):
+            parts.append(f"{k}={_short(scope[k], 40)}")
+
+    # Add a small, curated payload summary
+    for k in (
+        "dropped_count",
+        "passed_count",
+        "symbols_count",
+        "duration_ms",
+        "threshold",
+        "score",
+        "side",
+        "weight",
+        "confidence",
+        "reason",
+    ):
+        if k in payload:
+            parts.append(f"{k}={_short(payload[k], 40)}")
+
+    # If nothing matched, expose payload keys (but not full payload)
+    if not parts and payload:
+        parts.append(f"payload_keys={list(payload.keys())[:8]}")
+
+    return " ".join(parts)
+
+
+@dataclass(slots=True)
+class ConsoleTelemetrySink(TelemetrySink):
+    """Human-friendly console output.
+
+    Default should be disabled via config. When enabled, prints one line per event.
+    """
+
+    enabled_flag: bool = False
+    channels: set[str] = field(default_factory=lambda: {"ops"})
+    min_level: TelemetryLevel = TelemetryLevel.INFO
+    stream: Any = sys.stdout
+
+    def enabled(self, channel: str, level: TelemetryLevel, name: str | None = None) -> bool:
+        _ = name
+        if not self.enabled_flag:
+            return False
+        if channel not in self.channels:
+            return False
+        return TelemetryLevel.coerce(level).rank() >= TelemetryLevel.coerce(self.min_level).rank()
+
+    def emit(self, event: TelemetryEvent) -> None:
+        # Keep this stable and easy to grep
+        msg = (
+            f"[{event.level.value}]"
+            f"[{event.channel}]"
+            f"[{event.run_id}] "
+            f"{event.name}"
+        )
+        summary = _summarize(event)
+        if summary:
+            msg = f"{msg} {summary}"
+        try:
+            self.stream.write(msg + "\n")
+            self.stream.flush()
+        except Exception:
+            return
+
+--- src\tycherion\adapters\telemetry\console.py:END ---
+
+--- src\tycherion\adapters\telemetry\db_journal.py:START ---
+from __future__ import annotations
+
+import json
+import sqlite3
+from dataclasses import dataclass, field
+from pathlib import Path
+
+from tycherion.ports.telemetry import TelemetryEvent, TelemetryLevel, TelemetrySink
+
+
+_DDL = """
+CREATE TABLE IF NOT EXISTS execution_journal_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ts_utc TEXT NOT NULL,
+  run_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  level TEXT NOT NULL,
+  channel TEXT NOT NULL,
+  scope_json TEXT NOT NULL,
+  payload_json TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_eje_run_ts ON execution_journal_events(run_id, ts_utc);
+CREATE INDEX IF NOT EXISTS idx_eje_name ON execution_journal_events(name);
+CREATE INDEX IF NOT EXISTS idx_eje_channel ON execution_journal_events(channel);
+"""
+
+
+@dataclass(slots=True)
+class DbExecutionJournalSink(TelemetrySink):
+    """Append-only execution journal persisted in SQLite."""
+
+    db_path: str
+    enabled_flag: bool = True
+    channels: set[str] = field(default_factory=lambda: {"audit", "ops"})
+    min_level: TelemetryLevel = TelemetryLevel.INFO
+    batch_size: int = 50
+
+    _conn: sqlite3.Connection | None = field(default=None, init=False, repr=False)
+    _buffer: list[tuple[str, str, str, str, str, str, str]] = field(
+        default_factory=list, init=False, repr=False
+    )
+
+    def _ensure_conn(self) -> sqlite3.Connection:
+        if self._conn is not None:
+            return self._conn
+        p = Path(self.db_path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        conn = sqlite3.connect(str(p))
+        conn.execute("PRAGMA journal_mode=WAL;")
+        conn.executescript(_DDL)
+        conn.commit()
+        self._conn = conn
+        return conn
+
+    def enabled(self, channel: str, level: TelemetryLevel, name: str | None = None) -> bool:
+        _ = name
+        if not self.enabled_flag:
+            return False
+        if channel not in self.channels:
+            return False
+        return TelemetryLevel.coerce(level).rank() >= TelemetryLevel.coerce(self.min_level).rank()
+
+    def emit(self, event: TelemetryEvent) -> None:
+        conn = self._ensure_conn()
+        scope_json = json.dumps(dict(event.scope or {}), separators=(",", ":"), ensure_ascii=False)
+        payload_json = json.dumps(dict(event.payload or {}), separators=(",", ":"), ensure_ascii=False)
+        row = (
+            event.ts_utc.isoformat(),
+            str(event.run_id),
+            str(event.name),
+            str(event.level.value),
+            str(event.channel),
+            scope_json,
+            payload_json,
+        )
+        self._buffer.append(row)
+        if len(self._buffer) >= max(1, int(self.batch_size)):
+            self.flush()
+
+    def flush(self) -> None:
+        if not self._buffer:
+            return
+        conn = self._ensure_conn()
+        rows = list(self._buffer)
+        self._buffer.clear()
+        try:
+            conn.executemany(
+                """
+                INSERT INTO execution_journal_events
+                  (ts_utc, run_id, name, level, channel, scope_json, payload_json)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                rows,
+            )
+            conn.commit()
+        except Exception:
+            # best effort; do not break the run
+            return
+
+    def close(self) -> None:
+        try:
+            self.flush()
+        finally:
+            if self._conn is not None:
+                try:
+                    self._conn.close()
+                except Exception:
+                    pass
+                self._conn = None
+
+--- src\tycherion\adapters\telemetry\db_journal.py:END ---
+
+--- src\tycherion\adapters\telemetry\memory.py:START ---
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Iterable
+
+from tycherion.ports.telemetry import TelemetryEvent, TelemetryLevel, TelemetrySink
+
+
+@dataclass(slots=True)
+class InMemoryTelemetrySink(TelemetrySink):
+    """Test-friendly telemetry sink.
+
+    Stores events in memory so tests can assert on them without stdout/DB.
+    """
+
+    enabled_flag: bool = True
+    channels: set[str] = field(default_factory=lambda: {"audit", "ops"})
+    min_level: TelemetryLevel = TelemetryLevel.INFO
+    events: list[TelemetryEvent] = field(default_factory=list)
+
+    def enabled(self, channel: str, level: TelemetryLevel, name: str | None = None) -> bool:
+        _ = name
+        if not self.enabled_flag:
+            return False
+        if channel not in self.channels:
+            return False
+        return TelemetryLevel.coerce(level).rank() >= TelemetryLevel.coerce(self.min_level).rank()
+
+    def emit(self, event: TelemetryEvent) -> None:
+        self.events.append(event)
+
+--- src\tycherion\adapters\telemetry\memory.py:END ---
+
+--- src\tycherion\adapters\telemetry\__init__.py:START ---
+from .console import ConsoleTelemetrySink
+from .db_journal import DbExecutionJournalSink
+from .memory import InMemoryTelemetrySink
+
+__all__ = [
+    "ConsoleTelemetrySink",
+    "DbExecutionJournalSink",
+    "InMemoryTelemetrySink",
+]
+
+--- src\tycherion\adapters\telemetry\__init__.py:END ---
+
 --- src\tycherion\application\pipeline\config.py:START ---
 from __future__ import annotations
 
@@ -480,7 +756,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Callable, Dict, Mapping, Optional, Protocol, Tuple, Any
+from typing import Callable, Dict, Mapping, Optional, Tuple
 
 import pandas as pd
 
@@ -491,40 +767,46 @@ from tycherion.domain.signals.entities import (
     ModelStageResult,
     SymbolState,
 )
+from tycherion.domain.signals.models.base import SignalModel
+from tycherion.domain.signals.indicators.base import BaseIndicator
 from tycherion.ports.market_data import MarketDataPort
+from tycherion.application.telemetry.run_context import RunTelemetry
+from tycherion.ports.telemetry import TelemetryLevel, TelemetryPort
 
 from .config import PipelineConfig, PipelineStageConfig
 from .result import PipelineRunResult
-
-
-class TelemetrySink(Protocol):
-    def emit(self, event: str, payload: Dict[str, Any]) -> None: ...
-
-
-class ModelLike(Protocol):
-    def requires(self) -> set[str]: ...
-    def decide(self, indicators: Dict[str, IndicatorOutput]) -> ModelDecision: ...
-
 
 @dataclass(slots=True)
 class ModelPipelineService:
     """Façade that runs the ordered per-symbol model pipeline."""
 
     market_data: MarketDataPort
-    model_registry: Mapping[str, ModelLike]
-    indicator_picker: Callable[[str, Optional[str]], Any]  # returns indicator instance with .compute(df)
+    model_registry: Mapping[str, SignalModel]
+    indicator_picker: Callable[[str, Optional[str]], BaseIndicator]
     timeframe: str
     lookback_days: int
     playbook: str | None = None
-    telemetry_sink: TelemetrySink | None = None
+    telemetry: TelemetryPort | None = None
 
     def run(
         self,
         universe_symbols: list[str],
         portfolio_snapshot: PortfolioSnapshot,
         pipeline_config: PipelineConfig,
+        run_id: str,
     ) -> PipelineRunResult:
+        t = RunTelemetry(port=self.telemetry, run_id=str(run_id), base_scope={"component": "pipeline"})
         held_symbols = set(portfolio_snapshot.positions.keys())
+
+        t.emit(
+            name="pipeline.started",
+            channel="ops",
+            level=TelemetryLevel.INFO,
+            payload={
+                "symbols_count": int(len(universe_symbols)),
+                "stages": [st.name for st in pipeline_config.stages],
+            },
+        )
 
         # 1) Init per-symbol state
         states: Dict[str, SymbolState] = {
@@ -549,25 +831,60 @@ class ModelPipelineService:
         start = end - timedelta(days=int(self.lookback_days))
 
         stage_stats: Dict[str, int] = {st.name: 0 for st in pipeline_config.stages}
+        stage_passed: Dict[str, int] = {st.name: 0 for st in pipeline_config.stages}
+
+        for st in pipeline_config.stages:
+            t.emit(
+                name="pipeline.stage_started",
+                channel="ops",
+                level=TelemetryLevel.INFO,
+                scope={"stage": st.name},
+                payload={"threshold": st.drop_threshold},
+            )
 
         for symbol, state in states.items():
             if not state.alive and not state.is_held:
                 continue
 
-            df = self._safe_get_bars(symbol, start, end, state)
+            df = self._safe_get_bars(symbol, start, end, state, t)
             if df is None or df.empty:
                 if not state.is_held:
+                    t.emit(
+                        name="pipeline.symbol_dropped",
+                        channel="audit",
+                        level=TelemetryLevel.WARN,
+                        scope={"symbol": symbol},
+                        payload={"reason": "no_market_data"},
+                    )
                     state.alive = False
                 continue
 
-            bundle = self._compute_indicators(df, needed_keys, state)
+            if t.enabled("debug", TelemetryLevel.DEBUG):
+                try:
+                    t.emit(
+                        name="market_data.sample",
+                        channel="debug",
+                        level=TelemetryLevel.DEBUG,
+                        scope={"symbol": symbol},
+                        payload={
+                            "rows": int(len(df)),
+                            "columns": list(df.columns)[:20],
+                            "head": df.head(2).to_dict(orient="list"),
+                            "tail": df.tail(2).to_dict(orient="list"),
+                        },
+                    )
+                except Exception:
+                    pass
+
+            bundle = self._compute_indicators(df, needed_keys, state, t)
 
             # Pipeline execution per stage
             for stage_cfg, model in resolved:
                 if not state.alive and not state.is_held:
                     break
 
-                score = self._run_stage(symbol, stage_cfg, model, bundle, state)
+                stage_passed[stage_cfg.name] = int(stage_passed.get(stage_cfg.name, 0)) + 1
+                score = self._run_stage(symbol, stage_cfg, model, bundle, state, t)
 
                 # Drop policy
                 if stage_cfg.drop_threshold is not None and score < float(stage_cfg.drop_threshold):
@@ -577,6 +894,17 @@ class ModelPipelineService:
                     state.alive = False
                     state.notes[f"dropped_by_{stage_cfg.name}"] = 1.0
                     stage_stats[stage_cfg.name] = int(stage_stats.get(stage_cfg.name, 0)) + 1
+                    t.emit(
+                        name="pipeline.symbol_dropped",
+                        channel="audit",
+                        level=TelemetryLevel.INFO,
+                        scope={"symbol": symbol, "stage": stage_cfg.name},
+                        payload={
+                            "score": float(score),
+                            "threshold": float(stage_cfg.drop_threshold),
+                            "reason": "below_threshold",
+                        },
+                    )
                     break
 
             # Final signal fields (simple v1 rule: last stage score)
@@ -592,6 +920,38 @@ class ModelPipelineService:
             signed = float(state.alpha_score)
             confidence = float(state.notes.get("final_confidence", abs(signed)))
             signals[symbol] = Signal(symbol=symbol, signed=signed, confidence=confidence)
+            t.emit(
+                name="pipeline.signal_emitted",
+                channel="audit",
+                level=TelemetryLevel.INFO,
+                scope={"symbol": symbol},
+                payload={"signed": signed, "confidence": confidence},
+            )
+
+        for st in pipeline_config.stages:
+            dropped = int(stage_stats.get(st.name, 0))
+            passed = int(stage_passed.get(st.name, 0))
+            t.emit(
+                name="pipeline.stage_completed",
+                channel="ops",
+                level=TelemetryLevel.INFO,
+                scope={"stage": st.name},
+                payload={
+                    "passed_count": passed,
+                    "dropped_count": dropped,
+                    "threshold": st.drop_threshold,
+                },
+            )
+
+        t.emit(
+            name="pipeline.completed",
+            channel="ops",
+            level=TelemetryLevel.INFO,
+            payload={
+                "signals_count": int(len(signals)),
+                "alive_count": int(sum(1 for s in states.values() if s.alive or s.is_held)),
+            },
+        )
 
         return PipelineRunResult(
             pipeline_config=pipeline_config,
@@ -600,8 +960,8 @@ class ModelPipelineService:
             stage_stats=stage_stats,
         )
 
-    def _resolve_models(self, pipeline_config: PipelineConfig) -> list[Tuple[PipelineStageConfig, ModelLike]]:
-        pipeline: list[Tuple[PipelineStageConfig, ModelLike]] = []
+    def _resolve_models(self, pipeline_config: PipelineConfig) -> list[Tuple[PipelineStageConfig, SignalModel]]:
+        pipeline: list[Tuple[PipelineStageConfig, SignalModel]] = []
         for stage in pipeline_config.stages:
             name = stage.name
             model = self.model_registry.get(name)
@@ -617,12 +977,19 @@ class ModelPipelineService:
         start: datetime,
         end: datetime,
         state: SymbolState,
+        t: RunTelemetry,
     ) -> pd.DataFrame | None:
         try:
             return self.market_data.get_bars(symbol, self.timeframe, start, end)
         except Exception as e:
             state.notes["data_error"] = 1.0
-            self._telemetry("data_error", {"symbol": symbol, "error": str(e)})
+            t.emit(
+                name="error.exception",
+                channel="ops",
+                level=TelemetryLevel.ERROR,
+                scope={"symbol": symbol},
+                payload={"exception_type": type(e).__name__, "message": str(e), "stage": "get_bars"},
+            )
             return None
 
     def _compute_indicators(
@@ -630,6 +997,7 @@ class ModelPipelineService:
         df: pd.DataFrame,
         needed_keys: set[str],
         state: SymbolState,
+        t: RunTelemetry,
     ) -> Dict[str, IndicatorOutput]:
         bundle: Dict[str, IndicatorOutput] = {}
         for key in needed_keys:
@@ -638,7 +1006,17 @@ class ModelPipelineService:
                 bundle[key] = ind.compute(df.copy())
             except Exception as e:
                 state.notes[f"indicator_error_{key}"] = 1.0
-                self._telemetry("indicator_error", {"key": key, "error": str(e)})
+                t.emit(
+                    name="error.exception",
+                    channel="ops",
+                    level=TelemetryLevel.ERROR,
+                    payload={
+                        "exception_type": type(e).__name__,
+                        "message": str(e),
+                        "stage": "indicator",
+                        "indicator": key,
+                    },
+                )
                 bundle[key] = IndicatorOutput(score=0.0, features={})
         return bundle
 
@@ -646,20 +1024,58 @@ class ModelPipelineService:
         self,
         symbol: str,
         stage_cfg: PipelineStageConfig,
-        model: ModelLike,
+        model: SignalModel,
         indicators: Dict[str, IndicatorOutput],
         state: SymbolState,
+        t: RunTelemetry,
     ) -> float:
         stage_name = stage_cfg.name
         try:
+            if t.enabled("debug", TelemetryLevel.DEBUG):
+                try:
+                    t.emit(
+                        name="model.input_snapshot",
+                        channel="debug",
+                        level=TelemetryLevel.DEBUG,
+                        scope={"symbol": symbol, "stage": stage_name, "model": stage_name},
+                        payload={
+                            "indicator_keys": list(indicators.keys())[:30],
+                            "features_keys": {
+                                k: list(v.features.keys())[:20]
+                                for k, v in indicators.items()
+                                if getattr(v, "features", None)
+                            },
+                        },
+                    )
+                except Exception:
+                    pass
             decision = model.decide(indicators)
         except Exception as e:
             state.notes[f"model_error_{stage_name}"] = 1.0
-            self._telemetry("model_error", {"symbol": symbol, "model": stage_name, "error": str(e)})
+            t.emit(
+                name="error.exception",
+                channel="ops",
+                level=TelemetryLevel.ERROR,
+                scope={"symbol": symbol, "stage": stage_name, "model": stage_name},
+                payload={"exception_type": type(e).__name__, "message": str(e), "stage": "model"},
+            )
             decision = ModelDecision(side="HOLD", weight=0.0, confidence=0.0)
 
         score = self._decision_to_score(decision)
         state.pipeline_results.append(ModelStageResult(model_name=stage_name, score=score))
+
+        t.emit(
+            name="model.decided",
+            channel="audit",
+            level=TelemetryLevel.INFO,
+            scope={"symbol": symbol, "stage": stage_name, "model": stage_name},
+            payload={
+                "score": float(score),
+                "side": decision.side,
+                "weight": float(decision.weight or 0.0),
+                "confidence": float(decision.confidence or 0.0),
+            },
+        )
         return score
 
     @staticmethod
@@ -676,14 +1092,8 @@ class ModelPipelineService:
             s = 0.0
         return max(-1.0, min(1.0, s))
 
-    def _telemetry(self, event: str, payload: Dict[str, Any]) -> None:
-        if self.telemetry_sink is None:
-            return
-        try:
-            self.telemetry_sink.emit(event, payload)
-        except Exception:
-            # never break the run due to telemetry
-            return
+    # Telemetry helper removed: use RunTelemetry wrapper for structured events.
+
 
 --- src\tycherion\application\pipeline\service.py:END ---
 
@@ -693,14 +1103,22 @@ class ModelPipelineService:
 
 --- src\tycherion\application\plugins\registry.py:START ---
 from __future__ import annotations
-from typing import Dict, List, Callable, Iterable
 
-INDICATORS: Dict[str, List[object]] = {}
-MODELS: Dict[str, object] = {}
-ALLOCATORS: Dict[str, object] = {}
-BALANCERS: Dict[str, object] = {}
+from typing import Dict, List, Iterable
+
+from tycherion.application.telemetry.event_factory import make_event
+from tycherion.ports.telemetry import TelemetryLevel, TelemetryPort
+
+from tycherion.domain.signals.indicators.base import BaseIndicator
+from tycherion.domain.signals.models.base import SignalModel
+from tycherion.domain.portfolio.allocators.base import BaseAllocator
+from tycherion.domain.portfolio.balancers.base import BaseBalancer
+
+INDICATORS: Dict[str, List[BaseIndicator]] = {}
+MODELS: Dict[str, SignalModel] = {}
+ALLOCATORS: Dict[str, BaseAllocator] = {}
+BALANCERS: Dict[str, BaseBalancer] = {}
 DEFAULT_METHOD: Dict[str, str] = {}
-
 
 def register_indicator(*, key: str, method: str, tags: set[str]):
     """
@@ -760,7 +1178,7 @@ def set_default_indicator_method(key: str, method: str) -> None:
     DEFAULT_METHOD[key] = method
 
 
-def pick_indicator_for(key: str, playbook: str | None = None):
+def pick_indicator_for(key: str, playbook: str | None = None) -> BaseIndicator:
     """
     Pick an indicator instance for a given key and (optionally) playbook.
     Preference order:
@@ -769,7 +1187,7 @@ def pick_indicator_for(key: str, playbook: str | None = None):
     - otherwise, the first registered
     If DEFAULT_METHOD[key] is set, prefer that method among candidates.
     """
-    candidates: Iterable[object] = INDICATORS.get(key, [])
+    candidates: Iterable[BaseIndicator] = INDICATORS.get(key, [])
     candidates = list(candidates)
     if not candidates:
         raise KeyError(f"No indicators registered for key={key!r}")
@@ -801,13 +1219,30 @@ def pick_indicator_for(key: str, playbook: str | None = None):
     return candidates[0]
 
 
-def auto_discover() -> None:
+def auto_discover(telemetry: TelemetryPort | None) -> None:
     """
     Import all plugin modules so that their decorators run and fill the
     registries above. This is called once during application startup.
     """
     import importlib
     import pkgutil
+    
+    def _emit(name: str, *, level: TelemetryLevel, channel: str, payload: dict) -> None:
+        if telemetry is None:
+            return
+        try:
+            telemetry.emit(
+                make_event(
+                    run_id="bootstrap",
+                    name=name,
+                    level=level,
+                    channel=channel,
+                    scope={"component": "plugins"},
+                    payload=payload,
+                )
+            )
+        except Exception:
+            return
 
     bases = (
         "tycherion.domain.signals.indicators",
@@ -820,7 +1255,12 @@ def auto_discover() -> None:
         try:
             pkg = importlib.import_module(base)
         except Exception as e:
-            print(f"[plugins] base import failed: {base} -> {e}")
+            _emit(
+                "plugins.base_import_failed",
+                level=TelemetryLevel.WARN,
+                channel="ops",
+                payload={"base": base, "error": str(e)},
+            )
             continue
 
         pkg_path = getattr(pkg, "__path__", None)
@@ -831,14 +1271,23 @@ def auto_discover() -> None:
             try:
                 importlib.import_module(mod.name)
             except Exception as e:
-                print(f"[plugins] import failed: {mod.name} -> {e}")
+                _emit(
+                    "plugins.module_import_failed",
+                    level=TelemetryLevel.WARN,
+                    channel="ops",
+                    payload={"module": mod.name, "error": str(e)},
+                )
 
-    print(
-        f"[plugins] discovered "
-        f"indicators={sum(len(v) for v in INDICATORS.values())} "
-        f"models={len(MODELS)} "
-        f"allocators={len(ALLOCATORS)} "
-        f"balancers={len(BALANCERS)}"
+    _emit(
+        "plugins.discovered",
+        level=TelemetryLevel.INFO,
+        channel="ops",
+        payload={
+            "indicators_count": int(sum(len(v) for v in INDICATORS.values())),
+            "models_count": int(len(MODELS)),
+            "allocators_count": int(len(ALLOCATORS)),
+            "balancers_count": int(len(BALANCERS)),
+        },
     )
 
 --- src\tycherion\application\plugins\registry.py:END ---
@@ -847,6 +1296,7 @@ def auto_discover() -> None:
 from __future__ import annotations
 
 import time
+import uuid
 from typing import Dict
 
 from tycherion.shared.config import AppConfig
@@ -867,6 +1317,8 @@ from tycherion.domain.portfolio.entities import (
 
 from tycherion.application.pipeline.config import build_pipeline_config
 from tycherion.application.pipeline.service import ModelPipelineService
+from tycherion.application.telemetry.run_context import RunTelemetry
+from tycherion.ports.telemetry import TelemetryLevel, TelemetryPort
 
 
 def _build_portfolio_snapshot(account: AccountPort) -> PortfolioSnapshot:
@@ -883,6 +1335,7 @@ def run_live_multimodel(
     account: AccountPort,
     universe: UniversePort,
     pipeline_service: ModelPipelineService,
+    telemetry: TelemetryPort | None = None,
 ) -> None:
     """Live runmode that delegates per-symbol pipeline execution to ModelPipelineService."""
 
@@ -895,25 +1348,55 @@ def run_live_multimodel(
         raise RuntimeError(f"Balancer not found: {cfg.application.portfolio.balancer!r}")
 
     pipeline_config = build_pipeline_config(cfg)
-    print(f"[models] pipeline={[st.name for st in pipeline_config.stages]}")
+    # no stdout by default; this is emitted via telemetry when sinks are enabled
 
     def step_once() -> None:
+        run_id = str(uuid.uuid4())
+        t = RunTelemetry(port=telemetry, run_id=run_id, base_scope={"component": "runmode"})
+        start_t = time.perf_counter()
+
+        t.emit(
+            name="run.cycle_started",
+            channel="ops",
+            level=TelemetryLevel.INFO,
+            scope={"run_mode": "live_multimodel"},
+            payload={
+                "timeframe": cfg.timeframe,
+                "lookback_days": int(cfg.lookback_days),
+                "pipeline": [st.name for st in pipeline_config.stages],
+            },
+        )
+
         # 1) Structural universe from coverage + ensure held symbols are included
         coverage = build_coverage(cfg, pipeline_service.market_data, universe)
         portfolio = _build_portfolio_snapshot(account)
         held_symbols = set(portfolio.positions.keys())
         universe_symbols = sorted(set(coverage) | held_symbols)
-        print(f"[coverage] {len(universe_symbols)} symbols -> {universe_symbols}")
+
+        t.emit(
+            name="run.coverage_built",
+            channel="ops",
+            level=TelemetryLevel.INFO,
+            payload={
+                "symbols_count": int(len(universe_symbols)),
+                "symbols_sample": universe_symbols[: min(10, len(universe_symbols))],
+            },
+        )
 
         # 2) Run pipeline (single entrypoint)
         result = pipeline_service.run(
             universe_symbols=universe_symbols,
             portfolio_snapshot=portfolio,
             pipeline_config=pipeline_config,
+            run_id=run_id,
         )
 
-        if result.stage_stats:
-            print(f"[pipeline] stage_stats={result.stage_stats}")
+        t.emit(
+            name="run.pipeline_finished",
+            channel="ops",
+            level=TelemetryLevel.INFO,
+            payload={"stage_stats": dict(result.stage_stats or {})},
+        )
 
         # 3) Allocation -> target weights
         target_alloc = allocator.allocate(result.signals_by_symbol)
@@ -924,18 +1407,49 @@ def run_live_multimodel(
             target=target_alloc,
             threshold=cfg.application.portfolio.threshold_weight,
         )
-        print(f"[rebalance] plan={len(plan)} instructions")
+        t.emit(
+            name="rebalance.plan_built",
+            channel="ops",
+            level=TelemetryLevel.INFO,
+            payload={"instructions_count": int(len(plan))},
+        )
 
         # 5) Orders -> execution
         orders = build_orders(portfolio, plan, cfg.trading)
-        print(f"[orders] {len(orders)} orders to execute")
+        t.emit(
+            name="orders.built",
+            channel="ops",
+            level=TelemetryLevel.INFO,
+            payload={"orders_count": int(len(orders))},
+        )
 
         for od in orders:
             if od.side.upper() == "BUY":
                 res = trader.market_buy(od.symbol, volume=od.volume)
             else:
                 res = trader.market_sell(od.symbol, volume=od.volume)
-            print(f"[trade] {od.side} {od.symbol} vol={od.volume} -> {res}")
+            t.emit(
+                name="trade.executed",
+                channel="ops",
+                level=TelemetryLevel.INFO,
+                scope={"symbol": od.symbol},
+                payload={"side": od.side, "volume": float(od.volume), "result": str(res)},
+            )
+
+        t.emit(
+            name="run.cycle_finished",
+            channel="ops",
+            level=TelemetryLevel.INFO,
+            scope={"run_mode": "live_multimodel"},
+            payload={"duration_ms": int((time.perf_counter() - start_t) * 1000)},
+        )
+
+        flush = getattr(telemetry, "flush", None)
+        if callable(flush):
+            try:
+                flush()
+            except Exception:
+                pass
 
     if cfg.application.schedule.run_forever:
         while True:
@@ -943,13 +1457,28 @@ def run_live_multimodel(
                 step_once()
                 time.sleep(max(1, cfg.application.schedule.interval_seconds))
             except KeyboardInterrupt:
-                print("Stopping by keyboard.")
+                t = RunTelemetry(port=telemetry, run_id="bootstrap", base_scope={"component": "runmode"})
+                t.emit(
+                    name="run.stopped",
+                    channel="ops",
+                    level=TelemetryLevel.INFO,
+                    scope={"run_mode": "live_multimodel"},
+                    payload={"reason": "KeyboardInterrupt"},
+                )
                 break
             except Exception as e:
-                print("Loop error:", e)
+                t = RunTelemetry(port=telemetry, run_id="bootstrap", base_scope={"component": "runmode"})
+                t.emit(
+                    name="error.exception",
+                    channel="ops",
+                    level=TelemetryLevel.ERROR,
+                    scope={"run_mode": "live_multimodel"},
+                    payload={"exception_type": type(e).__name__, "message": str(e)},
+                )
                 time.sleep(3)
     else:
         step_once()
+
 
 --- src\tycherion\application\runmodes\live_multimodel.py:END ---
 
@@ -1051,6 +1580,7 @@ def combine(decisions: List[ModelDecision]) -> AggregatedDecision:
         signed=s,
     )
 
+
 --- src\tycherion\application\services\ensemble.py:END ---
 
 --- src\tycherion\application\services\order_planner.py:START ---
@@ -1114,6 +1644,7 @@ def build_orders(
         )
     return orders
 
+
 --- src\tycherion\application\services\order_planner.py:END ---
 
 --- src\tycherion\application\services\sizer.py:START ---
@@ -1136,18 +1667,227 @@ def volume_from_weight(symbol: str, weight: float, mode: str, fixed_volume: floa
         return float(fixed_volume) * weight
     return symbol_min_volume(symbol)
 
+
 --- src\tycherion\application\services\sizer.py:END ---
+
+--- src\tycherion\application\telemetry\event_factory.py:START ---
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from typing import Any, Mapping
+
+from tycherion.ports.telemetry import TelemetryEvent, TelemetryLevel
+
+
+def now_utc() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def make_event(
+    *,
+    run_id: str,
+    name: str,
+    level: str | TelemetryLevel,
+    channel: str,
+    scope: Mapping[str, Any] | None = None,
+    payload: Mapping[str, Any] | None = None,
+    schema_version: int = 1,
+) -> TelemetryEvent:
+    return TelemetryEvent(
+        ts_utc=now_utc(),
+        run_id=str(run_id),
+        name=str(name),
+        level=TelemetryLevel.coerce(level),
+        channel=str(channel),
+        scope=dict(scope or {}),
+        payload=dict(payload or {}),
+        schema_version=int(schema_version),
+    )
+
+--- src\tycherion\application\telemetry\event_factory.py:END ---
+
+--- src\tycherion\application\telemetry\hub.py:START ---
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any, Iterable, Mapping
+
+from tycherion.ports.telemetry import TelemetryEvent, TelemetryLevel, TelemetryPort, TelemetrySink
+
+
+@dataclass(slots=True)
+class TelemetryHub(TelemetryPort):
+    """Fan-out hub.
+
+    The hub is application-layer infrastructure: it receives canonical
+    TelemetryEvent envelopes and forwards them to sinks. Sinks can filter
+    independently.
+    """
+
+    sinks: list[TelemetrySink]
+    base_scope: Mapping[str, Any] | None = None
+
+    def emit(self, event: TelemetryEvent) -> None:
+        scope = dict(self.base_scope or {})
+        if event.scope:
+            scope.update(dict(event.scope))
+        merged = TelemetryEvent(
+            ts_utc=event.ts_utc,
+            run_id=event.run_id,
+            name=event.name,
+            level=event.level,
+            channel=event.channel,
+            scope=scope,
+            payload=dict(event.payload or {}),
+            schema_version=event.schema_version,
+        )
+
+        for s in list(self.sinks):
+            try:
+                if not s.enabled(merged.channel, merged.level, merged.name):
+                    continue
+                s.emit(merged)
+            except Exception:
+                # telemetry must never break the run
+                continue
+
+    def enabled(self, channel: str, level: str | TelemetryLevel) -> bool:
+        lv = TelemetryLevel.coerce(level)
+        for s in list(self.sinks):
+            try:
+                if s.enabled(str(channel), lv, None):
+                    return True
+            except Exception:
+                continue
+        return False
+
+    def child(self, scope: Mapping[str, Any]) -> TelemetryPort:
+        merged = dict(self.base_scope or {})
+        merged.update(dict(scope or {}))
+        return TelemetryHub(sinks=self.sinks, base_scope=merged)
+
+    def flush(self) -> None:
+        for s in list(self.sinks):
+            flush = getattr(s, "flush", None)
+            if callable(flush):
+                try:
+                    flush()
+                except Exception:
+                    continue
+
+    def close(self) -> None:
+        for s in list(self.sinks):
+            close = getattr(s, "close", None)
+            if callable(close):
+                try:
+                    close()
+                except Exception:
+                    continue
+
+--- src\tycherion\application\telemetry\hub.py:END ---
+
+--- src\tycherion\application\telemetry\run_context.py:START ---
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Mapping
+
+from tycherion.application.telemetry.event_factory import make_event
+from tycherion.ports.telemetry import TelemetryLevel, TelemetryPort
+
+
+@dataclass(frozen=True, slots=True)
+class RunContext:
+    run_id: str
+    timeframe: str
+    lookback_days: int
+    started_utc: datetime
+    config_hash: str | None = None
+
+
+@dataclass(slots=True)
+class RunTelemetry:
+    """Ergonomic wrapper to produce consistent events for a single run_id."""
+
+    port: TelemetryPort | None
+    run_id: str
+    base_scope: Mapping[str, Any] | None = None
+
+    def enabled(self, channel: str, level: str | TelemetryLevel) -> bool:
+        if self.port is None:
+            return False
+        return self.port.enabled(channel, level)
+
+    def emit(
+        self,
+        *,
+        name: str,
+        channel: str,
+        level: str | TelemetryLevel = TelemetryLevel.INFO,
+        scope: Mapping[str, Any] | None = None,
+        payload: Mapping[str, Any] | None = None,
+        schema_version: int = 1,
+    ) -> None:
+        if self.port is None:
+            return
+
+        merged_scope = dict(self.base_scope or {})
+        if scope:
+            merged_scope.update(dict(scope))
+
+        try:
+            self.port.emit(
+                make_event(
+                    run_id=self.run_id,
+                    name=name,
+                    level=level,
+                    channel=channel,
+                    scope=merged_scope,
+                    payload=payload,
+                    schema_version=schema_version,
+                )
+            )
+        except Exception:
+            # never break the run due to telemetry
+            return
+
+    def child(self, scope: Mapping[str, Any]) -> "RunTelemetry":
+        merged = dict(self.base_scope or {})
+        merged.update(dict(scope or {}))
+        return RunTelemetry(port=self.port, run_id=self.run_id, base_scope=merged)
+
+--- src\tycherion\application\telemetry\run_context.py:END ---
+
+--- src\tycherion\application\telemetry\__init__.py:START ---
+from .event_factory import make_event
+from .hub import TelemetryHub
+from .run_context import RunContext, RunTelemetry
+
+__all__ = [
+    "make_event",
+    "TelemetryHub",
+    "RunContext",
+    "RunTelemetry",
+]
+
+--- src\tycherion\application\telemetry\__init__.py:END ---
 
 --- src\tycherion\bootstrap\main.py:START ---
 from __future__ import annotations
 
 import MetaTrader5 as mt5
+from pathlib import Path
 
 from tycherion.shared.config import load_config, AppConfig
 from tycherion.adapters.mt5.market_data_mt5 import MT5MarketData
 from tycherion.adapters.mt5.trading_mt5 import MT5Trader
 from tycherion.adapters.mt5.account_mt5 import MT5Account
 from tycherion.adapters.mt5.universe_mt5 import MT5Universe
+
+from tycherion.adapters.telemetry.db_journal import DbExecutionJournalSink
+from tycherion.adapters.telemetry.console import ConsoleTelemetrySink
+from tycherion.application.telemetry.hub import TelemetryHub
 
 from tycherion.application.plugins import registry as _registry
 from tycherion.application.pipeline.service import ModelPipelineService
@@ -1169,8 +1909,11 @@ def _ensure_initialized(cfg: AppConfig) -> None:
 def run_app(config_path: str) -> None:
     cfg = load_config(config_path)
 
+    # Telemetry must be available as early as possible (e.g. plugin discovery).
+    telemetry = _build_telemetry(cfg, config_path)
+
     # Discover all indicators, models, allocators and balancers
-    _registry.auto_discover()
+    _registry.auto_discover(telemetry)
 
     _ensure_initialized(cfg)
     try:
@@ -1192,15 +1935,48 @@ def run_app(config_path: str) -> None:
             timeframe=cfg.timeframe,
             lookback_days=cfg.lookback_days,
             playbook=cfg.application.playbook,
+            telemetry=telemetry,
         )
 
         run_mode = (cfg.application.run_mode.name or "").lower()
         if run_mode == "live_multimodel":
-            run_live_multimodel(cfg, trader, account, universe, pipeline_service)
+            run_live_multimodel(cfg, trader, account, universe, pipeline_service, telemetry=telemetry)
         else:
             raise SystemExit(f"Unknown run_mode: {run_mode}")
     finally:
+        try:
+            telemetry.close()
+        except Exception:
+            pass
         mt5.shutdown()
+
+def _build_telemetry(cfg: AppConfig, config_path: str) -> TelemetryHub:
+    sinks = []
+    telemetry_cfg = cfg.telemetry
+
+
+    if bool(telemetry_cfg.db_enabled):
+        sinks.append(
+            DbExecutionJournalSink(
+                db_path=str(telemetry_cfg.db_path or ''),
+                enabled_flag=True,
+                channels=set(telemetry_cfg.db_channels or ["audit", "ops"]),
+                min_level=telemetry_cfg.db_min_level,
+                batch_size=int(telemetry_cfg.db_batch_size or 50),
+            )
+        )
+
+    if bool(telemetry_cfg.console_enabled):
+        sinks.append(
+            ConsoleTelemetrySink(
+                enabled_flag=True,
+                channels=set(telemetry_cfg.console_channels or ["ops"]),
+                min_level=telemetry_cfg.console_min_level,
+            )
+        )
+
+    return TelemetryHub(sinks=sinks)
+
 
 --- src\tycherion\bootstrap\main.py:END ---
 
@@ -1344,15 +2120,37 @@ class RebalanceInstruction:
 
 --- src\tycherion\domain\portfolio\__init__.py:END ---
 
+--- src\tycherion\domain\portfolio\allocators\base.py:START ---
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+
+from tycherion.domain.portfolio.entities import SignalsBySymbol, TargetAllocation
+
+
+class BaseAllocator(ABC):
+    """Abstract base class for portfolio allocator plugins."""
+
+    # Set by decorator
+    name: str = ""
+    tags: set[str] = set()
+
+    @abstractmethod
+    def allocate(self, signals: SignalsBySymbol) -> TargetAllocation:
+        raise NotImplementedError
+
+--- src\tycherion\domain\portfolio\allocators\base.py:END ---
+
 --- src\tycherion\domain\portfolio\allocators\equal_weight.py:START ---
 from __future__ import annotations
 
+from tycherion.domain.portfolio.allocators.base import BaseAllocator
 from tycherion.application.plugins.registry import register_allocator
 from tycherion.domain.portfolio.entities import SignalsBySymbol, TargetAllocation
 
 
 @register_allocator(name="equal_weight", tags={"default"})
-class EqualWeightAllocator:
+class EqualWeightAllocator(BaseAllocator):
     """
     Simple allocator: gives the same absolute weight to all symbols that have
     a non-zero signal. Longs get +w, shorts get -w, holds get 0.
@@ -1379,12 +2177,13 @@ class EqualWeightAllocator:
 --- src\tycherion\domain\portfolio\allocators\proportional.py:START ---
 from __future__ import annotations
 
+from tycherion.domain.portfolio.allocators.base import BaseAllocator
 from tycherion.application.plugins.registry import register_allocator
 from tycherion.domain.portfolio.entities import SignalsBySymbol, TargetAllocation
 
 
 @register_allocator(name="proportional", tags={"default"})
-class ProportionalAllocator:
+class ProportionalAllocator(BaseAllocator):
     """
     Allocator that gives each symbol a weight proportional to the absolute
     value of its signal. Signals are normalised so that the sum of absolute
@@ -1411,9 +2210,40 @@ class ProportionalAllocator:
 
 --- src\tycherion\domain\portfolio\allocators\__init__.py:END ---
 
+--- src\tycherion\domain\portfolio\balancers\base.py:START ---
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+
+from tycherion.domain.portfolio.entities import (
+    PortfolioSnapshot,
+    TargetAllocation,
+    RebalanceInstruction,
+)
+
+
+class BaseBalancer(ABC):
+    """Abstract base class for portfolio balancer / rebalancer plugins."""
+
+    # Set by decorator
+    name: str = ""
+    tags: set[str] = set()
+
+    @abstractmethod
+    def plan(
+        self,
+        portfolio: PortfolioSnapshot,
+        target: TargetAllocation,
+        threshold: float = 0.25,
+    ) -> list[RebalanceInstruction]:
+        raise NotImplementedError
+
+--- src\tycherion\domain\portfolio\balancers\base.py:END ---
+
 --- src\tycherion\domain\portfolio\balancers\threshold.py:START ---
 from __future__ import annotations
 
+from tycherion.domain.portfolio.balancers.base import BaseBalancer
 from tycherion.application.plugins.registry import register_balancer
 from tycherion.domain.portfolio.entities import (
     PortfolioSnapshot,
@@ -1423,7 +2253,7 @@ from tycherion.domain.portfolio.entities import (
 
 
 @register_balancer(name="threshold", tags={"default"})
-class ThresholdBalancer:
+class ThresholdBalancer(BaseBalancer):
     """
     Domain-level balancer: generates rebalance instructions whenever the
     difference between current and target weight is greater than or equal
@@ -1540,6 +2370,7 @@ class SymbolState:
 
     notes: Dict[str, float] = field(default_factory=dict)
 
+
 --- src\tycherion\domain\signals\entities.py:END ---
 
 --- src\tycherion\domain\signals\__init__.py:START ---
@@ -1547,9 +2378,33 @@ class SymbolState:
 
 --- src\tycherion\domain\signals\__init__.py:END ---
 
+--- src\tycherion\domain\signals\indicators\base.py:START ---
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+import pandas as pd
+
+from tycherion.domain.signals.entities import IndicatorOutput
+
+
+class BaseIndicator(ABC):
+    """Abstract base class for indicator plugins."""
+
+    # Set by decorator
+    key: str = ""
+    method: str = ""
+    tags: set[str] = set()
+
+    @abstractmethod
+    def compute(self, df: pd.DataFrame) -> IndicatorOutput:
+        raise NotImplementedError
+
+--- src\tycherion\domain\signals\indicators\base.py:END ---
+
 --- src\tycherion\domain\signals\indicators\stretch_zscore.py:START ---
 from __future__ import annotations
 
+from tycherion.domain.signals.indicators.base import BaseIndicator
 import pandas as pd
 
 from tycherion.application.plugins.registry import register_indicator
@@ -1557,7 +2412,7 @@ from tycherion.domain.signals.entities import IndicatorOutput
 
 
 @register_indicator(key="stretch", method="zscore_20", tags={"default"})
-class StretchZScore20:
+class StretchZScore20(BaseIndicator):
     period = 20
 
     def compute(self, df: pd.DataFrame) -> IndicatorOutput:
@@ -1576,6 +2431,7 @@ class StretchZScore20:
 --- src\tycherion\domain\signals\indicators\trend_donchian.py:START ---
 from __future__ import annotations
 
+from tycherion.domain.signals.indicators.base import BaseIndicator
 import pandas as pd
 
 from tycherion.application.plugins.registry import register_indicator
@@ -1583,7 +2439,7 @@ from tycherion.domain.signals.entities import IndicatorOutput
 
 
 @register_indicator(key="trend", method="donchian_50_50", tags={"default"})
-class TrendDonchian5050:
+class TrendDonchian5050(BaseIndicator):
     high_n = 50
     low_n = 50
 
@@ -1607,6 +2463,7 @@ class TrendDonchian5050:
 --- src\tycherion\domain\signals\indicators\volatility_atr.py:START ---
 from __future__ import annotations
 
+from tycherion.domain.signals.indicators.base import BaseIndicator
 import pandas as pd
 
 from tycherion.application.plugins.registry import register_indicator
@@ -1614,7 +2471,7 @@ from tycherion.domain.signals.entities import IndicatorOutput
 
 
 @register_indicator(key="volatility", method="atr_14", tags={"default"})
-class VolATR14:
+class VolATR14(BaseIndicator):
     period = 14
 
     def compute(self, df: pd.DataFrame) -> IndicatorOutput:
@@ -1640,9 +2497,35 @@ class VolATR14:
 
 --- src\tycherion\domain\signals\indicators\__init__.py:END ---
 
+--- src\tycherion\domain\signals\models\base.py:START ---
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from typing import Dict
+
+from tycherion.domain.signals.entities import IndicatorOutput, ModelDecision
+
+
+class SignalModel(ABC):
+    """Abstract base class for per-symbol signal models."""
+
+    name: str = ""
+    tags: set[str] = set()
+
+    @abstractmethod
+    def requires(self) -> set[str]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def decide(self, indicators: Dict[str, IndicatorOutput]) -> ModelDecision:
+        raise NotImplementedError
+
+--- src\tycherion\domain\signals\models\base.py:END ---
+
 --- src\tycherion\domain\signals\models\mean_reversion.py:START ---
 from __future__ import annotations
 
+from tycherion.domain.signals.models.base import SignalModel
 from typing import Dict
 
 from tycherion.application.plugins.registry import register_model
@@ -1650,7 +2533,7 @@ from tycherion.domain.signals.entities import IndicatorOutput, ModelDecision
 
 
 @register_model(name="mean_reversion", tags={"default"})
-class MeanReversion:
+class MeanReversion(SignalModel):
     def requires(self) -> set[str]:
         return {"stretch", "volatility"}
 
@@ -1666,11 +2549,13 @@ class MeanReversion:
             return ModelDecision(side="SELL", weight=w, confidence=0.6)
         return ModelDecision(side="HOLD", weight=0.0, confidence=0.4)
 
+
 --- src\tycherion\domain\signals\models\mean_reversion.py:END ---
 
 --- src\tycherion\domain\signals\models\trend_following.py:START ---
 from __future__ import annotations
 
+from tycherion.domain.signals.models.base import SignalModel
 from typing import Dict
 
 from tycherion.application.plugins.registry import register_model
@@ -1678,7 +2563,7 @@ from tycherion.domain.signals.entities import IndicatorOutput, ModelDecision
 
 
 @register_model(name="trend_following", tags={"default"})
-class TrendFollowing:
+class TrendFollowing(SignalModel):
     def requires(self) -> set[str]:
         return {"trend", "volatility"}
 
@@ -1699,6 +2584,7 @@ class TrendFollowing:
                 confidence=0.7,
             )
         return ModelDecision(side="HOLD", weight=0.0, confidence=0.3)
+
 
 --- src\tycherion\domain\signals\models\trend_following.py:END ---
 
@@ -1733,6 +2619,81 @@ class MarketDataPort(Protocol):
     def get_bars(self, symbol: str, timeframe: str, start: datetime, end: datetime) -> pd.DataFrame: ...
 
 --- src\tycherion\ports\market_data.py:END ---
+
+--- src\tycherion\ports\telemetry.py:START ---
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+from typing import Any, Mapping, Protocol
+
+
+class TelemetryLevel(str, Enum):
+    DEBUG = "DEBUG"
+    INFO = "INFO"
+    WARN = "WARN"
+    ERROR = "ERROR"
+
+    @classmethod
+    def coerce(cls, value: str | "TelemetryLevel") -> "TelemetryLevel":
+        if isinstance(value, TelemetryLevel):
+            return value
+        v = (value or "INFO").upper().strip()
+        try:
+            return TelemetryLevel(v)
+        except Exception:
+            return TelemetryLevel.INFO
+
+    def rank(self) -> int:
+        order = {
+            TelemetryLevel.DEBUG: 10,
+            TelemetryLevel.INFO: 20,
+            TelemetryLevel.WARN: 30,
+            TelemetryLevel.ERROR: 40,
+        }
+        return int(order[self])
+
+
+@dataclass(frozen=True, slots=True)
+class TelemetryEvent:
+    """Canonical, small telemetry envelope.
+
+    NOTE: `scope` and `payload` must be JSON-serialisable.
+    """
+
+    ts_utc: datetime
+    run_id: str
+    name: str
+    level: TelemetryLevel
+    channel: str
+    scope: Mapping[str, Any] | None
+    payload: Mapping[str, Any]
+    schema_version: int = 1
+
+
+class TelemetrySink(Protocol):
+    """Adapter-side sink.
+
+    A sink can filter independently. The hub will call `enabled` to determine
+    whether some payload should be built (gating), then `emit` to persist/print.
+    """
+
+    def enabled(self, channel: str, level: TelemetryLevel, name: str | None = None) -> bool: ...
+
+    def emit(self, event: TelemetryEvent) -> None: ...
+
+
+class TelemetryPort(Protocol):
+    """Application-facing telemetry API (fan-out hub + scoped wrappers)."""
+
+    def emit(self, event: TelemetryEvent) -> None: ...
+
+    def enabled(self, channel: str, level: str | TelemetryLevel) -> bool: ...
+
+    def child(self, scope: Mapping[str, Any]) -> "TelemetryPort": ...
+
+--- src\tycherion\ports\telemetry.py:END ---
 
 --- src\tycherion\ports\trading.py:START ---
 from __future__ import annotations
@@ -1848,6 +2809,29 @@ class ApplicationCfg(BaseModel):
     models: ModelsCfg = ModelsCfg()
     portfolio: PortfolioCfg = PortfolioCfg()
 
+
+class TelemetrySinkCfg(BaseModel):
+    enabled: bool = True
+    channels: list[str] = ["audit", "ops"]
+    min_level: str = "INFO"  # DEBUG/INFO/WARN/ERROR
+
+
+class TelemetryCfg(BaseModel):
+    """Telemetry configuration (bootstrap/application concern, not domain)."""
+
+    # DB execution journal
+    db_enabled: bool = True
+    db_path: Optional[str] = None
+    db_channels: list[str] = ["audit", "ops"]
+    db_min_level: str = "INFO"
+    db_batch_size: int = 50
+
+    # Console sink
+    console_enabled: bool = False
+    console_channels: list[str] = ["ops"]
+    console_min_level: str = "INFO"
+
+
 class AppConfig(BaseModel):
     timeframe: str
     lookback_days: int
@@ -1855,6 +2839,7 @@ class AppConfig(BaseModel):
     risk: Risk = Risk()
     mt5: MT5 = MT5()
     application: ApplicationCfg = ApplicationCfg()
+    telemetry: TelemetryCfg = TelemetryCfg()
 
 def load_config(path: str) -> AppConfig:
     load_dotenv(override=False)
@@ -1888,7 +2873,10 @@ def load_config(path: str) -> AppConfig:
 --- src\tycherion\shared\decorators.py:START ---
 from __future__ import annotations
 from functools import wraps
+import logging
 import MetaTrader5 as mt5
+
+_log = logging.getLogger(__name__)
 
 def demo_only(fn):
     @wraps(fn)
@@ -1907,11 +2895,111 @@ def logged(fn):
         name = fn.__qualname__
         try:
             res = fn(*args, **kwargs)
-            print(f"{name}: ok -> {res}")
+            _log.debug("%s: ok -> %s", name, res)
             return res
         except Exception as e:
-            print(f"{name}: error -> {e}")
+            _log.exception("%s: error", name)
             raise
     return wrapper
 
 --- src\tycherion\shared\decorators.py:END ---
+
+--- tests\test_telemetry.py:START ---
+from __future__ import annotations
+
+import unittest
+from datetime import datetime, timezone
+
+import pathlib
+import sys
+
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
+import pandas as pd
+
+from tycherion.application.pipeline.config import PipelineConfig, PipelineStageConfig
+from tycherion.application.pipeline.service import ModelPipelineService
+from tycherion.application.telemetry.hub import TelemetryHub
+from tycherion.adapters.telemetry.memory import InMemoryTelemetrySink
+from tycherion.domain.portfolio.entities import PortfolioSnapshot
+from tycherion.domain.signals.entities import ModelDecision
+from tycherion.domain.signals.models.base import SignalModel
+from tycherion.ports.telemetry import TelemetryLevel
+
+
+class TestTelemetryHub(unittest.TestCase):
+    def test_enabled_any_sink_accepts(self) -> None:
+        sink = InMemoryTelemetrySink(
+            enabled_flag=True,
+            channels={"debug"},
+            min_level=TelemetryLevel.DEBUG,
+        )
+        hub = TelemetryHub(sinks=[sink])
+
+        self.assertTrue(hub.enabled("debug", "DEBUG"))
+        self.assertFalse(hub.enabled("audit", "INFO"))
+
+
+class _DummyMarketData:
+    def get_bars(self, symbol: str, timeframe: str, start: datetime, end: datetime) -> pd.DataFrame:
+        _ = (symbol, timeframe, start, end)
+        # Minimal but realistic-ish OHLC frame
+        return pd.DataFrame(
+            {
+                "time": [datetime(2020, 1, 1, tzinfo=timezone.utc)],
+                "open": [1.0],
+                "high": [1.0],
+                "low": [1.0],
+                "close": [1.0],
+                "tick_volume": [1],
+            }
+        )
+
+
+class _DummyModel(SignalModel):
+    def requires(self) -> set[str]:
+        return set()
+
+    def decide(self, indicators):  # type: ignore[override]
+        _ = indicators
+        return ModelDecision(side="BUY", weight=0.5, confidence=0.1)
+
+
+class TestDebugGating(unittest.TestCase):
+    def test_debug_events_not_emitted_when_debug_disabled(self) -> None:
+        sink = InMemoryTelemetrySink(
+            enabled_flag=True,
+            channels={"audit", "ops"},
+            min_level=TelemetryLevel.INFO,
+        )
+        hub = TelemetryHub(sinks=[sink])
+
+        svc = ModelPipelineService(
+            market_data=_DummyMarketData(),
+            model_registry={"dummy": _DummyModel()},
+            indicator_picker=lambda key, pb: None,  # type: ignore[return-value]
+            timeframe="D1",
+            lookback_days=10,
+            playbook=None,
+            telemetry=hub,
+        )
+
+        pipeline_config = PipelineConfig(stages=[PipelineStageConfig(name="dummy", drop_threshold=None)])
+        portfolio = PortfolioSnapshot(equity=1000.0, positions={})
+
+        svc.run(
+            universe_symbols=["AAA"],
+            portfolio_snapshot=portfolio,
+            pipeline_config=pipeline_config,
+            run_id="test-run",
+        )
+
+        self.assertTrue(len(sink.events) > 0)
+        self.assertEqual(0, sum(1 for e in sink.events if e.channel == "debug"))
+
+
+if __name__ == "__main__":
+    unittest.main()
+
+--- tests\test_telemetry.py:END ---

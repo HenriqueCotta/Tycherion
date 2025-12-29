@@ -1,5 +1,9 @@
 from __future__ import annotations
-from typing import Dict, List, Callable, Iterable
+
+from typing import Dict, List, Iterable
+
+from tycherion.application.telemetry.event_factory import make_event
+from tycherion.ports.telemetry import TelemetryLevel, TelemetryPort
 
 from tycherion.domain.signals.indicators.base import BaseIndicator
 from tycherion.domain.signals.models.base import SignalModel
@@ -11,7 +15,6 @@ MODELS: Dict[str, SignalModel] = {}
 ALLOCATORS: Dict[str, BaseAllocator] = {}
 BALANCERS: Dict[str, BaseBalancer] = {}
 DEFAULT_METHOD: Dict[str, str] = {}
-
 
 def register_indicator(*, key: str, method: str, tags: set[str]):
     """
@@ -112,13 +115,30 @@ def pick_indicator_for(key: str, playbook: str | None = None) -> BaseIndicator:
     return candidates[0]
 
 
-def auto_discover() -> None:
+def auto_discover(telemetry: TelemetryPort | None) -> None:
     """
     Import all plugin modules so that their decorators run and fill the
     registries above. This is called once during application startup.
     """
     import importlib
     import pkgutil
+    
+    def _emit(name: str, *, level: TelemetryLevel, channel: str, payload: dict) -> None:
+        if telemetry is None:
+            return
+        try:
+            telemetry.emit(
+                make_event(
+                    run_id="bootstrap",
+                    name=name,
+                    level=level,
+                    channel=channel,
+                    scope={"component": "plugins"},
+                    payload=payload,
+                )
+            )
+        except Exception:
+            return
 
     bases = (
         "tycherion.domain.signals.indicators",
@@ -131,7 +151,12 @@ def auto_discover() -> None:
         try:
             pkg = importlib.import_module(base)
         except Exception as e:
-            print(f"[plugins] base import failed: {base} -> {e}")
+            _emit(
+                "plugins.base_import_failed",
+                level=TelemetryLevel.WARN,
+                channel="ops",
+                payload={"base": base, "error": str(e)},
+            )
             continue
 
         pkg_path = getattr(pkg, "__path__", None)
@@ -142,12 +167,21 @@ def auto_discover() -> None:
             try:
                 importlib.import_module(mod.name)
             except Exception as e:
-                print(f"[plugins] import failed: {mod.name} -> {e}")
+                _emit(
+                    "plugins.module_import_failed",
+                    level=TelemetryLevel.WARN,
+                    channel="ops",
+                    payload={"module": mod.name, "error": str(e)},
+                )
 
-    print(
-        f"[plugins] discovered "
-        f"indicators={sum(len(v) for v in INDICATORS.values())} "
-        f"models={len(MODELS)} "
-        f"allocators={len(ALLOCATORS)} "
-        f"balancers={len(BALANCERS)}"
+    _emit(
+        "plugins.discovered",
+        level=TelemetryLevel.INFO,
+        channel="ops",
+        payload={
+            "indicators_count": int(sum(len(v) for v in INDICATORS.values())),
+            "models_count": int(len(MODELS)),
+            "allocators_count": int(len(ALLOCATORS)),
+            "balancers_count": int(len(BALANCERS)),
+        },
     )

@@ -41,3 +41,14 @@ application:
     allocator: "proportional"
     balancer: "threshold"
     threshold_weight: 0.25
+
+telemetry:
+  db_enabled: false
+  db_min_level: "INFO"
+  db_channels: ["audit", "ops"]        # adicione "debug" se quiser persistir debug
+  db_batch_size: 50
+  # db_path: "./data/execution_journal.sqlite3"  # opcional
+
+  console_enabled: true
+  console_min_level: "INFO"
+  console_channels: ["ops"]            # adicione "debug" para ver debug no terminal
