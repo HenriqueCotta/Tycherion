@@ -16,20 +16,22 @@ class TelemetryHub(TelemetryPort):
     """
 
     sinks: list[TelemetrySink]
-    base_scope: Mapping[str, Any] | None = None
+    base_attributes: Mapping[str, Any] | None = None
 
     def emit(self, event: TelemetryEvent) -> None:
-        scope = dict(self.base_scope or {})
-        if event.scope:
-            scope.update(dict(event.scope))
+        attributes = dict(self.base_attributes or {})
+        if event.attributes:
+            attributes.update(dict(event.attributes))
         merged = TelemetryEvent(
             ts_utc=event.ts_utc,
-            run_id=event.run_id,
+            trace_id=event.trace_id,
+            span_id=event.span_id,
+            parent_span_id=event.parent_span_id,
             name=event.name,
             level=event.level,
             channel=event.channel,
-            scope=scope,
-            payload=dict(event.payload or {}),
+            attributes=attributes if attributes else None,
+            data=dict(event.data or {}),
             schema_version=event.schema_version,
         )
 
@@ -52,10 +54,10 @@ class TelemetryHub(TelemetryPort):
                 continue
         return False
 
-    def child(self, scope: Mapping[str, Any]) -> TelemetryPort:
-        merged = dict(self.base_scope or {})
-        merged.update(dict(scope or {}))
-        return TelemetryHub(sinks=self.sinks, base_scope=merged)
+    def child(self, attributes: Mapping[str, Any]) -> TelemetryPort:
+        merged = dict(self.base_attributes or {})
+        merged.update(dict(attributes or {}))
+        return TelemetryHub(sinks=self.sinks, base_attributes=merged)
 
     def flush(self) -> None:
         for s in list(self.sinks):

@@ -95,7 +95,8 @@ class TelemetryCfg(BaseModel):
 
     # DB execution journal
     db_enabled: bool = True
-    db_path: Optional[str] = None
+    # PostgreSQL DSN, e.g. "postgresql://user:pass@host:5432/dbname"
+    db_dsn: Optional[str] = None
     db_channels: list[str] = ["audit", "ops"]
     db_min_level: str = "INFO"
     db_batch_size: int = 50

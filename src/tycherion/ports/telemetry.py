@@ -36,16 +36,18 @@ class TelemetryLevel(str, Enum):
 class TelemetryEvent:
     """Canonical, small telemetry envelope.
 
-    NOTE: `scope` and `payload` must be JSON-serialisable.
+    NOTE: `attributes` and `data` must be JSON-serialisable.
     """
 
     ts_utc: datetime
-    run_id: str
+    trace_id: str
+    span_id: str | None
+    parent_span_id: str | None
     name: str
     level: TelemetryLevel
     channel: str
-    scope: Mapping[str, Any] | None
-    payload: Mapping[str, Any]
+    attributes: Mapping[str, Any] | None
+    data: Mapping[str, Any]
     schema_version: int = 1
 
 
@@ -53,7 +55,7 @@ class TelemetrySink(Protocol):
     """Adapter-side sink.
 
     A sink can filter independently. The hub will call `enabled` to determine
-    whether some payload should be built (gating), then `emit` to persist/print.
+    whether some data should be built (gating), then `emit` to persist/print.
     """
 
     def enabled(self, channel: str, level: TelemetryLevel, name: str | None = None) -> bool: ...
@@ -68,4 +70,4 @@ class TelemetryPort(Protocol):
 
     def enabled(self, channel: str, level: str | TelemetryLevel) -> bool: ...
 
-    def child(self, scope: Mapping[str, Any]) -> "TelemetryPort": ...
+    def child(self, attributes: Mapping[str, Any]) -> "TelemetryPort": ...

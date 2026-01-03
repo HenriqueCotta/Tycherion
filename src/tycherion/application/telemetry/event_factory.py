@@ -12,21 +12,25 @@ def now_utc() -> datetime:
 
 def make_event(
     *,
-    run_id: str,
+    trace_id: str,
+    span_id: str | None = None,
+    parent_span_id: str | None = None,
     name: str,
     level: str | TelemetryLevel,
     channel: str,
-    scope: Mapping[str, Any] | None = None,
-    payload: Mapping[str, Any] | None = None,
-    schema_version: int = 1,
+    attributes: Mapping[str, Any] | None = None,
+    data: Mapping[str, Any] | None = None,
+    schema_version: int = 2,
 ) -> TelemetryEvent:
     return TelemetryEvent(
         ts_utc=now_utc(),
-        run_id=str(run_id),
+        trace_id=str(trace_id),
+        span_id=(str(span_id) if span_id is not None else None),
+        parent_span_id=(str(parent_span_id) if parent_span_id is not None else None),
         name=str(name),
         level=TelemetryLevel.coerce(level),
         channel=str(channel),
-        scope=dict(scope or {}),
-        payload=dict(payload or {}),
+        attributes=(dict(attributes or {}) if attributes is not None else None),
+        data=dict(data or {}),
         schema_version=int(schema_version),
     )

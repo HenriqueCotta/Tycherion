@@ -11,7 +11,8 @@ from tycherion.adapters.mt5.universe_mt5 import MT5Universe
 
 from tycherion.adapters.telemetry.db_journal import DbExecutionJournalSink
 from tycherion.adapters.telemetry.console import ConsoleTelemetrySink
-from tycherion.application.telemetry.hub import TelemetryHub
+from tycherion.application.telemetry import TelemetryHub, TraceTelemetry, new_trace_id
+from tycherion.ports.telemetry import TelemetryLevel
 
 from tycherion.application.plugins import registry as _registry
 from tycherion.application.pipeline.service import ModelPipelineService
@@ -37,7 +38,13 @@ def run_app(config_path: str) -> None:
     telemetry = _build_telemetry(cfg, config_path)
 
     # Discover all indicators, models, allocators and balancers
-    _registry.auto_discover(telemetry)
+    bootstrap_tracer = TraceTelemetry(
+        port=telemetry,
+        trace_id=new_trace_id(),
+        base_attributes={"component": "bootstrap"},
+    )
+    with bootstrap_tracer.span("bootstrap.discover", channel="ops", level=TelemetryLevel.INFO):
+        _registry.auto_discover(bootstrap_tracer)
 
     _ensure_initialized(cfg)
     try:
@@ -59,12 +66,19 @@ def run_app(config_path: str) -> None:
             timeframe=cfg.timeframe,
             lookback_days=cfg.lookback_days,
             playbook=cfg.application.playbook,
-            telemetry=telemetry,
         )
 
         run_mode = (cfg.application.run_mode.name or "").lower()
         if run_mode == "live_multimodel":
-            run_live_multimodel(cfg, trader, account, universe, pipeline_service, telemetry=telemetry)
+            run_live_multimodel(
+                cfg,
+                trader,
+                account,
+                universe,
+                pipeline_service,
+                telemetry=telemetry,
+                config_path=config_path,
+            )
         else:
             raise SystemExit(f"Unknown run_mode: {run_mode}")
     finally:
@@ -79,10 +93,10 @@ def _build_telemetry(cfg: AppConfig, config_path: str) -> TelemetryHub:
     telemetry_cfg = cfg.telemetry
 
 
-    if bool(telemetry_cfg.db_enabled):
+    if bool(telemetry_cfg.db_enabled) and bool(telemetry_cfg.db_dsn):
         sinks.append(
             DbExecutionJournalSink(
-                db_path=str(telemetry_cfg.db_path or ''),
+                dsn=str(telemetry_cfg.db_dsn),
                 enabled_flag=True,
                 channels=set(telemetry_cfg.db_channels or ["audit", "ops"]),
                 min_level=telemetry_cfg.db_min_level,

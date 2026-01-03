@@ -1,54 +1,88 @@
 from __future__ import annotations
 
 import json
-import sqlite3
 from dataclasses import dataclass, field
-from pathlib import Path
 
 from tycherion.ports.telemetry import TelemetryEvent, TelemetryLevel, TelemetrySink
 
 
 _DDL = """
 CREATE TABLE IF NOT EXISTS execution_journal_events (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id BIGSERIAL PRIMARY KEY,
   ts_utc TEXT NOT NULL,
-  run_id TEXT NOT NULL,
+  trace_id TEXT NOT NULL,
+  span_id TEXT NULL,
+  parent_span_id TEXT NULL,
   name TEXT NOT NULL,
   level TEXT NOT NULL,
   channel TEXT NOT NULL,
-  scope_json TEXT NOT NULL,
-  payload_json TEXT NOT NULL
+  attributes_json TEXT NOT NULL,
+  data_json TEXT NOT NULL,
+  schema_version INTEGER NOT NULL
 );
-CREATE INDEX IF NOT EXISTS idx_eje_run_ts ON execution_journal_events(run_id, ts_utc);
+CREATE INDEX IF NOT EXISTS idx_eje_trace_ts ON execution_journal_events(trace_id, ts_utc);
+CREATE INDEX IF NOT EXISTS idx_eje_span ON execution_journal_events(span_id);
 CREATE INDEX IF NOT EXISTS idx_eje_name ON execution_journal_events(name);
 CREATE INDEX IF NOT EXISTS idx_eje_channel ON execution_journal_events(channel);
 """
 
 
+def _connect(dsn: str):
+    """Lazy import of a Postgres driver.
+
+    We intentionally do NOT add dependencies to Tycherion. The sink will work
+    if the runtime environment provides a PostgreSQL DB-API driver.
+    """
+
+    try:
+        import psycopg  # type: ignore
+
+        return psycopg.connect(dsn)
+    except Exception:
+        pass
+
+    try:
+        import psycopg2  # type: ignore
+
+        return psycopg2.connect(dsn)
+    except Exception as e:
+        raise RuntimeError(
+            "PostgreSQL telemetry sink requires a driver (psycopg or psycopg2) to be installed"
+        ) from e
+
+
 @dataclass(slots=True)
 class DbExecutionJournalSink(TelemetrySink):
-    """Append-only execution journal persisted in SQLite."""
+    """Append-only execution journal persisted in PostgreSQL.
 
-    db_path: str
+    NOTE: This sink uses lazy imports for DB drivers to keep Tycherion dependency-free.
+    """
+
+    db_dsn: str
     enabled_flag: bool = True
     channels: set[str] = field(default_factory=lambda: {"audit", "ops"})
     min_level: TelemetryLevel = TelemetryLevel.INFO
-    batch_size: int = 50
+    batch_size: int = 100
 
-    _conn: sqlite3.Connection | None = field(default=None, init=False, repr=False)
-    _buffer: list[tuple[str, str, str, str, str, str, str]] = field(
+    _conn: object | None = field(default=None, init=False, repr=False)
+    _buffer: list[tuple[str, str, str | None, str | None, str, str, str, str, str, int]] = field(
         default_factory=list, init=False, repr=False
     )
 
-    def _ensure_conn(self) -> sqlite3.Connection:
+    def _ensure_conn(self):
         if self._conn is not None:
             return self._conn
-        p = Path(self.db_path)
-        p.parent.mkdir(parents=True, exist_ok=True)
-        conn = sqlite3.connect(str(p))
-        conn.execute("PRAGMA journal_mode=WAL;")
-        conn.executescript(_DDL)
-        conn.commit()
+        conn = _connect(self.db_dsn)
+        try:
+            cur = conn.cursor()
+            cur.execute(_DDL)
+            conn.commit()
+        except Exception:
+            try:
+                conn.close()
+            except Exception:
+                pass
+            raise
         self._conn = conn
         return conn
 
@@ -61,40 +95,60 @@ class DbExecutionJournalSink(TelemetrySink):
         return TelemetryLevel.coerce(level).rank() >= TelemetryLevel.coerce(self.min_level).rank()
 
     def emit(self, event: TelemetryEvent) -> None:
-        conn = self._ensure_conn()
-        scope_json = json.dumps(dict(event.scope or {}), separators=(",", ":"), ensure_ascii=False)
-        payload_json = json.dumps(dict(event.payload or {}), separators=(",", ":"), ensure_ascii=False)
-        row = (
-            event.ts_utc.isoformat(),
-            str(event.run_id),
-            str(event.name),
-            str(event.level.value),
-            str(event.channel),
-            scope_json,
-            payload_json,
-        )
-        self._buffer.append(row)
-        if len(self._buffer) >= max(1, int(self.batch_size)):
-            self.flush()
+        if not self.enabled(event.channel, event.level, event.name):
+            return
+        try:
+            attributes_json = json.dumps(dict(event.attributes or {}), separators=(",", ":"), ensure_ascii=False)
+            data_json = json.dumps(dict(event.data or {}), separators=(",", ":"), ensure_ascii=False)
+            row = (
+                event.ts_utc.isoformat(),
+                str(event.trace_id),
+                str(event.span_id) if event.span_id else None,
+                str(event.parent_span_id) if event.parent_span_id else None,
+                str(event.name),
+                str(event.level.value),
+                str(event.channel),
+                attributes_json,
+                data_json,
+                int(event.schema_version),
+            )
+            self._buffer.append(row)
+            if len(self._buffer) >= max(1, int(self.batch_size)):
+                self.flush()
+        except Exception:
+            # best effort
+            return
 
     def flush(self) -> None:
         if not self._buffer:
             return
-        conn = self._ensure_conn()
+        try:
+            conn = self._ensure_conn()
+        except Exception:
+            # best effort: if we can't connect, drop buffered events
+            self._buffer.clear()
+            return
+
         rows = list(self._buffer)
         self._buffer.clear()
+
         try:
-            conn.executemany(
+            cur = conn.cursor()
+            cur.executemany(
                 """
                 INSERT INTO execution_journal_events
-                  (ts_utc, run_id, name, level, channel, scope_json, payload_json)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                  (ts_utc, trace_id, span_id, parent_span_id, name, level, channel, attributes_json, data_json, schema_version)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
                 rows,
             )
             conn.commit()
         except Exception:
-            # best effort; do not break the run
+            # best effort
+            try:
+                conn.rollback()
+            except Exception:
+                pass
             return
 
     def close(self) -> None:

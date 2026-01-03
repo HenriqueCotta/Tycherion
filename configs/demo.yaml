@@ -47,7 +47,7 @@ telemetry:
   db_min_level: "INFO"
   db_channels: ["audit", "ops"]        # adicione "debug" se quiser persistir debug
   db_batch_size: 50
-  # db_path: "./data/execution_journal.sqlite3"  # opcional
+  # db_dsn: "postgresql://user:pass@host:5432/dbname"  # opcional
 
   console_enabled: true
   console_min_level: "INFO"

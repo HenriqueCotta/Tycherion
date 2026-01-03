@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Dict, List, Iterable
 
-from tycherion.application.telemetry.event_factory import make_event
-from tycherion.ports.telemetry import TelemetryLevel, TelemetryPort
+from tycherion.application.telemetry import TraceTelemetry
+from tycherion.ports.telemetry import TelemetryLevel
 
 from tycherion.domain.signals.indicators.base import BaseIndicator
 from tycherion.domain.signals.models.base import SignalModel
@@ -115,7 +115,7 @@ def pick_indicator_for(key: str, playbook: str | None = None) -> BaseIndicator:
     return candidates[0]
 
 
-def auto_discover(telemetry: TelemetryPort | None) -> None:
+def auto_discover(tracer: TraceTelemetry | None) -> None:
     """
     Import all plugin modules so that their decorators run and fill the
     registries above. This is called once during application startup.
@@ -123,22 +123,12 @@ def auto_discover(telemetry: TelemetryPort | None) -> None:
     import importlib
     import pkgutil
     
-    def _emit(name: str, *, level: TelemetryLevel, channel: str, payload: dict) -> None:
-        if telemetry is None:
+    t = tracer.child({"component": "plugins"}) if tracer else None
+
+    def _emit(name: str, *, level: TelemetryLevel, channel: str, data: dict) -> None:
+        if t is None:
             return
-        try:
-            telemetry.emit(
-                make_event(
-                    run_id="bootstrap",
-                    name=name,
-                    level=level,
-                    channel=channel,
-                    scope={"component": "plugins"},
-                    payload=payload,
-                )
-            )
-        except Exception:
-            return
+        t.emit(name=name, level=level, channel=channel, attributes=None, data=data)
 
     bases = (
         "tycherion.domain.signals.indicators",
@@ -155,7 +145,7 @@ def auto_discover(telemetry: TelemetryPort | None) -> None:
                 "plugins.base_import_failed",
                 level=TelemetryLevel.WARN,
                 channel="ops",
-                payload={"base": base, "error": str(e)},
+                data={"base": base, "error": str(e)},
             )
             continue
 
@@ -171,14 +161,14 @@ def auto_discover(telemetry: TelemetryPort | None) -> None:
                     "plugins.module_import_failed",
                     level=TelemetryLevel.WARN,
                     channel="ops",
-                    payload={"module": mod.name, "error": str(e)},
+                    data={"module": mod.name, "error": str(e)},
                 )
 
     _emit(
         "plugins.discovered",
         level=TelemetryLevel.INFO,
         channel="ops",
-        payload={
+        data={
             "indicators_count": int(sum(len(v) for v in INDICATORS.values())),
             "models_count": int(len(MODELS)),
             "allocators_count": int(len(ALLOCATORS)),

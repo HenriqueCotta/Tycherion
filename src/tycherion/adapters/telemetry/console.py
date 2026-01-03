@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 from dataclasses import dataclass, field
-from typing import Any, Mapping
+from typing import Any
 
 from tycherion.ports.telemetry import TelemetryEvent, TelemetryLevel, TelemetrySink
 
@@ -13,14 +13,14 @@ def _short(v: Any, limit: int = 80) -> str:
 
 
 def _summarize(event: TelemetryEvent) -> str:
-    scope = dict(event.scope or {})
-    payload = dict(event.payload or {})
+    attributes = dict(event.attributes or {})
+    data = dict(event.data or {})
 
     # Prefer common identifiers
     parts: list[str] = []
-    for k in ("stage", "symbol", "model"):
-        if k in scope and scope[k] not in (None, ""):
-            parts.append(f"{k}={_short(scope[k], 40)}")
+    for k in ("component", "stage", "symbol", "model"):
+        if k in attributes and attributes[k] not in (None, ""):
+            parts.append(f"{k}={_short(attributes[k], 40)}")
 
     # Add a small, curated payload summary
     for k in (
@@ -35,12 +35,12 @@ def _summarize(event: TelemetryEvent) -> str:
         "confidence",
         "reason",
     ):
-        if k in payload:
-            parts.append(f"{k}={_short(payload[k], 40)}")
+        if k in data:
+            parts.append(f"{k}={_short(data[k], 40)}")
 
     # If nothing matched, expose payload keys (but not full payload)
-    if not parts and payload:
-        parts.append(f"payload_keys={list(payload.keys())[:8]}")
+    if not parts and data:
+        parts.append(f"data_keys={list(data.keys())[:8]}")
 
     return " ".join(parts)
 
@@ -67,12 +67,19 @@ class ConsoleTelemetrySink(TelemetrySink):
 
     def emit(self, event: TelemetryEvent) -> None:
         # Keep this stable and easy to grep
+        trace_short = _short(event.trace_id, 8)
         msg = (
             f"[{event.level.value}]"
             f"[{event.channel}]"
-            f"[{event.run_id}] "
-            f"{event.name}"
+            f"[trace={trace_short}]"
         )
+
+        if event.span_id:
+            msg += f"[span={_short(event.span_id, 8)}]"
+        if event.parent_span_id:
+            msg += f"[parent={_short(event.parent_span_id, 8)}]"
+
+        msg += f" {event.name}"
         summary = _summarize(event)
         if summary:
             msg = f"{msg} {summary}"

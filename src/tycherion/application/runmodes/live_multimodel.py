@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import time
-import uuid
 from typing import Dict
 
 from tycherion.shared.config import AppConfig
@@ -22,7 +21,7 @@ from tycherion.domain.portfolio.entities import (
 
 from tycherion.application.pipeline.config import build_pipeline_config
 from tycherion.application.pipeline.service import ModelPipelineService
-from tycherion.application.telemetry.run_context import RunTelemetry
+from tycherion.application.telemetry import TraceTelemetry, new_trace_id, stable_config_hash
 from tycherion.ports.telemetry import TelemetryLevel, TelemetryPort
 
 
@@ -41,6 +40,7 @@ def run_live_multimodel(
     universe: UniversePort,
     pipeline_service: ModelPipelineService,
     telemetry: TelemetryPort | None = None,
+    config_path: str | None = None,
 ) -> None:
     """Live runmode that delegates per-symbol pipeline execution to ModelPipelineService."""
 
@@ -56,105 +56,107 @@ def run_live_multimodel(
     # no stdout by default; this is emitted via telemetry when sinks are enabled
 
     def step_once() -> None:
-        run_id = str(uuid.uuid4())
-        t = RunTelemetry(port=telemetry, run_id=run_id, base_scope={"component": "runmode"})
-        start_t = time.perf_counter()
+        trace_id = new_trace_id()
+        t = TraceTelemetry(port=telemetry, trace_id=trace_id, base_attributes={"component": "runmode"})
 
-        t.emit(
-            name="run.cycle_started",
+        try:
+            cfg_hash = stable_config_hash(cfg.model_dump())
+        except Exception:
+            cfg_hash = ""
+
+        with t.span(
+            "run",
             channel="ops",
             level=TelemetryLevel.INFO,
-            scope={"run_mode": "live_multimodel"},
-            payload={
+            attributes={"run_mode": "live_multimodel"},
+            data={
                 "timeframe": cfg.timeframe,
                 "lookback_days": int(cfg.lookback_days),
-                "pipeline": [st.name for st in pipeline_config.stages],
+                "pipeline_stages": [st.name for st in pipeline_config.stages],
+                "config_hash": cfg_hash,
+                "config_path": config_path,
             },
-        )
+        ):
 
         # 1) Structural universe from coverage + ensure held symbols are included
-        coverage = build_coverage(cfg, pipeline_service.market_data, universe)
-        portfolio = _build_portfolio_snapshot(account)
-        held_symbols = set(portfolio.positions.keys())
-        universe_symbols = sorted(set(coverage) | held_symbols)
+            with t.span("coverage.fetch", channel="ops", level=TelemetryLevel.INFO):
+                coverage = build_coverage(cfg, pipeline_service.market_data, universe)
+                portfolio = _build_portfolio_snapshot(account)
+                held_symbols = set(portfolio.positions.keys())
+                universe_symbols = sorted(set(coverage) | held_symbols)
 
-        t.emit(
-            name="run.coverage_built",
-            channel="ops",
-            level=TelemetryLevel.INFO,
-            payload={
-                "symbols_count": int(len(universe_symbols)),
-                "symbols_sample": universe_symbols[: min(10, len(universe_symbols))],
-            },
-        )
+                t.emit(
+                    name="coverage.summary",
+                    channel="ops",
+                    level=TelemetryLevel.INFO,
+                    data={
+                        "symbols_count": int(len(universe_symbols)),
+                        "symbols_sample": universe_symbols[: min(10, len(universe_symbols))],
+                    },
+                )
 
         # 2) Run pipeline (single entrypoint)
-        result = pipeline_service.run(
-            universe_symbols=universe_symbols,
-            portfolio_snapshot=portfolio,
-            pipeline_config=pipeline_config,
-            run_id=run_id,
-        )
-
-        t.emit(
-            name="run.pipeline_finished",
-            channel="ops",
-            level=TelemetryLevel.INFO,
-            payload={"stage_stats": dict(result.stage_stats or {})},
-        )
-
-        # 3) Allocation -> target weights
-        target_alloc = allocator.allocate(result.signals_by_symbol)
-
-        # 4) Balancing -> rebalance plan
-        plan = balancer.plan(
-            portfolio=portfolio,
-            target=target_alloc,
-            threshold=cfg.application.portfolio.threshold_weight,
-        )
-        t.emit(
-            name="rebalance.plan_built",
-            channel="ops",
-            level=TelemetryLevel.INFO,
-            payload={"instructions_count": int(len(plan))},
-        )
-
-        # 5) Orders -> execution
-        orders = build_orders(portfolio, plan, cfg.trading)
-        t.emit(
-            name="orders.built",
-            channel="ops",
-            level=TelemetryLevel.INFO,
-            payload={"orders_count": int(len(orders))},
-        )
-
-        for od in orders:
-            if od.side.upper() == "BUY":
-                res = trader.market_buy(od.symbol, volume=od.volume)
-            else:
-                res = trader.market_sell(od.symbol, volume=od.volume)
-            t.emit(
-                name="trade.executed",
-                channel="ops",
-                level=TelemetryLevel.INFO,
-                scope={"symbol": od.symbol},
-                payload={"side": od.side, "volume": float(od.volume), "result": str(res)},
+            result = pipeline_service.run(
+                universe_symbols=universe_symbols,
+                portfolio_snapshot=portfolio,
+                pipeline_config=pipeline_config,
+                tracer=t,
             )
 
-        t.emit(
-            name="run.cycle_finished",
-            channel="ops",
-            level=TelemetryLevel.INFO,
-            scope={"run_mode": "live_multimodel"},
-            payload={"duration_ms": int((time.perf_counter() - start_t) * 1000)},
-        )
+            t.emit(
+                name="pipeline.run_summary",
+                channel="ops",
+                level=TelemetryLevel.INFO,
+                data={"stage_stats": dict(result.stage_stats or {})},
+            )
 
-        flush = getattr(telemetry, "flush", None)
-        if callable(flush):
-            try:
-                flush()
-            except Exception:
-                pass
+        # 3) Allocation -> target weights
+            with t.span("allocator", channel="ops", level=TelemetryLevel.INFO):
+                target_alloc = allocator.allocate(result.signals_by_symbol)
+
+        # 4) Balancing -> rebalance plan
+            with t.span("balancer", channel="ops", level=TelemetryLevel.INFO):
+                plan = balancer.plan(
+                    portfolio=portfolio,
+                    target=target_alloc,
+                    threshold=cfg.application.portfolio.threshold_weight,
+                )
+                t.emit(
+                    name="rebalance.plan_built",
+                    channel="ops",
+                    level=TelemetryLevel.INFO,
+                    data={"instructions_count": int(len(plan))},
+                )
+
+        # 5) Orders -> execution
+            with t.span("execution", channel="ops", level=TelemetryLevel.INFO):
+                orders = build_orders(portfolio, plan, cfg.trading)
+                t.emit(
+                    name="orders.built",
+                    channel="ops",
+                    level=TelemetryLevel.INFO,
+                    data={"orders_count": int(len(orders))},
+                )
+
+                for od in orders:
+                    if od.side.upper() == "BUY":
+                        res = trader.market_buy(od.symbol, volume=od.volume)
+                    else:
+                        res = trader.market_sell(od.symbol, volume=od.volume)
+                    t.emit(
+                        name="trade.executed",
+                        channel="ops",
+                        level=TelemetryLevel.INFO,
+                        attributes={"symbol": od.symbol},
+                        data={"side": od.side, "volume": float(od.volume), "result": str(res)},
+                    )
+
+            flush = getattr(telemetry, "flush", None)
+            if callable(flush):
+                try:
+                    flush()
+                except Exception:
+                    pass
 
     if cfg.application.schedule.run_forever:
         while True:
@@ -162,23 +164,23 @@ def run_live_multimodel(
                 step_once()
                 time.sleep(max(1, cfg.application.schedule.interval_seconds))
             except KeyboardInterrupt:
-                t = RunTelemetry(port=telemetry, run_id="bootstrap", base_scope={"component": "runmode"})
+                t = TraceTelemetry(port=telemetry, trace_id="bootstrap", base_attributes={"component": "runmode"})
                 t.emit(
                     name="run.stopped",
                     channel="ops",
                     level=TelemetryLevel.INFO,
-                    scope={"run_mode": "live_multimodel"},
-                    payload={"reason": "KeyboardInterrupt"},
+                    attributes={"run_mode": "live_multimodel"},
+                    data={"reason": "KeyboardInterrupt"},
                 )
                 break
             except Exception as e:
-                t = RunTelemetry(port=telemetry, run_id="bootstrap", base_scope={"component": "runmode"})
+                t = TraceTelemetry(port=telemetry, trace_id="bootstrap", base_attributes={"component": "runmode"})
                 t.emit(
                     name="error.exception",
                     channel="ops",
                     level=TelemetryLevel.ERROR,
-                    scope={"run_mode": "live_multimodel"},
-                    payload={"exception_type": type(e).__name__, "message": str(e)},
+                    attributes={"run_mode": "live_multimodel"},
+                    data={"exception_type": type(e).__name__, "message": str(e)},
                 )
                 time.sleep(3)
     else:
