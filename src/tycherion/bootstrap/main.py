@@ -1,7 +1,10 @@
 from __future__ import annotations
 
-import MetaTrader5 as mt5
+import os
+import socket
 from pathlib import Path
+
+import MetaTrader5 as mt5
 
 from tycherion.shared.config import load_config, AppConfig
 from tycherion.adapters.mt5.market_data_mt5 import MT5MarketData
@@ -10,8 +13,10 @@ from tycherion.adapters.mt5.account_mt5 import MT5Account
 from tycherion.adapters.mt5.universe_mt5 import MT5Universe
 
 from tycherion.adapters.telemetry.db_journal import DbExecutionJournalSink
+from tycherion.adapters.telemetry.mongo_journal import MongoExecutionJournalSink
 from tycherion.adapters.telemetry.console import ConsoleTelemetrySink
-from tycherion.application.telemetry import TelemetryHub, TraceTelemetry, new_trace_id
+
+from tycherion.application.telemetry import TelemetryHub, TelemetryProvider
 from tycherion.ports.telemetry import TelemetryLevel
 
 from tycherion.application.plugins import registry as _registry
@@ -35,14 +40,10 @@ def run_app(config_path: str) -> None:
     cfg = load_config(config_path)
 
     # Telemetry must be available as early as possible (e.g. plugin discovery).
-    telemetry = _build_telemetry(cfg, config_path)
+    provider = _build_telemetry(cfg, config_path)
 
     # Discover all indicators, models, allocators and balancers
-    bootstrap_tracer = TraceTelemetry(
-        port=telemetry,
-        trace_id=new_trace_id(),
-        base_attributes={"component": "bootstrap"},
-    )
+    bootstrap_tracer = provider.new_trace(base_attributes={"component": "bootstrap"})
     with bootstrap_tracer.span("bootstrap.discover", channel="ops", level=TelemetryLevel.INFO):
         _registry.auto_discover(bootstrap_tracer)
 
@@ -76,22 +77,29 @@ def run_app(config_path: str) -> None:
                 account,
                 universe,
                 pipeline_service,
-                telemetry=telemetry,
+                telemetry_provider=provider,
                 config_path=config_path,
             )
         else:
             raise SystemExit(f"Unknown run_mode: {run_mode}")
     finally:
         try:
-            telemetry.close()
+            provider.close()
         except Exception:
             pass
         mt5.shutdown()
 
-def _build_telemetry(cfg: AppConfig, config_path: str) -> TelemetryHub:
+
+def _build_telemetry(cfg: AppConfig, config_path: str) -> TelemetryProvider:
+    _ = config_path
+
+    runner_id = (os.getenv("TYCHERION_RUNNER_ID") or "").strip()
+    if not runner_id:
+        # Fallback: still deterministic enough for local dev.
+        runner_id = f"runner-{socket.gethostname()}-{os.getpid()}"
+
     sinks = []
     telemetry_cfg = cfg.telemetry
-
 
     if bool(telemetry_cfg.db_enabled) and bool(telemetry_cfg.db_dsn):
         sinks.append(
@@ -99,8 +107,21 @@ def _build_telemetry(cfg: AppConfig, config_path: str) -> TelemetryHub:
                 dsn=str(telemetry_cfg.db_dsn),
                 enabled_flag=True,
                 channels=set(telemetry_cfg.db_channels or ["audit", "ops"]),
-                min_level=telemetry_cfg.db_min_level,
+                min_level=TelemetryLevel.coerce(telemetry_cfg.db_min_level),
                 batch_size=int(telemetry_cfg.db_batch_size or 50),
+            )
+        )
+
+    if bool(telemetry_cfg.mongo_enabled) and bool(telemetry_cfg.mongo_uri):
+        sinks.append(
+            MongoExecutionJournalSink(
+                uri=str(telemetry_cfg.mongo_uri),
+                db_name=str(telemetry_cfg.mongo_db or "tycherion"),
+                collection_name=str(telemetry_cfg.mongo_collection or "execution_journal_events"),
+                enabled_flag=True,
+                channels=set(telemetry_cfg.mongo_channels or ["audit", "ops"]),
+                min_level=TelemetryLevel.coerce(telemetry_cfg.mongo_min_level),
+                batch_size=int(telemetry_cfg.mongo_batch_size or 200),
             )
         )
 
@@ -109,9 +130,9 @@ def _build_telemetry(cfg: AppConfig, config_path: str) -> TelemetryHub:
             ConsoleTelemetrySink(
                 enabled_flag=True,
                 channels=set(telemetry_cfg.console_channels or ["ops"]),
-                min_level=telemetry_cfg.console_min_level,
+                min_level=TelemetryLevel.coerce(telemetry_cfg.console_min_level),
             )
         )
 
-    return TelemetryHub(sinks=sinks)
-
+    hub = TelemetryHub(sinks=sinks)
+    return TelemetryProvider(runner_id=runner_id, hub=hub)

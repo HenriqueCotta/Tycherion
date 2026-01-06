@@ -49,6 +49,14 @@ telemetry:
   db_batch_size: 50
   # db_dsn: "postgresql://user:pass@host:5432/dbname"  # opcional
 
+  mongo_enabled: false
+  mongo_min_level: "INFO"
+  mongo_channels: ["audit", "ops"]
+  mongo_batch_size: 200
+  # mongo_uri: "mongodb://user:pass@host:27017/?authSource=admin"  # opcional
+  # mongo_db: "tycherion"
+  # mongo_collection: "execution_journal_events"
+
   console_enabled: true
   console_min_level: "INFO"
   console_channels: ["ops"]            # adicione "debug" para ver debug no terminal

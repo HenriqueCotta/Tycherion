@@ -16,13 +16,11 @@ def _summarize(event: TelemetryEvent) -> str:
     attributes = dict(event.attributes or {})
     data = dict(event.data or {})
 
-    # Prefer common identifiers
     parts: list[str] = []
     for k in ("component", "stage", "symbol", "model"):
         if k in attributes and attributes[k] not in (None, ""):
             parts.append(f"{k}={_short(attributes[k], 40)}")
 
-    # Add a small, curated payload summary
     for k in (
         "dropped_count",
         "passed_count",
@@ -38,7 +36,6 @@ def _summarize(event: TelemetryEvent) -> str:
         if k in data:
             parts.append(f"{k}={_short(data[k], 40)}")
 
-    # If nothing matched, expose payload keys (but not full payload)
     if not parts and data:
         parts.append(f"data_keys={list(data.keys())[:8]}")
 
@@ -67,11 +64,13 @@ class ConsoleTelemetrySink(TelemetrySink):
 
     def emit(self, event: TelemetryEvent) -> None:
         # Keep this stable and easy to grep
-        trace_short = _short(event.trace_id, 8)
+        trace_short = _short(event.trace_id, 18)
         msg = (
             f"[{event.level.value}]"
             f"[{event.channel}]"
+            f"[runner={_short(event.runner_id, 18)}]"
             f"[trace={trace_short}]"
+            f"[event_seq={event.event_seq}]"
         )
 
         if event.span_id:

@@ -21,8 +21,8 @@ from tycherion.domain.portfolio.entities import (
 
 from tycherion.application.pipeline.config import build_pipeline_config
 from tycherion.application.pipeline.service import ModelPipelineService
-from tycherion.application.telemetry import TraceTelemetry, new_trace_id, stable_config_hash
-from tycherion.ports.telemetry import TelemetryLevel, TelemetryPort
+from tycherion.application.telemetry import TelemetryProvider, TraceTelemetry, stable_config_hash
+from tycherion.ports.telemetry import TelemetryLevel
 
 
 def _build_portfolio_snapshot(account: AccountPort) -> PortfolioSnapshot:
@@ -33,13 +33,18 @@ def _build_portfolio_snapshot(account: AccountPort) -> PortfolioSnapshot:
     return PortfolioSnapshot(equity=equity, positions=positions)
 
 
+def _fallback_tracer() -> TraceTelemetry:
+    # Used when telemetry is disabled/unconfigured.
+    return TraceTelemetry(port=None, runner_id="runner-unknown", trace_id="no-trace", base_attributes=None)
+
+
 def run_live_multimodel(
     cfg: AppConfig,
     trader: TradingPort,
     account: AccountPort,
     universe: UniversePort,
     pipeline_service: ModelPipelineService,
-    telemetry: TelemetryPort | None = None,
+    telemetry_provider: TelemetryProvider | None = None,
     config_path: str | None = None,
 ) -> None:
     """Live runmode that delegates per-symbol pipeline execution to ModelPipelineService."""
@@ -53,11 +58,13 @@ def run_live_multimodel(
         raise RuntimeError(f"Balancer not found: {cfg.application.portfolio.balancer!r}")
 
     pipeline_config = build_pipeline_config(cfg)
-    # no stdout by default; this is emitted via telemetry when sinks are enabled
 
     def step_once() -> None:
-        trace_id = new_trace_id()
-        t = TraceTelemetry(port=telemetry, trace_id=trace_id, base_attributes={"component": "runmode"})
+        t = (
+            telemetry_provider.new_trace(base_attributes={"component": "runmode"})
+            if telemetry_provider
+            else _fallback_tracer()
+        )
 
         try:
             cfg_hash = stable_config_hash(cfg.model_dump())
@@ -78,7 +85,7 @@ def run_live_multimodel(
             },
         ):
 
-        # 1) Structural universe from coverage + ensure held symbols are included
+            # 1) Structural universe from coverage + ensure held symbols are included
             with t.span("coverage.fetch", channel="ops", level=TelemetryLevel.INFO):
                 coverage = build_coverage(cfg, pipeline_service.market_data, universe)
                 portfolio = _build_portfolio_snapshot(account)
@@ -95,7 +102,7 @@ def run_live_multimodel(
                     },
                 )
 
-        # 2) Run pipeline (single entrypoint)
+            # 2) Run pipeline (single entrypoint)
             result = pipeline_service.run(
                 universe_symbols=universe_symbols,
                 portfolio_snapshot=portfolio,
@@ -110,11 +117,11 @@ def run_live_multimodel(
                 data={"stage_stats": dict(result.stage_stats or {})},
             )
 
-        # 3) Allocation -> target weights
+            # 3) Allocation -> target weights
             with t.span("allocator", channel="ops", level=TelemetryLevel.INFO):
                 target_alloc = allocator.allocate(result.signals_by_symbol)
 
-        # 4) Balancing -> rebalance plan
+            # 4) Balancing -> rebalance plan
             with t.span("balancer", channel="ops", level=TelemetryLevel.INFO):
                 plan = balancer.plan(
                     portfolio=portfolio,
@@ -128,7 +135,7 @@ def run_live_multimodel(
                     data={"instructions_count": int(len(plan))},
                 )
 
-        # 5) Orders -> execution
+            # 5) Orders -> execution
             with t.span("execution", channel="ops", level=TelemetryLevel.INFO):
                 orders = build_orders(portfolio, plan, cfg.trading)
                 t.emit(
@@ -151,12 +158,8 @@ def run_live_multimodel(
                         data={"side": od.side, "volume": float(od.volume), "result": str(res)},
                     )
 
-            flush = getattr(telemetry, "flush", None)
-            if callable(flush):
-                try:
-                    flush()
-                except Exception:
-                    pass
+        if telemetry_provider:
+            telemetry_provider.flush()
 
     if cfg.application.schedule.run_forever:
         while True:
@@ -164,7 +167,11 @@ def run_live_multimodel(
                 step_once()
                 time.sleep(max(1, cfg.application.schedule.interval_seconds))
             except KeyboardInterrupt:
-                t = TraceTelemetry(port=telemetry, trace_id="bootstrap", base_attributes={"component": "runmode"})
+                t = (
+                    telemetry_provider.new_trace(base_attributes={"component": "runmode"})
+                    if telemetry_provider
+                    else _fallback_tracer()
+                )
                 t.emit(
                     name="run.stopped",
                     channel="ops",
@@ -172,9 +179,15 @@ def run_live_multimodel(
                     attributes={"run_mode": "live_multimodel"},
                     data={"reason": "KeyboardInterrupt"},
                 )
+                if telemetry_provider:
+                    telemetry_provider.flush()
                 break
             except Exception as e:
-                t = TraceTelemetry(port=telemetry, trace_id="bootstrap", base_attributes={"component": "runmode"})
+                t = (
+                    telemetry_provider.new_trace(base_attributes={"component": "runmode"})
+                    if telemetry_provider
+                    else _fallback_tracer()
+                )
                 t.emit(
                     name="error.exception",
                     channel="ops",
@@ -182,7 +195,8 @@ def run_live_multimodel(
                     attributes={"run_mode": "live_multimodel"},
                     data={"exception_type": type(e).__name__, "message": str(e)},
                 )
+                if telemetry_provider:
+                    telemetry_provider.flush()
                 time.sleep(3)
     else:
         step_once()
-

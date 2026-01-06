@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Iterable, Mapping
+from typing import Any, Mapping
 
 from tycherion.ports.telemetry import TelemetryEvent, TelemetryLevel, TelemetryPort, TelemetrySink
 
@@ -23,8 +23,12 @@ class TelemetryHub(TelemetryPort):
         if event.attributes:
             attributes.update(dict(event.attributes))
         merged = TelemetryEvent(
-            ts_utc=event.ts_utc,
+            schema_version=event.schema_version,
+            runner_id=event.runner_id,
             trace_id=event.trace_id,
+            event_seq=event.event_seq,
+            ts_utc=event.ts_utc,
+            mono_ns=event.mono_ns,
             span_id=event.span_id,
             parent_span_id=event.parent_span_id,
             name=event.name,
@@ -32,7 +36,6 @@ class TelemetryHub(TelemetryPort):
             channel=event.channel,
             attributes=attributes if attributes else None,
             data=dict(event.data or {}),
-            schema_version=event.schema_version,
         )
 
         for s in list(self.sinks):
@@ -41,7 +44,6 @@ class TelemetryHub(TelemetryPort):
                     continue
                 s.emit(merged)
             except Exception:
-                # telemetry must never break the run
                 continue
 
     def enabled(self, channel: str, level: str | TelemetryLevel) -> bool:

@@ -36,26 +36,44 @@ class TelemetryLevel(str, Enum):
 class TelemetryEvent:
     """Canonical, small telemetry envelope.
 
+    Design goals:
+    - stable schema (versioned)
+    - append-only journaling friendly
+    - deterministic ordering within a trace (event_seq)
+
     NOTE: `attributes` and `data` must be JSON-serialisable.
     """
 
-    ts_utc: datetime
+    schema_version: int
+    runner_id: str
     trace_id: str
+
+    # Order within the trace (1..N). Useful for ordering + idempotent dedupe in sinks.
+    event_seq: int
+
+    # When the event happened (audit / timeline)
+    ts_utc: datetime
+
+    # Optional monotonic timestamp for precision timing (not affected by NTP).
+    mono_ns: int | None
+
+    # Hierarchy
     span_id: str | None
     parent_span_id: str | None
+
+    # Semantic payload
     name: str
     level: TelemetryLevel
     channel: str
     attributes: Mapping[str, Any] | None
     data: Mapping[str, Any]
-    schema_version: int = 1
 
 
 class TelemetrySink(Protocol):
     """Adapter-side sink.
 
-    A sink can filter independently. The hub will call `enabled` to determine
-    whether some data should be built (gating), then `emit` to persist/print.
+    A sink can filter independently. The hub will call `enabled` for gating,
+    then `emit` to persist/print.
     """
 
     def enabled(self, channel: str, level: TelemetryLevel, name: str | None = None) -> bool: ...
@@ -71,3 +89,7 @@ class TelemetryPort(Protocol):
     def enabled(self, channel: str, level: str | TelemetryLevel) -> bool: ...
 
     def child(self, attributes: Mapping[str, Any]) -> "TelemetryPort": ...
+
+    def flush(self) -> None: ...
+
+    def close(self) -> None: ...

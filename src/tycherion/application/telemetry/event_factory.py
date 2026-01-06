@@ -12,7 +12,12 @@ def now_utc() -> datetime:
 
 def make_event(
     *,
+    schema_version: int,
+    runner_id: str,
     trace_id: str,
+    event_seq: int,
+    ts_utc: datetime | None = None,
+    mono_ns: int | None = None,
     span_id: str | None = None,
     parent_span_id: str | None = None,
     name: str,
@@ -20,11 +25,14 @@ def make_event(
     channel: str,
     attributes: Mapping[str, Any] | None = None,
     data: Mapping[str, Any] | None = None,
-    schema_version: int = 2,
 ) -> TelemetryEvent:
     return TelemetryEvent(
-        ts_utc=now_utc(),
+        schema_version=int(schema_version),
+        runner_id=str(runner_id),
         trace_id=str(trace_id),
+        event_seq=int(event_seq),
+        ts_utc=(ts_utc or now_utc()),
+        mono_ns=(int(mono_ns) if mono_ns is not None else None),
         span_id=(str(span_id) if span_id is not None else None),
         parent_span_id=(str(parent_span_id) if parent_span_id is not None else None),
         name=str(name),
@@ -32,5 +40,4 @@ def make_event(
         channel=str(channel),
         attributes=(dict(attributes or {}) if attributes is not None else None),
         data=dict(data or {}),
-        schema_version=int(schema_version),
     )

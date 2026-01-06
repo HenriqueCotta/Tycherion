@@ -91,15 +91,33 @@ class TelemetrySinkCfg(BaseModel):
 
 
 class TelemetryCfg(BaseModel):
-    """Telemetry configuration (bootstrap/application concern, not domain)."""
+    """Telemetry configuration (bootstrap/application concern, not domain).
 
-    # DB execution journal
+    Notes about the two databases we plan to have in Tycherion:
+    - PostgreSQL: for *analytics* and structured datasets (models, indicators, actions, etc.).
+      The schema for this is not defined yet.
+    - MongoDB: for *operational health / audit journal* (telemetry events, errors, spans, etc.).
+
+    Right now this config focuses on telemetry sinks (journal-like append-only storage).
+    """
+
+    # PostgreSQL execution journal (optional)
     db_enabled: bool = True
     # PostgreSQL DSN, e.g. "postgresql://user:pass@host:5432/dbname"
     db_dsn: Optional[str] = None
     db_channels: list[str] = ["audit", "ops"]
     db_min_level: str = "INFO"
     db_batch_size: int = 50
+
+    # MongoDB execution journal (optional)
+    mongo_enabled: bool = False
+    # Mongo URI, e.g. "mongodb://user:pass@host:27017/?authSource=admin"
+    mongo_uri: Optional[str] = None
+    mongo_db: str = "tycherion"
+    mongo_collection: str = "execution_journal_events"
+    mongo_channels: list[str] = ["audit", "ops"]
+    mongo_min_level: str = "INFO"
+    mongo_batch_size: int = 200
 
     # Console sink
     console_enabled: bool = False
