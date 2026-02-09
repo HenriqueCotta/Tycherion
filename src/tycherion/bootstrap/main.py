@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import socket
-from pathlib import Path
 
 import MetaTrader5 as mt5
 
@@ -12,12 +11,10 @@ from tycherion.adapters.mt5.trading_mt5 import MT5Trader
 from tycherion.adapters.mt5.account_mt5 import MT5Account
 from tycherion.adapters.mt5.universe_mt5 import MT5Universe
 
-from tycherion.adapters.telemetry.db_journal import DbExecutionJournalSink
-from tycherion.adapters.telemetry.mongo_journal import MongoExecutionJournalSink
-from tycherion.adapters.telemetry.console import ConsoleTelemetrySink
+from tycherion.adapters.observability.noop.noop_observability import NoopObservability
 
-from tycherion.application.telemetry import TelemetryHub, TelemetryProvider
-from tycherion.ports.telemetry import TelemetryLevel
+from tycherion.ports.observability.observability import ObservabilityPort
+from tycherion.ports.observability.types import Severity, TYCHERION_SCHEMA_VERSION
 
 from tycherion.application.plugins import registry as _registry
 from tycherion.application.pipeline.service import ModelPipelineService
@@ -39,13 +36,15 @@ def _ensure_initialized(cfg: AppConfig) -> None:
 def run_app(config_path: str) -> None:
     cfg = load_config(config_path)
 
-    # Telemetry must be available as early as possible (e.g. plugin discovery).
-    provider = _build_telemetry(cfg, config_path)
+    # Observability must be available as early as possible (e.g. plugin discovery).
+    obs = _build_observability(cfg, config_path)
 
-    # Discover all indicators, models, allocators and balancers
-    bootstrap_tracer = provider.new_trace(base_attributes={"component": "bootstrap"})
-    with bootstrap_tracer.span("bootstrap.discover", channel="ops", level=TelemetryLevel.INFO):
-        _registry.auto_discover(bootstrap_tracer)
+    tracer = obs.traces.get_tracer("tycherion.bootstrap", version=TYCHERION_SCHEMA_VERSION)
+    logger = obs.logs.get_logger("tycherion.bootstrap", version=TYCHERION_SCHEMA_VERSION)
+
+    with tracer.start_as_current_span("bootstrap.discover", attributes={"component": "bootstrap"}):
+        _registry.auto_discover(observability=obs)
+        logger.emit("Plugin discovery completed", Severity.INFO, {"tycherion.channel": "ops"})
 
     _ensure_initialized(cfg)
     try:
@@ -77,62 +76,64 @@ def run_app(config_path: str) -> None:
                 account,
                 universe,
                 pipeline_service,
-                telemetry_provider=provider,
+                observability=obs,
                 config_path=config_path,
             )
         else:
             raise SystemExit(f"Unknown run_mode: {run_mode}")
     finally:
         try:
-            provider.close()
+            obs.shutdown()
         except Exception:
             pass
         mt5.shutdown()
 
 
-def _build_telemetry(cfg: AppConfig, config_path: str) -> TelemetryProvider:
+def _parse_severity(level: str | None) -> Severity:
+    lvl = (level or "INFO").strip().upper()
+    try:
+        return Severity[lvl]
+    except Exception:
+        # Accept legacy values too
+        if lvl in ("WARNING",):
+            return Severity.WARN
+        return Severity.INFO
+
+
+def _build_observability(cfg: AppConfig, config_path: str) -> ObservabilityPort:
     _ = config_path
 
     runner_id = (os.getenv("TYCHERION_RUNNER_ID") or "").strip()
     if not runner_id:
-        # Fallback: still deterministic enough for local dev.
+        # Fallback: deterministic enough for local dev.
         runner_id = f"runner-{socket.gethostname()}-{os.getpid()}"
 
-    sinks = []
-    telemetry_cfg = cfg.telemetry
+    tel = cfg.telemetry
 
-    if bool(telemetry_cfg.db_enabled) and bool(telemetry_cfg.db_dsn):
-        sinks.append(
-            DbExecutionJournalSink(
-                dsn=str(telemetry_cfg.db_dsn),
-                enabled_flag=True,
-                channels=set(telemetry_cfg.db_channels or ["audit", "ops"]),
-                min_level=TelemetryLevel.coerce(telemetry_cfg.db_min_level),
-                batch_size=int(telemetry_cfg.db_batch_size or 50),
-            )
+    try:
+        from tycherion.adapters.observability.otel.otel_observability import (
+            OtelObservability,
+            OtelObservabilityConfig,
         )
 
-    if bool(telemetry_cfg.mongo_enabled) and bool(telemetry_cfg.mongo_uri):
-        sinks.append(
-            MongoExecutionJournalSink(
-                uri=str(telemetry_cfg.mongo_uri),
-                db_name=str(telemetry_cfg.mongo_db or "tycherion"),
-                collection_name=str(telemetry_cfg.mongo_collection or "execution_journal_events"),
-                enabled_flag=True,
-                channels=set(telemetry_cfg.mongo_channels or ["audit", "ops"]),
-                min_level=TelemetryLevel.coerce(telemetry_cfg.mongo_min_level),
-                batch_size=int(telemetry_cfg.mongo_batch_size or 200),
+        return OtelObservability(
+            OtelObservabilityConfig(
+                runner_id=runner_id,
+                schema_version=TYCHERION_SCHEMA_VERSION,
+                console_enabled=bool(tel.console_enabled),
+                console_min_severity=_parse_severity(tel.console_min_level),
+                console_show_span_lifecycle=True,
+                otlp_enabled=bool(getattr(tel, "otlp_enabled", False)),
+                otlp_endpoint=str(getattr(tel, "otlp_endpoint", "http://localhost:4317") or "http://localhost:4317"),
+                mongo_audit_enabled=bool(tel.mongo_enabled),
+                mongo_uri=str(tel.mongo_uri) if tel.mongo_uri else None,
+                mongo_db=str(tel.mongo_db or "tycherion"),
+                mongo_collection=str(tel.mongo_collection or "ops_journal"),
+                mongo_min_severity=_parse_severity(tel.mongo_min_level),
+                mongo_batch_size=int(tel.mongo_batch_size or 200),
             )
         )
-
-    if bool(telemetry_cfg.console_enabled):
-        sinks.append(
-            ConsoleTelemetrySink(
-                enabled_flag=True,
-                channels=set(telemetry_cfg.console_channels or ["ops"]),
-                min_level=TelemetryLevel.coerce(telemetry_cfg.console_min_level),
-            )
-        )
-
-    hub = TelemetryHub(sinks=sinks)
-    return TelemetryProvider(runner_id=runner_id, hub=hub)
+    except Exception as e:
+        # Hard-fail would be annoying during local dev if deps are missing, so we degrade to noop.
+        print(f"[tycherion] Observability disabled (failed to init OTel adapter): {e}")
+        return NoopObservability()

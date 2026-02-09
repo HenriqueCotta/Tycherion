@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import time
 from typing import Dict
 
@@ -7,6 +9,9 @@ from tycherion.shared.config import AppConfig
 from tycherion.ports.trading import TradingPort
 from tycherion.ports.account import AccountPort
 from tycherion.ports.universe import UniversePort
+
+from tycherion.ports.observability.observability import ObservabilityPort
+from tycherion.ports.observability.types import Severity, TYCHERION_SCHEMA_VERSION
 
 from tycherion.application.plugins.registry import (
     ALLOCATORS,
@@ -21,8 +26,6 @@ from tycherion.domain.portfolio.entities import (
 
 from tycherion.application.pipeline.config import build_pipeline_config
 from tycherion.application.pipeline.service import ModelPipelineService
-from tycherion.application.telemetry import TelemetryProvider, TraceTelemetry, stable_config_hash
-from tycherion.ports.telemetry import TelemetryLevel
 
 
 def _build_portfolio_snapshot(account: AccountPort) -> PortfolioSnapshot:
@@ -33,9 +36,12 @@ def _build_portfolio_snapshot(account: AccountPort) -> PortfolioSnapshot:
     return PortfolioSnapshot(equity=equity, positions=positions)
 
 
-def _fallback_tracer() -> TraceTelemetry:
-    # Used when telemetry is disabled/unconfigured.
-    return TraceTelemetry(port=None, runner_id="runner-unknown", trace_id="no-trace", base_attributes=None)
+def _stable_config_hash(d: dict) -> str:
+    try:
+        blob = json.dumps(d, sort_keys=True, default=str).encode("utf-8")
+        return hashlib.sha256(blob).hexdigest()[:16]
+    except Exception:
+        return ""
 
 
 def run_live_multimodel(
@@ -44,7 +50,8 @@ def run_live_multimodel(
     account: AccountPort,
     universe: UniversePort,
     pipeline_service: ModelPipelineService,
-    telemetry_provider: TelemetryProvider | None = None,
+    *,
+    observability: ObservabilityPort,
     config_path: str | None = None,
 ) -> None:
     """Live runmode that delegates per-symbol pipeline execution to ModelPipelineService."""
@@ -59,107 +66,104 @@ def run_live_multimodel(
 
     pipeline_config = build_pipeline_config(cfg)
 
+    tracer = observability.traces.get_tracer("tycherion.runmodes.live_multimodel", version=TYCHERION_SCHEMA_VERSION)
+    logger = observability.logs.get_logger("tycherion.runmodes.live_multimodel", version=TYCHERION_SCHEMA_VERSION)
+
     def step_once() -> None:
-        t = (
-            telemetry_provider.new_trace(base_attributes={"component": "runmode"})
-            if telemetry_provider
-            else _fallback_tracer()
-        )
+        cfg_hash = _stable_config_hash(cfg.model_dump())
 
-        try:
-            cfg_hash = stable_config_hash(cfg.model_dump())
-        except Exception:
-            cfg_hash = ""
-
-        with t.span(
+        with tracer.start_as_current_span(
             "run",
-            channel="ops",
-            level=TelemetryLevel.INFO,
-            attributes={"run_mode": "live_multimodel"},
-            data={
+            attributes={
+                "run_mode": "live_multimodel",
                 "timeframe": cfg.timeframe,
                 "lookback_days": int(cfg.lookback_days),
                 "pipeline_stages": [st.name for st in pipeline_config.stages],
                 "config_hash": cfg_hash,
                 "config_path": config_path,
             },
-        ):
+        ) as span_run:
+            try:
+                # 1) Structural universe from coverage + ensure held symbols are included
+                with tracer.start_as_current_span("coverage.fetch") as span_cov:
+                    coverage = build_coverage(cfg, pipeline_service.market_data, universe)
+                    portfolio = _build_portfolio_snapshot(account)
+                    held_symbols = set(portfolio.positions.keys())
+                    universe_symbols = sorted(set(coverage) | held_symbols)
 
-            # 1) Structural universe from coverage + ensure held symbols are included
-            with t.span("coverage.fetch", channel="ops", level=TelemetryLevel.INFO):
-                coverage = build_coverage(cfg, pipeline_service.market_data, universe)
-                portfolio = _build_portfolio_snapshot(account)
-                held_symbols = set(portfolio.positions.keys())
-                universe_symbols = sorted(set(coverage) | held_symbols)
-
-                t.emit(
-                    name="coverage.summary",
-                    channel="ops",
-                    level=TelemetryLevel.INFO,
-                    data={
-                        "symbols_count": int(len(universe_symbols)),
-                        "symbols_sample": universe_symbols[: min(10, len(universe_symbols))],
-                    },
-                )
-
-            # 2) Run pipeline (single entrypoint)
-            result = pipeline_service.run(
-                universe_symbols=universe_symbols,
-                portfolio_snapshot=portfolio,
-                pipeline_config=pipeline_config,
-                tracer=t,
-            )
-
-            t.emit(
-                name="pipeline.run_summary",
-                channel="ops",
-                level=TelemetryLevel.INFO,
-                data={"stage_stats": dict(result.stage_stats or {})},
-            )
-
-            # 3) Allocation -> target weights
-            with t.span("allocator", channel="ops", level=TelemetryLevel.INFO):
-                target_alloc = allocator.allocate(result.signals_by_symbol)
-
-            # 4) Balancing -> rebalance plan
-            with t.span("balancer", channel="ops", level=TelemetryLevel.INFO):
-                plan = balancer.plan(
-                    portfolio=portfolio,
-                    target=target_alloc,
-                    threshold=cfg.application.portfolio.threshold_weight,
-                )
-                t.emit(
-                    name="rebalance.plan_built",
-                    channel="ops",
-                    level=TelemetryLevel.INFO,
-                    data={"instructions_count": int(len(plan))},
-                )
-
-            # 5) Orders -> execution
-            with t.span("execution", channel="ops", level=TelemetryLevel.INFO):
-                orders = build_orders(portfolio, plan, cfg.trading)
-                t.emit(
-                    name="orders.built",
-                    channel="ops",
-                    level=TelemetryLevel.INFO,
-                    data={"orders_count": int(len(orders))},
-                )
-
-                for od in orders:
-                    if od.side.upper() == "BUY":
-                        res = trader.market_buy(od.symbol, volume=od.volume)
-                    else:
-                        res = trader.market_sell(od.symbol, volume=od.volume)
-                    t.emit(
-                        name="trade.executed",
-                        channel="ops",
-                        level=TelemetryLevel.INFO,
-                        attributes={"symbol": od.symbol},
-                        data={"side": od.side, "volume": float(od.volume), "result": str(res)},
+                    span_cov.add_event(
+                        "coverage.summary",
+                        {
+                            "symbols_count": int(len(universe_symbols)),
+                            "symbols_sample": universe_symbols[: min(10, len(universe_symbols))],
+                        },
                     )
 
-        if telemetry_provider:
-            telemetry_provider.flush()
+                # 2) Run pipeline (single entrypoint)
+                result = pipeline_service.run(
+                    universe_symbols=universe_symbols,
+                    portfolio_snapshot=portfolio,
+                    pipeline_config=pipeline_config,
+                    observability=observability,
+                )
+
+                span_run.add_event(
+                    "pipeline.run_summary",
+                    {"stage_stats": dict(result.stage_stats or {})},
+                )
+
+                # 3) Allocation -> target weights
+                with tracer.start_as_current_span("allocator") as span_alloc:
+                    target_alloc = allocator.allocate(result.signals_by_symbol)
+                    span_alloc.add_event("allocator.completed", {"symbols_count": int(len(result.signals_by_symbol))})
+
+                # 4) Balancing -> rebalance plan
+                with tracer.start_as_current_span("balancer") as span_bal:
+                    plan = balancer.plan(
+                        portfolio=portfolio,
+                        target=target_alloc,
+                        threshold=cfg.application.portfolio.threshold_weight,
+                    )
+                    span_bal.add_event("rebalance.plan_built", {"instructions_count": int(len(plan))})
+
+                # 5) Orders -> execution
+                with tracer.start_as_current_span("execution") as span_exec:
+                    orders = build_orders(portfolio, plan, cfg.trading)
+                    span_exec.add_event("orders.built", {"orders_count": int(len(orders))})
+
+                    for od in orders:
+                        if od.side.upper() == "BUY":
+                            res = trader.market_buy(od.symbol, volume=od.volume)
+                        else:
+                            res = trader.market_sell(od.symbol, volume=od.volume)
+
+                        logger.emit(
+                            "trade.executed",
+                            Severity.INFO,
+                            {
+                                "tycherion.channel": "ops",
+                                "symbol": od.symbol,
+                                "side": od.side,
+                                "volume": float(od.volume),
+                                "result": str(res),
+                            },
+                        )
+
+                span_run.set_status_ok()
+            except BaseException as e:
+                span_run.record_exception(e)
+                span_run.set_status_error(str(e))
+                logger.emit(
+                    "run.exception",
+                    Severity.ERROR,
+                    {
+                        "tycherion.channel": "ops",
+                        "run_mode": "live_multimodel",
+                        "exception_type": type(e).__name__,
+                        "message": str(e),
+                    },
+                )
+                raise
 
     if cfg.application.schedule.run_forever:
         while True:
@@ -167,36 +171,28 @@ def run_live_multimodel(
                 step_once()
                 time.sleep(max(1, cfg.application.schedule.interval_seconds))
             except KeyboardInterrupt:
-                t = (
-                    telemetry_provider.new_trace(base_attributes={"component": "runmode"})
-                    if telemetry_provider
-                    else _fallback_tracer()
+                logger.emit(
+                    "run.stopped",
+                    Severity.INFO,
+                    {
+                        "tycherion.channel": "ops",
+                        "run_mode": "live_multimodel",
+                        "reason": "KeyboardInterrupt",
+                    },
                 )
-                t.emit(
-                    name="run.stopped",
-                    channel="ops",
-                    level=TelemetryLevel.INFO,
-                    attributes={"run_mode": "live_multimodel"},
-                    data={"reason": "KeyboardInterrupt"},
-                )
-                if telemetry_provider:
-                    telemetry_provider.flush()
                 break
             except Exception as e:
-                t = (
-                    telemetry_provider.new_trace(base_attributes={"component": "runmode"})
-                    if telemetry_provider
-                    else _fallback_tracer()
+                # Error already recorded inside the run span, but keep a top-level log too.
+                logger.emit(
+                    "run.loop_exception",
+                    Severity.ERROR,
+                    {
+                        "tycherion.channel": "ops",
+                        "run_mode": "live_multimodel",
+                        "exception_type": type(e).__name__,
+                        "message": str(e),
+                    },
                 )
-                t.emit(
-                    name="error.exception",
-                    channel="ops",
-                    level=TelemetryLevel.ERROR,
-                    attributes={"run_mode": "live_multimodel"},
-                    data={"exception_type": type(e).__name__, "message": str(e)},
-                )
-                if telemetry_provider:
-                    telemetry_provider.flush()
                 time.sleep(3)
     else:
         step_once()

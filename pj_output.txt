@@ -1,4 +1,6 @@
 Tycherion
+├── .codex
+│   └── >>> config.toml <<<
 ├── >>> .env <<<
 ├── >>> .env.example <<<
 ├── .git (ignored)
@@ -12,6 +14,7 @@ Tycherion
 ├── pj_output.txt (ignored)
 ├── >>> pyproject.toml <<<
 ├── >>> requirements.txt <<<
+├── requirements_v1.txt (ignored)
 ├── scripts
 │   └── >>> run_demo.py <<<
 ├── src
@@ -23,6 +26,27 @@ Tycherion
 │       │   │   ├── >>> market_data_mt5.py <<<
 │       │   │   ├── >>> trading_mt5.py <<<
 │       │   │   └── >>> universe_mt5.py <<<
+│       │   ├── observability
+│       │   │   ├── >>> __init__.py <<<
+│       │   │   ├── __pycache__ (ignored)
+│       │   │   ├── memory
+│       │   │   │   ├── >>> __init__.py <<<
+│       │   │   │   ├── __pycache__ (ignored)
+│       │   │   │   └── >>> memory_observability.py <<<
+│       │   │   ├── noop
+│       │   │   │   ├── >>> __init__.py <<<
+│       │   │   │   ├── __pycache__ (ignored)
+│       │   │   │   └── >>> noop_observability.py <<<
+│       │   │   └── otel
+│       │   │       ├── >>> __init__.py <<<
+│       │   │       ├── __pycache__ (ignored)
+│       │   │       ├── >>> console.py <<<
+│       │   │       ├── >>> event_seq.py <<<
+│       │   │       ├── >>> mongo_audit.py <<<
+│       │   │       ├── >>> otel_logs.py <<<
+│       │   │       ├── >>> otel_metrics.py <<<
+│       │   │       ├── >>> otel_observability.py <<<
+│       │   │       └── >>> otel_traces.py <<<
 │       │   └── telemetry
 │       │       ├── >>> __init__.py <<<
 │       │       ├── __pycache__ (ignored)
@@ -65,6 +89,7 @@ Tycherion
 │       │   ├── __pycache__ (ignored)
 │       │   ├── market
 │       │   │   ├── >>> __init__.py <<<
+│       │   │   ├── __pycache__ (ignored)
 │       │   │   └── >>> entities.py <<<
 │       │   ├── portfolio
 │       │   │   ├── >>> __init__.py <<<
@@ -102,6 +127,14 @@ Tycherion
 │       │   ├── __pycache__ (ignored)
 │       │   ├── >>> account.py <<<
 │       │   ├── >>> market_data.py <<<
+│       │   ├── observability
+│       │   │   ├── >>> __init__.py <<<
+│       │   │   ├── __pycache__ (ignored)
+│       │   │   ├── >>> logs.py <<<
+│       │   │   ├── >>> metrics.py <<<
+│       │   │   ├── >>> observability.py <<<
+│       │   │   ├── >>> traces.py <<<
+│       │   │   └── >>> types.py <<<
 │       │   ├── >>> telemetry.py <<<
 │       │   ├── >>> trading.py <<<
 │       │   └── >>> universe.py <<<
@@ -111,7 +144,8 @@ Tycherion
 │           └── >>> decorators.py <<<
 ├── tests
 │   └── >>> test_telemetry.py <<<
-└── tycherion_guidelines.md (ignored)
+├── tycherion_guidelines.md (ignored)
+└── >>> tycherion_observability_flow.mmd <<<
 
 
 
@@ -159,7 +193,12 @@ dependencies = [
   "pyyaml>=6.0",
   "python-dotenv>=1.0",
   "pydantic>=2.8",
-  "typing-extensions>=4.12"
+  "typing-extensions>=4.12",
+  "opentelemetry-api>=1.26",
+  "opentelemetry-sdk>=1.26",
+  "opentelemetry-exporter-otlp-proto-grpc>=1.26",
+  "opentelemetry-exporter-otlp-proto-http>=1.26",
+  "pymongo>=4.7"
 ]
 
 [tool.setuptools]
@@ -184,8 +223,129 @@ pyyaml>=6.0
 python-dotenv>=1.0
 pydantic>=2.8
 typing-extensions>=4.12
+opentelemetry-api>=1.26
+opentelemetry-sdk>=1.26
+opentelemetry-exporter-otlp-proto-grpc>=1.26
+opentelemetry-exporter-otlp-proto-http>=1.26
+pymongo>=4.7
 
 --- requirements.txt:END ---
+
+--- tycherion_observability_flow.mmd:START ---
+---
+id: eb18670e-f616-48e5-8b72-28a183db386f
+---
+flowchart TD
+  A["scripts/run_demo.py"] --> B["bootstrap/main.py<br/>run_app()"]
+  B --> C["bootstrap/main.py<br/>_build_observability()"]
+  C -->|success| D["Adapter: OtelObservability"]
+  C -->|fallback| Dn["Adapter: NoopObservability"]
+  D --> E["Port Facade: ObservabilityPort"]
+  Dn --> E
+
+  subgraph CORE["Core: Application & Domain"]
+    direction TB
+    R["application/runmodes/live_multimodel.py"] -->|inject ObservabilityPort| P["application/pipeline/service.py<br/>ModelPipelineService.run()"]
+    R --> S1["macro spans<br/>run, coverage.fetch, pipeline,<br/>allocator, balancer, execution"]
+    P --> S2["span events<br/>pipeline.stage_started / completed"]
+    P --> L1["logs<br/>logger.emit(body, severity, attrs)"]
+  end
+
+  subgraph PORTS["Ports: src/tycherion/ports/observability"]
+    direction TB
+    OP["ObservabilityPort"]
+    TP["TracerProviderPort"] --> T["TracerPort"] --> SC["start_as_current_span(name, attrs)<br/>yields SpanPort"]
+    LP["LoggerProviderPort"] --> LG["LoggerPort.emit(...)"]
+    MP["MeterProviderPort"] --> M["MeterPort"] --> CTR["CounterPort.add(value, attrs)"]
+  end
+
+  CORE --> OP
+  OP --> TP
+  OP --> LP
+  OP --> MP
+
+  subgraph ADAPTERS["Adapters: src/tycherion/adapters/observability/otel"]
+    direction TB
+
+    D1["OtelObservability"]
+    ES["EventSeqManager<br/>(contextvars, per active trace)"]
+    CON["ConsoleRenderer<br/>(human-readable output)"]
+    MONGO["MongoOpsJournal<br/>(optional ops_journal sink)"]
+
+    RES["OTel Resource attributes<br/>service.name=tycherion<br/>service.instance.id=runner_id<br/>tycherion.runner_id, tycherion.schema_version"]
+    SDKTP["OTel SDK TracerProvider"]
+    SDKMP["OTel SDK MeterProvider"]
+
+    WTP["OtelTracerProvider<br/>implements TracerProviderPort"]
+    WT["OtelTracer<br/>implements TracerPort"]
+    WS["OtelSpan<br/>implements SpanPort"]
+
+    WLP["OtelLoggerProvider<br/>implements LoggerProviderPort"]
+    WLG["OtelLogger<br/>implements LoggerPort"]
+
+    WMP["OtelMeterProvider<br/>implements MeterProviderPort"]
+
+    BSP["BatchSpanProcessor"]
+    OTLP["OTLP Span Exporter (optional)<br/>TYCHERION_OTLP_ENABLED + endpoint"]
+    COL["Collector target (future)<br/>Grafana Alloy / OTel Collector"]
+
+    PMR["PeriodicExportingMetricReader"]
+    OTLPm["OTLP Metric Exporter (optional)"]
+  end
+
+  %% Adapter wiring
+  D1 --> RES --> SDKTP
+  D1 --> SDKMP
+  D1 --> ES
+  D1 --> CON
+  D1 -->|if enabled| MONGO
+
+  %% Providers returned by facade
+  D --> OP
+  D1 --> WTP --> WT --> WS
+  D1 --> WLP --> WLG
+  D1 --> WMP
+
+  %% Core calls through ports
+  TP --> WTP
+  T --> WT
+  SC --> WS
+  LG --> WLG
+  M --> WMP
+
+  %% Trace + event_seq behavior
+  WT -->|start span| SDKTP
+  WT -->|root trace begins| ES
+  WS -->|add_event attaches<br/>tycherion.schema_version + tycherion.event_seq| ES
+  WLG -->|emit correlates current span<br/>and attaches tycherion.event_seq| ES
+
+  %% Fan-out
+  WS --> CON
+  WLG --> CON
+  WS -->|span events| MONGO
+  WLG -->|logs| MONGO
+
+  %% OTLP export (spans/metrics)
+  SDKTP --> BSP --> OTLP --> COL
+  SDKMP --> PMR --> OTLPm --> COL
+
+  %% Notes
+  N1["Core never imports opentelemetry.*<br/>Only interacts via Ports API"]:::note
+  N2["Logs are correlated using OTel trace context.<br/>Current sinks: Console + optional Mongo.<br/>OTel Logs SDK can be added later without changing Ports."]:::note
+  N3["event_seq is Tycherion-specific.<br/>It increments only while a trace is active<br/>and is attached to logs + span events."]:::note
+
+  CORE --- N1
+  ADAPTERS --- N2
+  ES --- N3
+
+  classDef note fill:#fff7e6,stroke:#f0b429,color:#4a3b00;
+--- tycherion_observability_flow.mmd:END ---
+
+--- .codex\config.toml:START ---
+project_doc_fallback_filenames = ["tycherion_guidelines.md"]
+project_doc_max_bytes = 65536
+
+--- .codex\config.toml:END ---
 
 --- .vscode\settings.json:START ---
 {
@@ -196,68 +356,58 @@ typing-extensions>=4.12
 --- .vscode\settings.json:END ---
 
 --- configs\demo.yaml:START ---
-timeframe: "H1"
-
+timeframe: H1
 lookback_days: 15
-
 trading:
   dry_run: true
   require_demo: true
   deviation_points: 10
-  volume_mode: "min"
+  volume_mode: min
   fixed_volume: 100.0
-
 risk:
   risk_per_trade_pct: 0.5
   max_daily_loss_pct: 2.0
-
 mt5:
   terminal_path: null
   server: null
   login: null
   password: null
-
 application:
   run_mode:
-    name: "live_multimodel"
-  playbook: "default"
+    name: live_multimodel
+  playbook: default
   schedule:
     run_forever: true
     interval_seconds: 60
-
   coverage:
-    source: "static"
-    symbols: ["PETR4", "VALE3", "WIN$", "WDO$"]
+    source: static
+    symbols:
+    - PETR4
+    - VALE3
+    - WIN$
+    - WDO$
     pattern: null
-
   models:
     pipeline:
-      - "trend_following"
-      - "mean_reversion"
-
+    - trend_following
+    - mean_reversion
   portfolio:
-    allocator: "proportional"
-    balancer: "threshold"
+    allocator: proportional
+    balancer: threshold
     threshold_weight: 0.25
-
 telemetry:
   db_enabled: false
-  db_min_level: "INFO"
-  db_channels: ["audit", "ops"]        # adicione "debug" se quiser persistir debug
+  db_min_level: INFO
   db_batch_size: 50
-  # db_dsn: "postgresql://user:pass@host:5432/dbname"  # opcional
-
   mongo_enabled: false
-  mongo_min_level: "INFO"
-  mongo_channels: ["audit", "ops"]
+  mongo_min_level: INFO
   mongo_batch_size: 200
-  # mongo_uri: "mongodb://user:pass@host:27017/?authSource=admin"  # opcional
-  # mongo_db: "tycherion"
-  # mongo_collection: "execution_journal_events"
-
   console_enabled: true
-  console_min_level: "INFO"
-  console_channels: ["ops"]            # adicione "debug" para ver debug no terminal
+  console_min_level: INFO
+  otlp_enabled: false
+  otlp_endpoint: http://localhost:4317
+  mongo_db: tycherion
+  mongo_collection: ops_journal
 
 --- configs\demo.yaml:END ---
 
@@ -448,6 +598,1344 @@ class MT5Universe(UniversePort):
         return [s.name for s in syms]
 
 --- src\tycherion\adapters\mt5\universe_mt5.py:END ---
+
+--- src\tycherion\adapters\observability\__init__.py:START ---
+
+--- src\tycherion\adapters\observability\__init__.py:END ---
+
+--- src\tycherion\adapters\observability\memory\memory_observability.py:START ---
+from __future__ import annotations
+
+from contextlib import contextmanager
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+import os
+import secrets
+import time
+from typing import Any, Dict, List, Optional
+
+import contextvars
+
+from tycherion.ports.observability.logs import LoggerPort, LoggerProviderPort
+from tycherion.ports.observability.metrics import CounterPort, MeterPort, MeterProviderPort
+from tycherion.ports.observability.observability import ObservabilityPort
+from tycherion.ports.observability.traces import SpanPort, TracerPort, TracerProviderPort
+from tycherion.ports.observability.types import Attributes, Severity, TYCHERION_SCHEMA_VERSION
+
+
+_current_span: contextvars.ContextVar["MemorySpan | None"] = contextvars.ContextVar("tycherion_mem_current_span", default=None)
+_current_trace_state: contextvars.ContextVar["_TraceState | None"] = contextvars.ContextVar("tycherion_mem_trace_state", default=None)
+
+
+@dataclass
+class _TraceState:
+    trace_id: str
+    event_seq: int = 0
+
+
+def _new_trace_id() -> str:
+    return secrets.token_hex(16)  # 32 hex chars
+
+
+def _new_span_id() -> str:
+    return secrets.token_hex(8)  # 16 hex chars
+
+
+@dataclass
+class MemorySpan(SpanPort):
+    name: str
+    trace_id: str
+    span_id: str
+    parent_span_id: Optional[str]
+    start_ns: int = field(default_factory=time.time_ns)
+    end_ns: Optional[int] = None
+    status: str = "UNSET"
+    attributes: Dict[str, Any] = field(default_factory=dict)
+    events: List[Dict[str, Any]] = field(default_factory=list)
+    exceptions: List[str] = field(default_factory=list)
+
+    def set_attribute(self, key: str, value: object) -> None:
+        self.attributes[key] = value
+
+    def set_attributes(self, attributes: Attributes) -> None:
+        for k, v in attributes.items():
+            self.attributes[k] = v
+
+    def add_event(self, name: str, attributes: Attributes | None = None) -> None:
+        st = _current_trace_state.get()
+        seq = None
+        if st and st.trace_id == self.trace_id:
+            st.event_seq += 1
+            seq = st.event_seq
+
+        ev_attrs: Dict[str, Any] = dict(attributes or {})
+        ev_attrs["tycherion.schema_version"] = TYCHERION_SCHEMA_VERSION
+        if seq is not None:
+            ev_attrs["tycherion.event_seq"] = seq
+
+        self.events.append(
+            {
+                "ts": datetime.now(timezone.utc).isoformat(),
+                "name": name,
+                "attributes": ev_attrs,
+            }
+        )
+
+    def record_exception(self, exc: BaseException) -> None:
+        self.exceptions.append(repr(exc))
+
+    def set_status_ok(self) -> None:
+        self.status = "OK"
+
+    def set_status_error(self, message: str | None = None) -> None:
+        self.status = "ERROR"
+        if message:
+            self.attributes.setdefault("error.message", message)
+
+    def is_recording(self) -> bool:
+        return True
+
+
+class MemoryTracer(TracerPort):
+    def __init__(self, sink: "MemorySink") -> None:
+        self._sink = sink
+
+    @contextmanager
+    def start_as_current_span(self, name: str, attributes: Attributes | None = None):
+        parent = _current_span.get()
+        if parent is None:
+            trace_id = _new_trace_id()
+            _current_trace_state.set(_TraceState(trace_id=trace_id, event_seq=0))
+        else:
+            trace_id = parent.trace_id
+
+        span = MemorySpan(
+            name=name,
+            trace_id=trace_id,
+            span_id=_new_span_id(),
+            parent_span_id=parent.span_id if parent else None,
+        )
+        span.set_attributes(attributes or {})
+        token = _current_span.set(span)
+        self._sink.spans_started.append(span)
+        try:
+            yield span
+        finally:
+            span.end_ns = time.time_ns()
+            _current_span.reset(token)
+            self._sink.spans_ended.append(span)
+            if parent is None:
+                _current_trace_state.set(None)
+
+
+class MemoryTracerProvider(TracerProviderPort):
+    def __init__(self, sink: "MemorySink") -> None:
+        self._sink = sink
+
+    def get_tracer(self, name: str, version: str | None = None) -> TracerPort:
+        return MemoryTracer(self._sink)
+
+
+@dataclass
+class MemoryLogRecord:
+    ts: str
+    body: str
+    severity: Severity
+    attributes: Dict[str, Any]
+    trace_id: Optional[str]
+    span_id: Optional[str]
+
+
+class MemoryLogger(LoggerPort):
+    def __init__(self, sink: "MemorySink", min_severity: Severity = Severity.INFO) -> None:
+        self._sink = sink
+        self._min_severity = min_severity
+        self._rank = {
+            Severity.TRACE: 0,
+            Severity.DEBUG: 10,
+            Severity.INFO: 20,
+            Severity.WARN: 30,
+            Severity.ERROR: 40,
+            Severity.FATAL: 50,
+        }
+
+    def is_enabled(self, severity: Severity) -> bool:
+        return self._rank[severity] >= self._rank[self._min_severity]
+
+    def emit(self, body: str, severity: Severity, attributes: Attributes | None = None) -> None:
+        if not self.is_enabled(severity):
+            return
+
+        span = _current_span.get()
+        trace_id = span.trace_id if span else None
+        span_id = span.span_id if span else None
+
+        st = _current_trace_state.get()
+        seq = None
+        if st and trace_id and st.trace_id == trace_id:
+            st.event_seq += 1
+            seq = st.event_seq
+
+        attrs: Dict[str, Any] = dict(attributes or {})
+        attrs["tycherion.schema_version"] = TYCHERION_SCHEMA_VERSION
+        if seq is not None:
+            attrs["tycherion.event_seq"] = seq
+
+        self._sink.logs.append(
+            MemoryLogRecord(
+                ts=datetime.now(timezone.utc).isoformat(),
+                body=body,
+                severity=severity,
+                attributes=attrs,
+                trace_id=trace_id,
+                span_id=span_id,
+            )
+        )
+
+
+class MemoryLoggerProvider(LoggerProviderPort):
+    def __init__(self, sink: "MemorySink", min_severity: Severity = Severity.INFO) -> None:
+        self._sink = sink
+        self._min_severity = min_severity
+
+    def get_logger(self, name: str, version: str | None = None) -> LoggerPort:
+        return MemoryLogger(self._sink, min_severity=self._min_severity)
+
+
+class MemoryCounter(CounterPort):
+    def add(self, amount: int, attributes: Attributes | None = None) -> None:
+        return None
+
+
+class MemoryMeter(MeterPort):
+    def create_counter(self, name: str, unit: str | None = None, description: str | None = None) -> CounterPort:
+        return MemoryCounter()
+
+
+class MemoryMeterProvider(MeterProviderPort):
+    def get_meter(self, name: str, version: str | None = None) -> MeterPort:
+        return MemoryMeter()
+
+
+@dataclass
+class MemorySink:
+    spans_started: List[MemorySpan] = field(default_factory=list)
+    spans_ended: List[MemorySpan] = field(default_factory=list)
+    logs: List[MemoryLogRecord] = field(default_factory=list)
+
+
+class MemoryObservability(ObservabilityPort):
+    def __init__(self, min_log_severity: Severity = Severity.INFO) -> None:
+        self.sink = MemorySink()
+        self._traces = MemoryTracerProvider(self.sink)
+        self._logs = MemoryLoggerProvider(self.sink, min_severity=min_log_severity)
+        self._metrics = MemoryMeterProvider()
+
+    @property
+    def traces(self) -> TracerProviderPort:
+        return self._traces
+
+    @property
+    def logs(self) -> LoggerProviderPort:
+        return self._logs
+
+    @property
+    def metrics(self) -> MeterProviderPort:
+        return self._metrics
+
+    def shutdown(self) -> None:
+        return None
+
+    def force_flush(self) -> None:
+        return None
+
+--- src\tycherion\adapters\observability\memory\memory_observability.py:END ---
+
+--- src\tycherion\adapters\observability\memory\__init__.py:START ---
+
+--- src\tycherion\adapters\observability\memory\__init__.py:END ---
+
+--- src\tycherion\adapters\observability\noop\noop_observability.py:START ---
+from __future__ import annotations
+
+from contextlib import contextmanager
+
+from tycherion.ports.observability.logs import LoggerPort, LoggerProviderPort
+from tycherion.ports.observability.metrics import CounterPort, MeterPort, MeterProviderPort
+from tycherion.ports.observability.observability import ObservabilityPort
+from tycherion.ports.observability.traces import SpanPort, TracerPort, TracerProviderPort
+from tycherion.ports.observability.types import Attributes, Severity
+
+
+class _NoopSpan(SpanPort):
+    def set_attribute(self, key: str, value: object) -> None:
+        return None
+
+    def set_attributes(self, attributes: Attributes) -> None:
+        return None
+
+    def add_event(self, name: str, attributes: Attributes | None = None) -> None:
+        return None
+
+    def record_exception(self, exc: BaseException) -> None:
+        return None
+
+    def set_status_ok(self) -> None:
+        return None
+
+    def set_status_error(self, message: str | None = None) -> None:
+        return None
+
+    def is_recording(self) -> bool:
+        return False
+
+
+class _NoopTracer(TracerPort):
+    @contextmanager
+    def start_as_current_span(self, name: str, attributes: Attributes | None = None):
+        yield _NoopSpan()
+
+
+class _NoopTracerProvider(TracerProviderPort):
+    def get_tracer(self, name: str, version: str | None = None) -> TracerPort:
+        return _NoopTracer()
+
+
+class _NoopLogger(LoggerPort):
+    def emit(self, body: str, severity: Severity, attributes: Attributes | None = None) -> None:
+        return None
+
+    def is_enabled(self, severity: Severity) -> bool:
+        return False
+
+
+class _NoopLoggerProvider(LoggerProviderPort):
+    def get_logger(self, name: str, version: str | None = None) -> LoggerPort:
+        return _NoopLogger()
+
+
+class _NoopCounter(CounterPort):
+    def add(self, amount: int, attributes: Attributes | None = None) -> None:
+        return None
+
+
+class _NoopMeter(MeterPort):
+    def create_counter(self, name: str, unit: str | None = None, description: str | None = None) -> CounterPort:
+        return _NoopCounter()
+
+
+class _NoopMeterProvider(MeterProviderPort):
+    def get_meter(self, name: str, version: str | None = None) -> MeterPort:
+        return _NoopMeter()
+
+
+class NoopObservability(ObservabilityPort):
+    def __init__(self) -> None:
+        self._traces = _NoopTracerProvider()
+        self._logs = _NoopLoggerProvider()
+        self._metrics = _NoopMeterProvider()
+
+    @property
+    def traces(self) -> TracerProviderPort:
+        return self._traces
+
+    @property
+    def logs(self) -> LoggerProviderPort:
+        return self._logs
+
+    @property
+    def metrics(self) -> MeterProviderPort:
+        return self._metrics
+
+    def shutdown(self) -> None:
+        return None
+
+    def force_flush(self) -> None:
+        return None
+
+--- src\tycherion\adapters\observability\noop\noop_observability.py:END ---
+
+--- src\tycherion\adapters\observability\noop\__init__.py:START ---
+
+--- src\tycherion\adapters\observability\noop\__init__.py:END ---
+
+--- src\tycherion\adapters\observability\otel\console.py:START ---
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import datetime
+import sys
+from typing import Any, Mapping
+
+from tycherion.ports.observability.types import Severity
+
+
+@dataclass(slots=True)
+class ConsoleConfig:
+    enabled: bool = True
+    min_severity: Severity = Severity.INFO
+    show_span_lifecycle: bool = True
+
+
+class ConsoleRenderer:
+    def __init__(self, cfg: ConsoleConfig) -> None:
+        self._cfg = cfg
+        self._rank = {
+            Severity.TRACE: 0,
+            Severity.DEBUG: 10,
+            Severity.INFO: 20,
+            Severity.WARN: 30,
+            Severity.ERROR: 40,
+            Severity.FATAL: 50,
+        }
+
+    def enabled_for(self, sev: Severity) -> bool:
+        if not self._cfg.enabled:
+            return False
+        return self._rank[sev] >= self._rank[self._cfg.min_severity]
+
+    def _short(self, hex_id: str | None) -> str | None:
+        if not hex_id:
+            return None
+        return hex_id[:8]
+
+    def _ts(self) -> str:
+        return datetime.now().strftime("%H:%M:%S")
+
+    def _fmt_kv(self, attrs: Mapping[str, Any] | None) -> str:
+        if not attrs:
+            return ""
+        items = []
+        for k, v in attrs.items():
+            if v is None:
+                continue
+            items.append(f"{k}={v}")
+        return " ".join(items)
+
+    def log(self, *, body: str, severity: Severity, attributes: Mapping[str, Any] | None, trace_id: str | None, span_id: str | None, event_seq: int | None) -> None:
+        if not self.enabled_for(severity):
+            return
+        meta = []
+        if event_seq is not None:
+            meta.append(f"seq={event_seq}")
+        if trace_id:
+            meta.append(f"trace={trace_id if severity in (Severity.ERROR, Severity.FATAL) else self._short(trace_id)}")
+        if span_id:
+            meta.append(f"span={self._short(span_id)}")
+        meta_s = (" | " + " ".join(meta)) if meta else ""
+        attrs_s = self._fmt_kv(attributes)
+        attrs_s = (attrs_s + " ") if attrs_s else ""
+        line = f"{self._ts()} [{severity.value}] {attrs_s}{body}{meta_s}"
+        print(line, file=sys.stdout)
+
+    def span_started(self, *, name: str, attributes: Mapping[str, Any] | None, trace_id: str, span_id: str) -> None:
+        if not (self._cfg.enabled and self._cfg.show_span_lifecycle):
+            return
+        meta = f"trace={self._short(trace_id)} span={self._short(span_id)}"
+        attrs_s = self._fmt_kv(attributes)
+        attrs_s = (attrs_s + " ") if attrs_s else ""
+        print(f"{self._ts()} [SPAN] {attrs_s}{name} started | {meta}", file=sys.stdout)
+
+    def span_ended(self, *, name: str, status: str, duration_ms: float | None, trace_id: str, span_id: str, error: bool) -> None:
+        if not (self._cfg.enabled and self._cfg.show_span_lifecycle):
+            return
+        dur = f"{duration_ms:.1f}ms" if duration_ms is not None else "?"
+        # If error, print full trace_id to make backend lookup easy.
+        trace_meta = trace_id if error else self._short(trace_id)
+        meta = f"trace={trace_meta} span={self._short(span_id)}"
+        print(f"{self._ts()} [SPAN] {name} ended status={status} dur={dur} | {meta}", file=sys.stdout)
+
+    def span_event(self, *, name: str, attributes: Mapping[str, Any] | None, trace_id: str | None, span_id: str | None, event_seq: int | None) -> None:
+        # Span events are usually info-ish, but we still respect min_severity (INFO).
+        if not self.enabled_for(Severity.INFO):
+            return
+        meta = []
+        if event_seq is not None:
+            meta.append(f"seq={event_seq}")
+        if trace_id:
+            # Span events don't carry severity. Keep output short by default.
+            meta.append(f"trace={self._short(trace_id)}")
+        if span_id:
+            meta.append(f"span={self._short(span_id)}")
+        meta_s = (" | " + " ".join(meta)) if meta else ""
+        attrs_s = self._fmt_kv(attributes)
+        attrs_s = (attrs_s + " ") if attrs_s else ""
+        print(f"{self._ts()} [EVT] {attrs_s}{name}{meta_s}", file=sys.stdout)
+
+--- src\tycherion\adapters\observability\otel\console.py:END ---
+
+--- src\tycherion\adapters\observability\otel\event_seq.py:START ---
+from __future__ import annotations
+
+from dataclasses import dataclass
+import contextvars
+
+
+@dataclass(slots=True)
+class _EventSeqState:
+    trace_id_hex: str
+    seq: int = 0
+
+
+_state: contextvars.ContextVar[_EventSeqState | None] = contextvars.ContextVar("tycherion_event_seq_state", default=None)
+
+
+class EventSeqManager:
+    """Tycherion event_seq kept in contextvars and incremented per active trace."""
+
+    def start_trace(self, trace_id_hex: str) -> contextvars.Token[_EventSeqState | None]:
+        return _state.set(_EventSeqState(trace_id_hex=trace_id_hex, seq=0))
+
+    def end_trace(self, token: contextvars.Token[_EventSeqState | None]) -> None:
+        _state.reset(token)
+
+    def next_for_trace(self, trace_id_hex: str) -> int | None:
+        st = _state.get()
+        if st is None or st.trace_id_hex != trace_id_hex:
+            return None
+        st.seq += 1
+        return st.seq
+
+    def current_seq(self, trace_id_hex: str) -> int | None:
+        st = _state.get()
+        if st is None or st.trace_id_hex != trace_id_hex:
+            return None
+        return st.seq
+
+--- src\tycherion\adapters\observability\otel\event_seq.py:END ---
+
+--- src\tycherion\adapters\observability\otel\mongo_audit.py:START ---
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from typing import Any, Mapping
+
+from tycherion.ports.observability.types import Severity
+
+
+def _mongo_client(uri: str):
+    try:
+        from pymongo import MongoClient  # type: ignore
+    except Exception as e:
+        raise RuntimeError(
+            "Mongo audit sink requires `pymongo` to be installed in the runtime environment"
+        ) from e
+    return MongoClient(uri)
+
+
+@dataclass(slots=True)
+class MongoOpsJournal:
+    """Append-only ops journal persisted in MongoDB.
+
+    Stores logs and span events in a single collection for easy filtering.
+
+    Dedupe strategy:
+    - unique index on (trace_id, event_seq) when available
+    - inserts are best-effort, duplicates are ignored
+    """
+
+    uri: str
+    db_name: str = "tycherion"
+    collection_name: str = "ops_journal"
+    enabled_flag: bool = True
+    min_severity: Severity = Severity.INFO
+    batch_size: int = 200
+
+    runner_id: str | None = None
+    schema_version: str | None = None
+
+    _client: Any | None = field(default=None, init=False, repr=False)
+    _collection: Any | None = field(default=None, init=False, repr=False)
+    _buffer: list[dict[str, Any]] = field(default_factory=list, init=False, repr=False)
+
+    def _ensure_collection(self):
+        if self._collection is not None:
+            return self._collection
+
+        client = _mongo_client(self.uri)
+        db = client[self.db_name]
+        col = db[self.collection_name]
+
+        try:
+            col.create_index([("trace_id", 1), ("event_seq", 1)], unique=True, name="uq_trace_eventseq")
+            col.create_index([("ts_utc", 1)], name="idx_ts")
+            col.create_index([("runner_id", 1)], name="idx_runner")
+            col.create_index([("severity", 1)], name="idx_severity")
+            col.create_index([("signal", 1)], name="idx_signal")
+        except Exception:
+            pass
+
+        self._client = client
+        self._collection = col
+        return col
+
+    def _rank(self, s: Severity) -> int:
+        return {
+            Severity.TRACE: 0,
+            Severity.DEBUG: 10,
+            Severity.INFO: 20,
+            Severity.WARN: 30,
+            Severity.ERROR: 40,
+            Severity.FATAL: 50,
+        }[s]
+
+    def enabled(self, severity: Severity) -> bool:
+        if not self.enabled_flag:
+            return False
+        return self._rank(severity) >= self._rank(self.min_severity)
+
+    def emit_log(
+        self,
+        *,
+        body: str,
+        severity: Severity,
+        attributes: Mapping[str, Any] | None,
+        trace_id: str | None,
+        span_id: str | None,
+        event_seq: int | None,
+    ) -> None:
+        if not self.enabled(severity):
+            return
+
+        doc: dict[str, Any] = {
+            "signal": "log",
+            "ts_utc": datetime.now(timezone.utc),
+            "runner_id": self.runner_id,
+            "schema_version": self.schema_version,
+            "severity": severity.value,
+            "body": body,
+            "attributes": dict(attributes or {}),
+            "trace_id": trace_id,
+            "span_id": span_id,
+            "event_seq": event_seq,
+        }
+        self._buffer.append(doc)
+        if len(self._buffer) >= max(1, int(self.batch_size)):
+            self.flush()
+
+    def emit_span_event(
+        self,
+        *,
+        name: str,
+        attributes: Mapping[str, Any] | None,
+        trace_id: str | None,
+        span_id: str | None,
+        event_seq: int | None,
+    ) -> None:
+        # Span events are considered INFO.
+        if not self.enabled(Severity.INFO):
+            return
+
+        doc: dict[str, Any] = {
+            "signal": "span_event",
+            "ts_utc": datetime.now(timezone.utc),
+            "runner_id": self.runner_id,
+            "schema_version": self.schema_version,
+            "severity": Severity.INFO.value,
+            "name": name,
+            "attributes": dict(attributes or {}),
+            "trace_id": trace_id,
+            "span_id": span_id,
+            "event_seq": event_seq,
+        }
+        self._buffer.append(doc)
+        if len(self._buffer) >= max(1, int(self.batch_size)):
+            self.flush()
+
+    def flush(self) -> None:
+        if not self._buffer:
+            return
+        try:
+            col = self._ensure_collection()
+        except Exception:
+            self._buffer.clear()
+            return
+
+        docs = list(self._buffer)
+        self._buffer.clear()
+
+        try:
+            col.insert_many(docs, ordered=False)
+        except Exception:
+            return
+
+    def close(self) -> None:
+        try:
+            self.flush()
+        finally:
+            try:
+                if self._client is not None:
+                    self._client.close()
+            except Exception:
+                pass
+            self._client = None
+            self._collection = None
+
+--- src\tycherion\adapters\observability\otel\mongo_audit.py:END ---
+
+--- src\tycherion\adapters\observability\otel\otel_logs.py:START ---
+from __future__ import annotations
+
+from typing import Any, Mapping
+
+from opentelemetry import trace as otel_trace
+
+from tycherion.adapters.observability.otel.console import ConsoleRenderer
+from tycherion.adapters.observability.otel.event_seq import EventSeqManager
+from tycherion.adapters.observability.otel.mongo_audit import MongoOpsJournal
+from tycherion.ports.observability.logs import LoggerPort, LoggerProviderPort
+from tycherion.ports.observability.types import Attributes, Severity
+
+
+def _current_trace_span_ids() -> tuple[str | None, str | None]:
+    try:
+        span = otel_trace.get_current_span()
+        ctx = span.get_span_context()
+        if not getattr(ctx, "is_valid", False):
+            return None, None
+        trace_id = format(int(ctx.trace_id), "032x")
+        span_id = format(int(ctx.span_id), "016x")
+        return trace_id, span_id
+    except Exception:
+        return None, None
+
+
+class OtelLogger(LoggerPort):
+    def __init__(
+        self,
+        *,
+        schema_version: str,
+        min_severity: Severity,
+        console: ConsoleRenderer,
+        event_seq: EventSeqManager,
+        mongo: MongoOpsJournal | None,
+    ) -> None:
+        self._schema_version = schema_version
+        self._min_severity = min_severity
+        self._console = console
+        self._event_seq = event_seq
+        self._mongo = mongo
+        self._rank = {
+            Severity.TRACE: 0,
+            Severity.DEBUG: 10,
+            Severity.INFO: 20,
+            Severity.WARN: 30,
+            Severity.ERROR: 40,
+            Severity.FATAL: 50,
+        }
+
+    def is_enabled(self, severity: Severity) -> bool:
+        return self._rank[severity] >= self._rank[self._min_severity]
+
+    def emit(self, body: str, severity: Severity, attributes: Attributes | None = None) -> None:
+        if not self.is_enabled(severity):
+            return
+
+        trace_id, span_id = _current_trace_span_ids()
+
+        seq = None
+        if trace_id:
+            seq = self._event_seq.next_for_trace(trace_id)
+
+        attrs: dict[str, Any] = dict(attributes or {})
+        attrs["tycherion.schema_version"] = self._schema_version
+        if seq is not None:
+            attrs["tycherion.event_seq"] = seq
+
+        self._console.log(
+            body=body,
+            severity=severity,
+            attributes=attrs,
+            trace_id=trace_id,
+            span_id=span_id,
+            event_seq=seq,
+        )
+
+        if self._mongo is not None:
+            self._mongo.emit_log(
+                body=body,
+                severity=severity,
+                attributes=attrs,
+                trace_id=trace_id,
+                span_id=span_id,
+                event_seq=seq,
+            )
+
+
+class OtelLoggerProvider(LoggerProviderPort):
+    def __init__(
+        self,
+        *,
+        schema_version: str,
+        min_severity: Severity,
+        console: ConsoleRenderer,
+        event_seq: EventSeqManager,
+        mongo: MongoOpsJournal | None,
+    ) -> None:
+        self._schema_version = schema_version
+        self._min_severity = min_severity
+        self._console = console
+        self._event_seq = event_seq
+        self._mongo = mongo
+
+    def get_logger(self, name: str, version: str | None = None) -> LoggerPort:
+        # name/version are carried in OTel "instrumentation scope". For now, we keep them for
+        # API compatibility and future wiring into OTel Logs SDK.
+        _ = (name, version)
+        return OtelLogger(
+            schema_version=self._schema_version,
+            min_severity=self._min_severity,
+            console=self._console,
+            event_seq=self._event_seq,
+            mongo=self._mongo,
+        )
+
+--- src\tycherion\adapters\observability\otel\otel_logs.py:END ---
+
+--- src\tycherion\adapters\observability\otel\otel_metrics.py:START ---
+from __future__ import annotations
+
+from typing import Any
+
+from tycherion.ports.observability.metrics import CounterPort, MeterPort, MeterProviderPort
+from tycherion.ports.observability.types import Attributes
+
+
+class _OtelCounter(CounterPort):
+    def __init__(self, counter: Any) -> None:
+        self._counter = counter
+
+    def add(self, amount: int, attributes: Attributes | None = None) -> None:
+        try:
+            self._counter.add(amount, attributes=dict(attributes or {}))
+        except Exception:
+            return None
+
+
+class _OtelMeter(MeterPort):
+    def __init__(self, meter: Any) -> None:
+        self._meter = meter
+
+    def create_counter(self, name: str, unit: str | None = None, description: str | None = None) -> CounterPort:
+        try:
+            c = self._meter.create_counter(name, unit=unit, description=description)
+            return _OtelCounter(c)
+        except Exception:
+            # Fallback: no-op counter
+            return _OtelCounter(counter=_NoopCounter())
+
+
+class _NoopCounter:
+    def add(self, amount: int, attributes: dict | None = None) -> None:
+        return None
+
+
+class OtelMeterProvider(MeterProviderPort):
+    def __init__(self, provider: Any) -> None:
+        self._provider = provider
+
+    def get_meter(self, name: str, version: str | None = None) -> MeterPort:
+        # opentelemetry-python uses instrumentation scope params; keyword names
+        # differ across versions. Use positional for maximum compatibility.
+        meter = self._provider.get_meter(name, version)
+        return _OtelMeter(meter)
+
+--- src\tycherion\adapters\observability\otel\otel_metrics.py:END ---
+
+--- src\tycherion\adapters\observability\otel\otel_observability.py:START ---
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any
+
+from opentelemetry import metrics as otel_metrics_api
+from opentelemetry import trace as otel_trace
+
+from tycherion.adapters.observability.otel.console import ConsoleConfig, ConsoleRenderer
+from tycherion.adapters.observability.otel.event_seq import EventSeqManager
+from tycherion.adapters.observability.otel.mongo_audit import MongoOpsJournal
+from tycherion.adapters.observability.otel.otel_logs import OtelLoggerProvider
+from tycherion.adapters.observability.otel.otel_metrics import OtelMeterProvider
+from tycherion.adapters.observability.otel.otel_traces import OtelTracerProvider
+from tycherion.ports.observability.observability import ObservabilityPort
+from tycherion.ports.observability.traces import TracerProviderPort
+from tycherion.ports.observability.logs import LoggerProviderPort
+from tycherion.ports.observability.metrics import MeterProviderPort
+from tycherion.ports.observability.types import Severity
+
+
+@dataclass(slots=True)
+class OtelObservabilityConfig:
+    runner_id: str
+    schema_version: str
+
+    # Console output
+    console_enabled: bool = True
+    console_min_severity: Severity = Severity.INFO
+    console_show_span_lifecycle: bool = True
+
+    # OTLP (future: Alloy/Collector -> Tempo/Loki/Prometheus)
+    otlp_enabled: bool = False
+    otlp_endpoint: str = "http://localhost:4317"
+
+    # Mongo ops journal (optional)
+    mongo_audit_enabled: bool = False
+    mongo_uri: str | None = None
+    mongo_db: str = "tycherion"
+    mongo_collection: str = "ops_journal"
+    mongo_min_severity: Severity = Severity.INFO
+    mongo_batch_size: int = 200
+
+
+class OtelObservability(ObservabilityPort):
+    def __init__(self, cfg: OtelObservabilityConfig) -> None:
+        self._cfg = cfg
+        self._event_seq = EventSeqManager()
+
+        self._console = ConsoleRenderer(
+            ConsoleConfig(
+                enabled=bool(cfg.console_enabled),
+                min_severity=cfg.console_min_severity,
+                show_span_lifecycle=bool(cfg.console_show_span_lifecycle),
+            )
+        )
+
+        self._mongo: MongoOpsJournal | None = None
+        if cfg.mongo_audit_enabled:
+            if not cfg.mongo_uri:
+                raise ValueError("mongo_audit_enabled=True requires mongo_uri")
+            self._mongo = MongoOpsJournal(
+                uri=cfg.mongo_uri,
+                db_name=cfg.mongo_db,
+                collection_name=cfg.mongo_collection,
+                enabled_flag=True,
+                min_severity=cfg.mongo_min_severity,
+                batch_size=cfg.mongo_batch_size,
+                runner_id=cfg.runner_id,
+                schema_version=cfg.schema_version,
+            )
+
+        # SDK imports are intentionally delayed so importing this module does not hard-require
+        # opentelemetry-sdk until you actually instantiate this adapter.
+        try:
+            from opentelemetry.sdk.resources import Resource  # type: ignore
+            from opentelemetry.sdk.trace import TracerProvider  # type: ignore
+            from opentelemetry.sdk.trace.export import BatchSpanProcessor  # type: ignore
+        except Exception as e:
+            raise RuntimeError(
+                "OtelObservability requires `opentelemetry-sdk` to be installed. "
+                "Install project dependencies (see requirements/pyproject)."
+            ) from e
+
+        resource = Resource.create(
+            {
+                "service.name": "tycherion",
+                "service.instance.id": cfg.runner_id,
+                "tycherion.runner_id": cfg.runner_id,
+                "tycherion.schema_version": cfg.schema_version,
+            }
+        )
+
+        tracer_provider = TracerProvider(resource=resource)
+
+        if cfg.otlp_enabled:
+            span_exporter = _build_otlp_span_exporter(cfg.otlp_endpoint)
+            if span_exporter is not None:
+                tracer_provider.add_span_processor(BatchSpanProcessor(span_exporter))
+
+        # Register global providers (safe-ish; used by trace context propagation)
+        try:
+            otel_trace.set_tracer_provider(tracer_provider)
+        except Exception:
+            # If provider was already set by runtime, keep ours referenced locally anyway.
+            pass
+
+        self._sdk_tracer_provider = tracer_provider
+        self._traces = OtelTracerProvider(
+            tracer_provider,
+            schema_version=cfg.schema_version,
+            event_seq=self._event_seq,
+            console=self._console,
+            mongo=self._mongo,
+        )
+
+        # Metrics provider (minimal)
+        meter_provider = _build_meter_provider(resource=resource, otlp_enabled=cfg.otlp_enabled, otlp_endpoint=cfg.otlp_endpoint)
+        try:
+            if meter_provider is not None:
+                otel_metrics_api.set_meter_provider(meter_provider)
+        except Exception:
+            pass
+
+        self._sdk_meter_provider = meter_provider
+        self._metrics = OtelMeterProvider(meter_provider) if meter_provider is not None else OtelMeterProvider(_NoopMeterProvider())
+
+        self._logs = OtelLoggerProvider(
+            schema_version=cfg.schema_version,
+            min_severity=cfg.console_min_severity,  # console gate
+            console=self._console,
+            event_seq=self._event_seq,
+            mongo=self._mongo,
+        )
+
+    @property
+    def traces(self) -> TracerProviderPort:
+        return self._traces
+
+    @property
+    def logs(self) -> LoggerProviderPort:
+        return self._logs
+
+    @property
+    def metrics(self) -> MeterProviderPort:
+        return self._metrics
+
+    def force_flush(self) -> None:
+        try:
+            self._sdk_tracer_provider.force_flush()
+        except Exception:
+            pass
+        try:
+            if self._sdk_meter_provider is not None:
+                self._sdk_meter_provider.force_flush()
+        except Exception:
+            pass
+        try:
+            if self._mongo is not None:
+                self._mongo.flush()
+        except Exception:
+            pass
+
+    def shutdown(self) -> None:
+        try:
+            self.force_flush()
+        finally:
+            try:
+                self._sdk_tracer_provider.shutdown()
+            except Exception:
+                pass
+            try:
+                if self._sdk_meter_provider is not None:
+                    self._sdk_meter_provider.shutdown()
+            except Exception:
+                pass
+            try:
+                if self._mongo is not None:
+                    self._mongo.close()
+            except Exception:
+                pass
+
+
+def _build_otlp_span_exporter(endpoint: str):
+    # Prefer gRPC exporter (4317) by default; fall back to HTTP exporter (4318) when available.
+    # We intentionally keep this "best-effort" to avoid hard failures when only one exporter is installed.
+    try:
+        if ":4318" in endpoint or endpoint.rstrip("/").endswith("4318"):
+            from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter  # type: ignore
+
+            return OTLPSpanExporter(endpoint=endpoint)
+        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter  # type: ignore
+
+        return OTLPSpanExporter(endpoint=endpoint, insecure=True)
+    except Exception:
+        return None
+
+
+def _build_meter_provider(*, resource: Any, otlp_enabled: bool, otlp_endpoint: str):
+    try:
+        from opentelemetry.sdk.metrics import MeterProvider  # type: ignore
+    except Exception:
+        return None
+
+    if not otlp_enabled:
+        return MeterProvider(resource=resource)
+
+    try:
+        if ":4318" in otlp_endpoint or otlp_endpoint.rstrip("/").endswith("4318"):
+            from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter  # type: ignore
+            from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader  # type: ignore
+
+            reader = PeriodicExportingMetricReader(OTLPMetricExporter(endpoint=otlp_endpoint))
+            return MeterProvider(resource=resource, metric_readers=[reader])
+
+        from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter  # type: ignore
+        from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader  # type: ignore
+
+        reader = PeriodicExportingMetricReader(OTLPMetricExporter(endpoint=otlp_endpoint, insecure=True))
+        return MeterProvider(resource=resource, metric_readers=[reader])
+    except Exception:
+        return MeterProvider(resource=resource)
+
+
+class _NoopMeterProvider:
+    def get_meter(self, name: str, version: str | None = None):
+        _ = (name, version)
+        return _NoopMeter()
+
+
+class _NoopMeter:
+    def create_counter(self, name: str, unit: str | None = None, description: str | None = None):
+        _ = (name, unit, description)
+        return _NoopCounter()
+
+
+class _NoopCounter:
+    def add(self, amount: int, attributes: dict | None = None) -> None:
+        _ = (amount, attributes)
+        return None
+
+--- src\tycherion\adapters\observability\otel\otel_observability.py:END ---
+
+--- src\tycherion\adapters\observability\otel\otel_traces.py:START ---
+from __future__ import annotations
+
+from contextlib import contextmanager
+import time
+from typing import Any, Mapping
+
+from opentelemetry import trace as otel_trace
+from opentelemetry.trace.status import Status, StatusCode
+
+from tycherion.adapters.observability.otel.console import ConsoleRenderer
+from tycherion.adapters.observability.otel.event_seq import EventSeqManager
+from tycherion.adapters.observability.otel.mongo_audit import MongoOpsJournal
+from tycherion.ports.observability.traces import SpanPort, TracerPort, TracerProviderPort
+from tycherion.ports.observability.types import Attributes, TYCHERION_SCHEMA_VERSION
+
+
+def _hex_trace_id(span_or_ctx: Any) -> str | None:
+    try:
+        ctx = span_or_ctx.get_span_context()
+        if not getattr(ctx, "is_valid", False):
+            return None
+        return format(int(ctx.trace_id), "032x")
+    except Exception:
+        return None
+
+
+def _hex_span_id(span_or_ctx: Any) -> str | None:
+    try:
+        ctx = span_or_ctx.get_span_context()
+        if not getattr(ctx, "is_valid", False):
+            return None
+        return format(int(ctx.span_id), "016x")
+    except Exception:
+        return None
+
+
+class OtelSpan(SpanPort):
+    def __init__(
+        self,
+        span: Any,
+        *,
+        schema_version: str,
+        event_seq: EventSeqManager,
+        console: ConsoleRenderer,
+        mongo: MongoOpsJournal | None,
+    ) -> None:
+        self._span = span
+        self._schema_version = schema_version
+        self._event_seq = event_seq
+        self._console = console
+        self._mongo = mongo
+
+        self._trace_id_hex = _hex_trace_id(span) or None
+        self._span_id_hex = _hex_span_id(span) or None
+        self._start_ns = time.time_ns()
+        self._status = "UNSET"
+
+    @property
+    def trace_id_hex(self) -> str | None:
+        return self._trace_id_hex
+
+    @property
+    def span_id_hex(self) -> str | None:
+        return self._span_id_hex
+
+    @property
+    def status(self) -> str:
+        return self._status
+
+    @property
+    def start_ns(self) -> int:
+        return self._start_ns
+
+    def set_attribute(self, key: str, value: object) -> None:
+        try:
+            self._span.set_attribute(key, value)
+        except Exception:
+            return None
+
+    def set_attributes(self, attributes: Attributes) -> None:
+        for k, v in (attributes or {}).items():
+            self.set_attribute(k, v)
+
+    def _decorate_event_attrs(self, attributes: Attributes | None) -> dict[str, Any]:
+        attrs: dict[str, Any] = dict(attributes or {})
+        attrs["tycherion.schema_version"] = self._schema_version
+        if self._trace_id_hex:
+            seq = self._event_seq.next_for_trace(self._trace_id_hex)
+        else:
+            seq = None
+        if seq is not None:
+            attrs["tycherion.event_seq"] = seq
+        return attrs
+
+    def add_event(self, name: str, attributes: Attributes | None = None) -> None:
+        attrs = self._decorate_event_attrs(attributes)
+
+        try:
+            self._span.add_event(name, attributes=attrs)
+        except Exception:
+            pass
+
+        self._console.span_event(
+            name=name,
+            attributes=attrs,
+            trace_id=self._trace_id_hex,
+            span_id=self._span_id_hex,
+            event_seq=attrs.get("tycherion.event_seq"),
+        )
+
+        if self._mongo is not None:
+            self._mongo.emit_span_event(
+                name=name,
+                attributes=attrs,
+                trace_id=self._trace_id_hex,
+                span_id=self._span_id_hex,
+                event_seq=attrs.get("tycherion.event_seq"),
+            )
+
+    def record_exception(self, exc: BaseException) -> None:
+        try:
+            self._span.record_exception(exc)
+        except Exception:
+            return None
+
+    def set_status_ok(self) -> None:
+        self._status = "OK"
+        try:
+            self._span.set_status(Status(StatusCode.OK))
+        except Exception:
+            return None
+
+    def set_status_error(self, message: str | None = None) -> None:
+        self._status = "ERROR"
+        try:
+            self._span.set_status(Status(StatusCode.ERROR, description=message))
+        except Exception:
+            return None
+
+    def is_recording(self) -> bool:
+        try:
+            return bool(self._span.is_recording())
+        except Exception:
+            return False
+
+
+class OtelTracer(TracerPort):
+    def __init__(
+        self,
+        tracer: Any,
+        *,
+        schema_version: str,
+        event_seq: EventSeqManager,
+        console: ConsoleRenderer,
+        mongo: MongoOpsJournal | None,
+    ) -> None:
+        self._tracer = tracer
+        self._schema_version = schema_version
+        self._event_seq = event_seq
+        self._console = console
+        self._mongo = mongo
+
+    def _decorate_span_attrs(self, attributes: Attributes | None) -> dict[str, Any]:
+        attrs: dict[str, Any] = dict(attributes or {})
+        attrs.setdefault("tycherion.schema_version", self._schema_version)
+        return attrs
+
+    @contextmanager
+    def start_as_current_span(self, name: str, attributes: Attributes | None = None):
+        parent_ctx = otel_trace.get_current_span().get_span_context()
+        new_trace = not getattr(parent_ctx, "is_valid", False)
+
+        attrs = self._decorate_span_attrs(attributes)
+
+        token = None
+        start_ns = time.time_ns()
+        with self._tracer.start_as_current_span(name, attributes=attrs) as span:
+            trace_id_hex = _hex_trace_id(span) or ""
+            span_id_hex = _hex_span_id(span) or ""
+            if new_trace:
+                token = self._event_seq.start_trace(trace_id_hex)
+
+            wrapped = OtelSpan(
+                span,
+                schema_version=self._schema_version,
+                event_seq=self._event_seq,
+                console=self._console,
+                mongo=self._mongo,
+            )
+            self._console.span_started(
+                name=name,
+                attributes=attrs,
+                trace_id=trace_id_hex,
+                span_id=span_id_hex,
+            )
+            try:
+                yield wrapped
+            finally:
+                end_ns = time.time_ns()
+                duration_ms = (end_ns - start_ns) / 1_000_000
+                error = wrapped.status == "ERROR"
+                self._console.span_ended(
+                    name=name,
+                    status=wrapped.status,
+                    duration_ms=duration_ms,
+                    trace_id=trace_id_hex,
+                    span_id=span_id_hex,
+                    error=error,
+                )
+                if token is not None:
+                    self._event_seq.end_trace(token)
+
+
+class OtelTracerProvider(TracerProviderPort):
+    def __init__(
+        self,
+        provider: Any,
+        *,
+        schema_version: str,
+        event_seq: EventSeqManager,
+        console: ConsoleRenderer,
+        mongo: MongoOpsJournal | None,
+    ) -> None:
+        self._provider = provider
+        self._schema_version = schema_version
+        self._event_seq = event_seq
+        self._console = console
+        self._mongo = mongo
+
+    def get_tracer(self, name: str, version: str | None = None) -> TracerPort:
+        # opentelemetry-python's TracerProvider.get_tracer() accepts the scope
+        # version as the *second positional argument* (keyword names differ
+        # across OTel releases: "instrumentation_scope_version", etc.).
+        # Using positional keeps us compatible with a wider range of versions.
+        tracer = self._provider.get_tracer(name, version)
+        return OtelTracer(
+            tracer,
+            schema_version=self._schema_version,
+            event_seq=self._event_seq,
+            console=self._console,
+            mongo=self._mongo,
+        )
+
+--- src\tycherion\adapters\observability\otel\otel_traces.py:END ---
+
+--- src\tycherion\adapters\observability\otel\__init__.py:START ---
+
+--- src\tycherion\adapters\observability\otel\__init__.py:END ---
 
 --- src\tycherion\adapters\telemetry\console.py:START ---
 from __future__ import annotations
@@ -1049,11 +2537,15 @@ from tycherion.domain.signals.entities import (
 from tycherion.domain.signals.models.base import SignalModel
 from tycherion.domain.signals.indicators.base import BaseIndicator
 from tycherion.ports.market_data import MarketDataPort
-from tycherion.application.telemetry import TraceTelemetry
-from tycherion.ports.telemetry import TelemetryLevel
+
+from tycherion.ports.observability.observability import ObservabilityPort
+from tycherion.ports.observability.traces import SpanPort
+from tycherion.ports.observability.logs import LoggerPort
+from tycherion.ports.observability.types import Severity, TYCHERION_SCHEMA_VERSION
 
 from .config import PipelineConfig, PipelineStageConfig
 from .result import PipelineRunResult
+
 
 @dataclass(slots=True)
 class ModelPipelineService:
@@ -1071,20 +2563,23 @@ class ModelPipelineService:
         universe_symbols: list[str],
         portfolio_snapshot: PortfolioSnapshot,
         pipeline_config: PipelineConfig,
-        tracer: TraceTelemetry,
+        *,
+        observability: ObservabilityPort,
     ) -> PipelineRunResult:
-        t = tracer.child({"component": "pipeline"})
+        tracer = observability.traces.get_tracer("tycherion.pipeline", version=TYCHERION_SCHEMA_VERSION)
+        logger = observability.logs.get_logger("tycherion.pipeline", version=TYCHERION_SCHEMA_VERSION)
+
         held_symbols = set(portfolio_snapshot.positions.keys())
 
-        with t.span(
+        with tracer.start_as_current_span(
             "pipeline",
-            channel="ops",
-            level=TelemetryLevel.INFO,
-            data={
+            attributes={
                 "symbols_count": int(len(universe_symbols)),
                 "stages": [st.name for st in pipeline_config.stages],
+                "timeframe": self.timeframe,
+                "lookback_days": int(self.lookback_days),
             },
-        ):
+        ) as span:
             # 1) Init per-symbol state
             states: Dict[str, SymbolState] = {
                 sym: SymbolState(symbol=sym, is_held=(sym in held_symbols))
@@ -1100,7 +2595,6 @@ class ModelPipelineService:
                 try:
                     needed_keys.update(model.requires() or set())
                 except Exception:
-                    # a model might not implement requires()
                     pass
 
             # 4) Time window for analysis
@@ -1111,39 +2605,38 @@ class ModelPipelineService:
             stage_passed: Dict[str, int] = {st.name: 0 for st in pipeline_config.stages}
 
             for st in pipeline_config.stages:
-                t.emit(
-                    name="pipeline.stage_started",
-                    channel="ops",
-                    level=TelemetryLevel.INFO,
-                    attributes={"stage": st.name},
-                    data={"threshold": st.drop_threshold},
+                span.add_event(
+                    "pipeline.stage_started",
+                    {"stage": st.name, "threshold": st.drop_threshold},
                 )
 
             for symbol, state in states.items():
                 if not state.alive and not state.is_held:
                     continue
 
-                df = self._safe_get_bars(symbol, start, end, state, t)
+                df = self._safe_get_bars(symbol, start, end, state, span, logger)
                 if df is None or df.empty:
                     if not state.is_held:
-                        t.emit(
-                            name="pipeline.symbol_dropped",
-                            channel="audit",
-                            level=TelemetryLevel.WARN,
-                            attributes={"symbol": symbol},
-                            data={"reason": "no_market_data"},
+                        logger.emit(
+                            "pipeline.symbol_dropped",
+                            Severity.WARN,
+                            {
+                                "tycherion.channel": "audit",
+                                "symbol": symbol,
+                                "reason": "no_market_data",
+                            },
                         )
                         state.alive = False
                     continue
 
-                if t.enabled("debug", TelemetryLevel.DEBUG):
+                if logger.is_enabled(Severity.DEBUG):
                     try:
-                        t.emit(
-                            name="market_data.sample",
-                            channel="debug",
-                            level=TelemetryLevel.DEBUG,
-                            attributes={"symbol": symbol},
-                            data={
+                        logger.emit(
+                            "market_data.sample",
+                            Severity.DEBUG,
+                            {
+                                "tycherion.channel": "debug",
+                                "symbol": symbol,
                                 "rows": int(len(df)),
                                 "columns": list(df.columns)[:20],
                                 "head": df.head(2).to_dict(orient="list"),
@@ -1153,7 +2646,7 @@ class ModelPipelineService:
                     except Exception:
                         pass
 
-                bundle = self._compute_indicators(df, needed_keys, state, t)
+                bundle = self._compute_indicators(df, needed_keys, state, span, logger)
 
                 # Pipeline execution per stage
                 for stage_cfg, model in resolved:
@@ -1161,7 +2654,7 @@ class ModelPipelineService:
                         break
 
                     stage_passed[stage_cfg.name] = int(stage_passed.get(stage_cfg.name, 0)) + 1
-                    score = self._run_stage(symbol, stage_cfg, model, bundle, state, t)
+                    score = self._run_stage(symbol, stage_cfg, model, bundle, state, span, logger)
 
                     # Drop policy
                     if stage_cfg.drop_threshold is not None and score < float(stage_cfg.drop_threshold):
@@ -1171,12 +2664,13 @@ class ModelPipelineService:
                         state.alive = False
                         state.notes[f"dropped_by_{stage_cfg.name}"] = 1.0
                         stage_stats[stage_cfg.name] = int(stage_stats.get(stage_cfg.name, 0)) + 1
-                        t.emit(
-                            name="pipeline.symbol_dropped",
-                            channel="audit",
-                            level=TelemetryLevel.INFO,
-                            attributes={"symbol": symbol, "stage": stage_cfg.name},
-                            data={
+                        logger.emit(
+                            "pipeline.symbol_dropped",
+                            Severity.INFO,
+                            {
+                                "tycherion.channel": "audit",
+                                "symbol": symbol,
+                                "stage": stage_cfg.name,
                                 "score": float(score),
                                 "threshold": float(stage_cfg.drop_threshold),
                                 "reason": "below_threshold",
@@ -1197,34 +2691,33 @@ class ModelPipelineService:
                 signed = float(state.alpha_score)
                 confidence = float(state.notes.get("final_confidence", abs(signed)))
                 signals[symbol] = Signal(symbol=symbol, signed=signed, confidence=confidence)
-                t.emit(
-                    name="pipeline.signal_emitted",
-                    channel="audit",
-                    level=TelemetryLevel.INFO,
-                    attributes={"symbol": symbol},
-                    data={"signed": signed, "confidence": confidence},
+                logger.emit(
+                    "pipeline.signal_emitted",
+                    Severity.INFO,
+                    {
+                        "tycherion.channel": "audit",
+                        "symbol": symbol,
+                        "signed": signed,
+                        "confidence": confidence,
+                    },
                 )
 
             for st in pipeline_config.stages:
                 dropped = int(stage_stats.get(st.name, 0))
                 passed = int(stage_passed.get(st.name, 0))
-                t.emit(
-                    name="pipeline.stage_completed",
-                    channel="ops",
-                    level=TelemetryLevel.INFO,
-                    attributes={"stage": st.name},
-                    data={
+                span.add_event(
+                    "pipeline.stage_completed",
+                    {
+                        "stage": st.name,
                         "passed_count": passed,
                         "dropped_count": dropped,
                         "threshold": st.drop_threshold,
                     },
                 )
 
-            t.emit(
-                name="pipeline.summary",
-                channel="ops",
-                level=TelemetryLevel.INFO,
-                data={
+            span.add_event(
+                "pipeline.summary",
+                {
                     "signals_count": int(len(signals)),
                     "alive_count": int(sum(1 for s in states.values() if s.alive or s.is_held)),
                 },
@@ -1254,18 +2747,24 @@ class ModelPipelineService:
         start: datetime,
         end: datetime,
         state: SymbolState,
-        t: TraceTelemetry,
+        span: SpanPort,
+        logger: LoggerPort,
     ) -> pd.DataFrame | None:
         try:
             return self.market_data.get_bars(symbol, self.timeframe, start, end)
         except Exception as e:
             state.notes["data_error"] = 1.0
-            t.emit(
-                name="error.exception",
-                channel="ops",
-                level=TelemetryLevel.ERROR,
-                attributes={"symbol": symbol},
-                data={"exception_type": type(e).__name__, "message": str(e), "stage": "get_bars"},
+            span.record_exception(e)
+            logger.emit(
+                "error.exception",
+                Severity.ERROR,
+                {
+                    "tycherion.channel": "ops",
+                    "symbol": symbol,
+                    "exception_type": type(e).__name__,
+                    "message": str(e),
+                    "stage": "get_bars",
+                },
             )
             return None
 
@@ -1274,7 +2773,8 @@ class ModelPipelineService:
         df: pd.DataFrame,
         needed_keys: set[str],
         state: SymbolState,
-        t: TraceTelemetry,
+        span: SpanPort,
+        logger: LoggerPort,
     ) -> Dict[str, IndicatorOutput]:
         bundle: Dict[str, IndicatorOutput] = {}
         for key in needed_keys:
@@ -1283,11 +2783,12 @@ class ModelPipelineService:
                 bundle[key] = ind.compute(df.copy())
             except Exception as e:
                 state.notes[f"indicator_error_{key}"] = 1.0
-                t.emit(
-                    name="error.exception",
-                    channel="ops",
-                    level=TelemetryLevel.ERROR,
-                    data={
+                span.record_exception(e)
+                logger.emit(
+                    "error.exception",
+                    Severity.ERROR,
+                    {
+                        "tycherion.channel": "ops",
                         "exception_type": type(e).__name__,
                         "message": str(e),
                         "stage": "indicator",
@@ -1304,18 +2805,21 @@ class ModelPipelineService:
         model: SignalModel,
         indicators: Dict[str, IndicatorOutput],
         state: SymbolState,
-        t: TraceTelemetry,
+        span: SpanPort,
+        logger: LoggerPort,
     ) -> float:
         stage_name = stage_cfg.name
         try:
-            if t.enabled("debug", TelemetryLevel.DEBUG):
+            if logger.is_enabled(Severity.DEBUG):
                 try:
-                    t.emit(
-                        name="model.input_snapshot",
-                        channel="debug",
-                        level=TelemetryLevel.DEBUG,
-                        attributes={"symbol": symbol, "stage": stage_name, "model": stage_name},
-                        data={
+                    logger.emit(
+                        "model.input_snapshot",
+                        Severity.DEBUG,
+                        {
+                            "tycherion.channel": "debug",
+                            "symbol": symbol,
+                            "stage": stage_name,
+                            "model": stage_name,
                             "indicator_keys": list(indicators.keys())[:30],
                             "features_keys": {
                                 k: list(v.features.keys())[:20]
@@ -1326,27 +2830,37 @@ class ModelPipelineService:
                     )
                 except Exception:
                     pass
+
             decision = model.decide(indicators)
         except Exception as e:
             state.notes[f"model_error_{stage_name}"] = 1.0
-            t.emit(
-                name="error.exception",
-                channel="ops",
-                level=TelemetryLevel.ERROR,
-                attributes={"symbol": symbol, "stage": stage_name, "model": stage_name},
-                data={"exception_type": type(e).__name__, "message": str(e), "stage": "model"},
+            span.record_exception(e)
+            logger.emit(
+                "error.exception",
+                Severity.ERROR,
+                {
+                    "tycherion.channel": "ops",
+                    "symbol": symbol,
+                    "stage": stage_name,
+                    "model": stage_name,
+                    "exception_type": type(e).__name__,
+                    "message": str(e),
+                    "stage_kind": "model",
+                },
             )
             decision = ModelDecision(side="HOLD", weight=0.0, confidence=0.0)
 
         score = self._decision_to_score(decision)
         state.pipeline_results.append(ModelStageResult(model_name=stage_name, score=score))
 
-        t.emit(
-            name="model.decided",
-            channel="audit",
-            level=TelemetryLevel.INFO,
-            attributes={"symbol": symbol, "stage": stage_name, "model": stage_name},
-            data={
+        logger.emit(
+            "model.decided",
+            Severity.INFO,
+            {
+                "tycherion.channel": "audit",
+                "symbol": symbol,
+                "stage": stage_name,
+                "model": stage_name,
                 "score": float(score),
                 "side": decision.side,
                 "weight": float(decision.weight or 0.0),
@@ -1369,7 +2883,6 @@ class ModelPipelineService:
             s = 0.0
         return max(-1.0, min(1.0, s))
 
-
 --- src\tycherion\application\pipeline\service.py:END ---
 
 --- src\tycherion\application\pipeline\__init__.py:START ---
@@ -1381,8 +2894,8 @@ from __future__ import annotations
 
 from typing import Dict, List, Iterable
 
-from tycherion.application.telemetry import TraceTelemetry
-from tycherion.ports.telemetry import TelemetryLevel
+from tycherion.ports.observability.observability import ObservabilityPort
+from tycherion.ports.observability.types import Severity, TYCHERION_SCHEMA_VERSION
 
 from tycherion.domain.signals.indicators.base import BaseIndicator
 from tycherion.domain.signals.models.base import SignalModel
@@ -1395,11 +2908,12 @@ ALLOCATORS: Dict[str, BaseAllocator] = {}
 BALANCERS: Dict[str, BaseBalancer] = {}
 DEFAULT_METHOD: Dict[str, str] = {}
 
+
 def register_indicator(*, key: str, method: str, tags: set[str]):
-    """
-    Register an indicator implementation for a given logical key (e.g. "trend")
+    """Register an indicator implementation for a given logical key (e.g. "trend")
     and method (e.g. "donchian_50_50").
     """
+
     def deco(cls):
         inst = cls()
         inst.key = key
@@ -1407,45 +2921,46 @@ def register_indicator(*, key: str, method: str, tags: set[str]):
         inst.tags = tags
         INDICATORS.setdefault(key, []).append(inst)
         return cls
+
     return deco
 
 
 def register_model(*, name: str, tags: set[str]):
-    """
-    Register a per-symbol signal model.
-    """
+    """Register a per-symbol signal model."""
+
     def deco(cls):
         inst = cls()
         inst.name = name
         inst.tags = tags
         MODELS[name] = inst
         return cls
+
     return deco
 
 
 def register_allocator(*, name: str, tags: set[str]):
-    """
-    Register a portfolio allocator strategy.
-    """
+    """Register a portfolio allocator strategy."""
+
     def deco(cls):
         inst = cls()
         inst.name = name
         inst.tags = tags
         ALLOCATORS[name] = inst
         return cls
+
     return deco
 
 
 def register_balancer(*, name: str, tags: set[str]):
-    """
-    Register a portfolio balancer / rebalancer strategy.
-    """
+    """Register a portfolio balancer / rebalancer strategy."""
+
     def deco(cls):
         inst = cls()
         inst.name = name
         inst.tags = tags
         BALANCERS[name] = inst
         return cls
+
     return deco
 
 
@@ -1454,14 +2969,8 @@ def set_default_indicator_method(key: str, method: str) -> None:
 
 
 def pick_indicator_for(key: str, playbook: str | None = None) -> BaseIndicator:
-    """
-    Pick an indicator instance for a given key and (optionally) playbook.
-    Preference order:
-    - indicators whose tags contain the playbook name
-    - indicators whose tags contain "default"
-    - otherwise, the first registered
-    If DEFAULT_METHOD[key] is set, prefer that method among candidates.
-    """
+    """Pick an indicator instance for a given key and (optionally) playbook."""
+
     candidates: Iterable[BaseIndicator] = INDICATORS.get(key, [])
     candidates = list(candidates)
     if not candidates:
@@ -1469,18 +2978,12 @@ def pick_indicator_for(key: str, playbook: str | None = None) -> BaseIndicator:
 
     # filter by tags / playbook
     if playbook:
-        tagged = [
-            ind for ind in candidates
-            if playbook in getattr(ind, "tags", set())
-        ]
+        tagged = [ind for ind in candidates if playbook in getattr(ind, "tags", set())]
         if tagged:
             candidates = tagged
 
     # then prefer "default"
-    defaults = [
-        ind for ind in candidates
-        if "default" in getattr(ind, "tags", set())
-    ]
+    defaults = [ind for ind in candidates if "default" in getattr(ind, "tags", set())]
     if defaults:
         candidates = defaults
 
@@ -1494,20 +2997,20 @@ def pick_indicator_for(key: str, playbook: str | None = None) -> BaseIndicator:
     return candidates[0]
 
 
-def auto_discover(tracer: TraceTelemetry | None) -> None:
-    """
-    Import all plugin modules so that their decorators run and fill the
-    registries above. This is called once during application startup.
-    """
+def auto_discover(*, observability: ObservabilityPort | None) -> None:
+    """Import all plugin modules so that their decorators run and fill registries."""
+
     import importlib
     import pkgutil
-    
-    t = tracer.child({"component": "plugins"}) if tracer else None
 
-    def _emit(name: str, *, level: TelemetryLevel, channel: str, data: dict) -> None:
-        if t is None:
+    tracer = observability.traces.get_tracer("tycherion.plugins", version=TYCHERION_SCHEMA_VERSION) if observability else None
+    logger = observability.logs.get_logger("tycherion.plugins", version=TYCHERION_SCHEMA_VERSION) if observability else None
+
+    def _log(body: str, severity: Severity, **data) -> None:
+        if logger is None:
             return
-        t.emit(name=name, level=level, channel=channel, attributes=None, data=data)
+        attrs = {"tycherion.channel": "ops", **data}
+        logger.emit(body, severity, attrs)
 
     bases = (
         "tycherion.domain.signals.indicators",
@@ -1516,50 +3019,48 @@ def auto_discover(tracer: TraceTelemetry | None) -> None:
         "tycherion.domain.portfolio.balancers",
     )
 
-    for base in bases:
-        try:
+    if tracer is None:
+        # No observability: best effort discovery without logs.
+        for base in bases:
             pkg = importlib.import_module(base)
-        except Exception as e:
-            _emit(
-                "plugins.base_import_failed",
-                level=TelemetryLevel.WARN,
-                channel="ops",
-                data={"base": base, "error": str(e)},
-            )
-            continue
-
-        pkg_path = getattr(pkg, "__path__", None)
-        if not pkg_path:
-            continue
-
-        for mod in pkgutil.walk_packages(pkg_path, pkg.__name__ + "."):
-            try:
+            for mod in pkgutil.walk_packages(getattr(pkg, "__path__", None), pkg.__name__ + "."):
                 importlib.import_module(mod.name)
-            except Exception as e:
-                _emit(
-                    "plugins.module_import_failed",
-                    level=TelemetryLevel.WARN,
-                    channel="ops",
-                    data={"module": mod.name, "error": str(e)},
-                )
+        return
 
-    _emit(
-        "plugins.discovered",
-        level=TelemetryLevel.INFO,
-        channel="ops",
-        data={
-            "indicators_count": int(sum(len(v) for v in INDICATORS.values())),
-            "models_count": int(len(MODELS)),
-            "allocators_count": int(len(ALLOCATORS)),
-            "balancers_count": int(len(BALANCERS)),
-        },
-    )
+    with tracer.start_as_current_span("plugins.discover", attributes={"component": "plugins"}):
+        for base in bases:
+            try:
+                pkg = importlib.import_module(base)
+            except Exception as e:
+                _log("plugins.base_import_failed", Severity.WARN, base=base, error=str(e))
+                continue
+
+            pkg_path = getattr(pkg, "__path__", None)
+            if not pkg_path:
+                continue
+
+            for mod in pkgutil.walk_packages(pkg_path, pkg.__name__ + "."):
+                try:
+                    importlib.import_module(mod.name)
+                except Exception as e:
+                    _log("plugins.module_import_failed", Severity.WARN, module=mod.name, error=str(e))
+
+        _log(
+            "plugins.discovered",
+            Severity.INFO,
+            indicators_count=int(sum(len(v) for v in INDICATORS.values())),
+            models_count=int(len(MODELS)),
+            allocators_count=int(len(ALLOCATORS)),
+            balancers_count=int(len(BALANCERS)),
+        )
 
 --- src\tycherion\application\plugins\registry.py:END ---
 
 --- src\tycherion\application\runmodes\live_multimodel.py:START ---
 from __future__ import annotations
 
+import hashlib
+import json
 import time
 from typing import Dict
 
@@ -1567,6 +3068,9 @@ from tycherion.shared.config import AppConfig
 from tycherion.ports.trading import TradingPort
 from tycherion.ports.account import AccountPort
 from tycherion.ports.universe import UniversePort
+
+from tycherion.ports.observability.observability import ObservabilityPort
+from tycherion.ports.observability.types import Severity, TYCHERION_SCHEMA_VERSION
 
 from tycherion.application.plugins.registry import (
     ALLOCATORS,
@@ -1581,8 +3085,6 @@ from tycherion.domain.portfolio.entities import (
 
 from tycherion.application.pipeline.config import build_pipeline_config
 from tycherion.application.pipeline.service import ModelPipelineService
-from tycherion.application.telemetry import TelemetryProvider, TraceTelemetry, stable_config_hash
-from tycherion.ports.telemetry import TelemetryLevel
 
 
 def _build_portfolio_snapshot(account: AccountPort) -> PortfolioSnapshot:
@@ -1593,9 +3095,12 @@ def _build_portfolio_snapshot(account: AccountPort) -> PortfolioSnapshot:
     return PortfolioSnapshot(equity=equity, positions=positions)
 
 
-def _fallback_tracer() -> TraceTelemetry:
-    # Used when telemetry is disabled/unconfigured.
-    return TraceTelemetry(port=None, runner_id="runner-unknown", trace_id="no-trace", base_attributes=None)
+def _stable_config_hash(d: dict) -> str:
+    try:
+        blob = json.dumps(d, sort_keys=True, default=str).encode("utf-8")
+        return hashlib.sha256(blob).hexdigest()[:16]
+    except Exception:
+        return ""
 
 
 def run_live_multimodel(
@@ -1604,7 +3109,8 @@ def run_live_multimodel(
     account: AccountPort,
     universe: UniversePort,
     pipeline_service: ModelPipelineService,
-    telemetry_provider: TelemetryProvider | None = None,
+    *,
+    observability: ObservabilityPort,
     config_path: str | None = None,
 ) -> None:
     """Live runmode that delegates per-symbol pipeline execution to ModelPipelineService."""
@@ -1619,107 +3125,104 @@ def run_live_multimodel(
 
     pipeline_config = build_pipeline_config(cfg)
 
+    tracer = observability.traces.get_tracer("tycherion.runmodes.live_multimodel", version=TYCHERION_SCHEMA_VERSION)
+    logger = observability.logs.get_logger("tycherion.runmodes.live_multimodel", version=TYCHERION_SCHEMA_VERSION)
+
     def step_once() -> None:
-        t = (
-            telemetry_provider.new_trace(base_attributes={"component": "runmode"})
-            if telemetry_provider
-            else _fallback_tracer()
-        )
+        cfg_hash = _stable_config_hash(cfg.model_dump())
 
-        try:
-            cfg_hash = stable_config_hash(cfg.model_dump())
-        except Exception:
-            cfg_hash = ""
-
-        with t.span(
+        with tracer.start_as_current_span(
             "run",
-            channel="ops",
-            level=TelemetryLevel.INFO,
-            attributes={"run_mode": "live_multimodel"},
-            data={
+            attributes={
+                "run_mode": "live_multimodel",
                 "timeframe": cfg.timeframe,
                 "lookback_days": int(cfg.lookback_days),
                 "pipeline_stages": [st.name for st in pipeline_config.stages],
                 "config_hash": cfg_hash,
                 "config_path": config_path,
             },
-        ):
+        ) as span_run:
+            try:
+                # 1) Structural universe from coverage + ensure held symbols are included
+                with tracer.start_as_current_span("coverage.fetch") as span_cov:
+                    coverage = build_coverage(cfg, pipeline_service.market_data, universe)
+                    portfolio = _build_portfolio_snapshot(account)
+                    held_symbols = set(portfolio.positions.keys())
+                    universe_symbols = sorted(set(coverage) | held_symbols)
 
-            # 1) Structural universe from coverage + ensure held symbols are included
-            with t.span("coverage.fetch", channel="ops", level=TelemetryLevel.INFO):
-                coverage = build_coverage(cfg, pipeline_service.market_data, universe)
-                portfolio = _build_portfolio_snapshot(account)
-                held_symbols = set(portfolio.positions.keys())
-                universe_symbols = sorted(set(coverage) | held_symbols)
-
-                t.emit(
-                    name="coverage.summary",
-                    channel="ops",
-                    level=TelemetryLevel.INFO,
-                    data={
-                        "symbols_count": int(len(universe_symbols)),
-                        "symbols_sample": universe_symbols[: min(10, len(universe_symbols))],
-                    },
-                )
-
-            # 2) Run pipeline (single entrypoint)
-            result = pipeline_service.run(
-                universe_symbols=universe_symbols,
-                portfolio_snapshot=portfolio,
-                pipeline_config=pipeline_config,
-                tracer=t,
-            )
-
-            t.emit(
-                name="pipeline.run_summary",
-                channel="ops",
-                level=TelemetryLevel.INFO,
-                data={"stage_stats": dict(result.stage_stats or {})},
-            )
-
-            # 3) Allocation -> target weights
-            with t.span("allocator", channel="ops", level=TelemetryLevel.INFO):
-                target_alloc = allocator.allocate(result.signals_by_symbol)
-
-            # 4) Balancing -> rebalance plan
-            with t.span("balancer", channel="ops", level=TelemetryLevel.INFO):
-                plan = balancer.plan(
-                    portfolio=portfolio,
-                    target=target_alloc,
-                    threshold=cfg.application.portfolio.threshold_weight,
-                )
-                t.emit(
-                    name="rebalance.plan_built",
-                    channel="ops",
-                    level=TelemetryLevel.INFO,
-                    data={"instructions_count": int(len(plan))},
-                )
-
-            # 5) Orders -> execution
-            with t.span("execution", channel="ops", level=TelemetryLevel.INFO):
-                orders = build_orders(portfolio, plan, cfg.trading)
-                t.emit(
-                    name="orders.built",
-                    channel="ops",
-                    level=TelemetryLevel.INFO,
-                    data={"orders_count": int(len(orders))},
-                )
-
-                for od in orders:
-                    if od.side.upper() == "BUY":
-                        res = trader.market_buy(od.symbol, volume=od.volume)
-                    else:
-                        res = trader.market_sell(od.symbol, volume=od.volume)
-                    t.emit(
-                        name="trade.executed",
-                        channel="ops",
-                        level=TelemetryLevel.INFO,
-                        attributes={"symbol": od.symbol},
-                        data={"side": od.side, "volume": float(od.volume), "result": str(res)},
+                    span_cov.add_event(
+                        "coverage.summary",
+                        {
+                            "symbols_count": int(len(universe_symbols)),
+                            "symbols_sample": universe_symbols[: min(10, len(universe_symbols))],
+                        },
                     )
 
-        if telemetry_provider:
-            telemetry_provider.flush()
+                # 2) Run pipeline (single entrypoint)
+                result = pipeline_service.run(
+                    universe_symbols=universe_symbols,
+                    portfolio_snapshot=portfolio,
+                    pipeline_config=pipeline_config,
+                    observability=observability,
+                )
+
+                span_run.add_event(
+                    "pipeline.run_summary",
+                    {"stage_stats": dict(result.stage_stats or {})},
+                )
+
+                # 3) Allocation -> target weights
+                with tracer.start_as_current_span("allocator") as span_alloc:
+                    target_alloc = allocator.allocate(result.signals_by_symbol)
+                    span_alloc.add_event("allocator.completed", {"symbols_count": int(len(result.signals_by_symbol))})
+
+                # 4) Balancing -> rebalance plan
+                with tracer.start_as_current_span("balancer") as span_bal:
+                    plan = balancer.plan(
+                        portfolio=portfolio,
+                        target=target_alloc,
+                        threshold=cfg.application.portfolio.threshold_weight,
+                    )
+                    span_bal.add_event("rebalance.plan_built", {"instructions_count": int(len(plan))})
+
+                # 5) Orders -> execution
+                with tracer.start_as_current_span("execution") as span_exec:
+                    orders = build_orders(portfolio, plan, cfg.trading)
+                    span_exec.add_event("orders.built", {"orders_count": int(len(orders))})
+
+                    for od in orders:
+                        if od.side.upper() == "BUY":
+                            res = trader.market_buy(od.symbol, volume=od.volume)
+                        else:
+                            res = trader.market_sell(od.symbol, volume=od.volume)
+
+                        logger.emit(
+                            "trade.executed",
+                            Severity.INFO,
+                            {
+                                "tycherion.channel": "ops",
+                                "symbol": od.symbol,
+                                "side": od.side,
+                                "volume": float(od.volume),
+                                "result": str(res),
+                            },
+                        )
+
+                span_run.set_status_ok()
+            except BaseException as e:
+                span_run.record_exception(e)
+                span_run.set_status_error(str(e))
+                logger.emit(
+                    "run.exception",
+                    Severity.ERROR,
+                    {
+                        "tycherion.channel": "ops",
+                        "run_mode": "live_multimodel",
+                        "exception_type": type(e).__name__,
+                        "message": str(e),
+                    },
+                )
+                raise
 
     if cfg.application.schedule.run_forever:
         while True:
@@ -1727,36 +3230,28 @@ def run_live_multimodel(
                 step_once()
                 time.sleep(max(1, cfg.application.schedule.interval_seconds))
             except KeyboardInterrupt:
-                t = (
-                    telemetry_provider.new_trace(base_attributes={"component": "runmode"})
-                    if telemetry_provider
-                    else _fallback_tracer()
+                logger.emit(
+                    "run.stopped",
+                    Severity.INFO,
+                    {
+                        "tycherion.channel": "ops",
+                        "run_mode": "live_multimodel",
+                        "reason": "KeyboardInterrupt",
+                    },
                 )
-                t.emit(
-                    name="run.stopped",
-                    channel="ops",
-                    level=TelemetryLevel.INFO,
-                    attributes={"run_mode": "live_multimodel"},
-                    data={"reason": "KeyboardInterrupt"},
-                )
-                if telemetry_provider:
-                    telemetry_provider.flush()
                 break
             except Exception as e:
-                t = (
-                    telemetry_provider.new_trace(base_attributes={"component": "runmode"})
-                    if telemetry_provider
-                    else _fallback_tracer()
+                # Error already recorded inside the run span, but keep a top-level log too.
+                logger.emit(
+                    "run.loop_exception",
+                    Severity.ERROR,
+                    {
+                        "tycherion.channel": "ops",
+                        "run_mode": "live_multimodel",
+                        "exception_type": type(e).__name__,
+                        "message": str(e),
+                    },
                 )
-                t.emit(
-                    name="error.exception",
-                    channel="ops",
-                    level=TelemetryLevel.ERROR,
-                    attributes={"run_mode": "live_multimodel"},
-                    data={"exception_type": type(e).__name__, "message": str(e)},
-                )
-                if telemetry_provider:
-                    telemetry_provider.flush()
                 time.sleep(3)
     else:
         step_once()
@@ -2468,7 +3963,6 @@ from __future__ import annotations
 
 import os
 import socket
-from pathlib import Path
 
 import MetaTrader5 as mt5
 
@@ -2478,12 +3972,10 @@ from tycherion.adapters.mt5.trading_mt5 import MT5Trader
 from tycherion.adapters.mt5.account_mt5 import MT5Account
 from tycherion.adapters.mt5.universe_mt5 import MT5Universe
 
-from tycherion.adapters.telemetry.db_journal import DbExecutionJournalSink
-from tycherion.adapters.telemetry.mongo_journal import MongoExecutionJournalSink
-from tycherion.adapters.telemetry.console import ConsoleTelemetrySink
+from tycherion.adapters.observability.noop.noop_observability import NoopObservability
 
-from tycherion.application.telemetry import TelemetryHub, TelemetryProvider
-from tycherion.ports.telemetry import TelemetryLevel
+from tycherion.ports.observability.observability import ObservabilityPort
+from tycherion.ports.observability.types import Severity, TYCHERION_SCHEMA_VERSION
 
 from tycherion.application.plugins import registry as _registry
 from tycherion.application.pipeline.service import ModelPipelineService
@@ -2505,13 +3997,15 @@ def _ensure_initialized(cfg: AppConfig) -> None:
 def run_app(config_path: str) -> None:
     cfg = load_config(config_path)
 
-    # Telemetry must be available as early as possible (e.g. plugin discovery).
-    provider = _build_telemetry(cfg, config_path)
+    # Observability must be available as early as possible (e.g. plugin discovery).
+    obs = _build_observability(cfg, config_path)
 
-    # Discover all indicators, models, allocators and balancers
-    bootstrap_tracer = provider.new_trace(base_attributes={"component": "bootstrap"})
-    with bootstrap_tracer.span("bootstrap.discover", channel="ops", level=TelemetryLevel.INFO):
-        _registry.auto_discover(bootstrap_tracer)
+    tracer = obs.traces.get_tracer("tycherion.bootstrap", version=TYCHERION_SCHEMA_VERSION)
+    logger = obs.logs.get_logger("tycherion.bootstrap", version=TYCHERION_SCHEMA_VERSION)
+
+    with tracer.start_as_current_span("bootstrap.discover", attributes={"component": "bootstrap"}):
+        _registry.auto_discover(observability=obs)
+        logger.emit("Plugin discovery completed", Severity.INFO, {"tycherion.channel": "ops"})
 
     _ensure_initialized(cfg)
     try:
@@ -2543,65 +4037,67 @@ def run_app(config_path: str) -> None:
                 account,
                 universe,
                 pipeline_service,
-                telemetry_provider=provider,
+                observability=obs,
                 config_path=config_path,
             )
         else:
             raise SystemExit(f"Unknown run_mode: {run_mode}")
     finally:
         try:
-            provider.close()
+            obs.shutdown()
         except Exception:
             pass
         mt5.shutdown()
 
 
-def _build_telemetry(cfg: AppConfig, config_path: str) -> TelemetryProvider:
+def _parse_severity(level: str | None) -> Severity:
+    lvl = (level or "INFO").strip().upper()
+    try:
+        return Severity[lvl]
+    except Exception:
+        # Accept legacy values too
+        if lvl in ("WARNING",):
+            return Severity.WARN
+        return Severity.INFO
+
+
+def _build_observability(cfg: AppConfig, config_path: str) -> ObservabilityPort:
     _ = config_path
 
     runner_id = (os.getenv("TYCHERION_RUNNER_ID") or "").strip()
     if not runner_id:
-        # Fallback: still deterministic enough for local dev.
+        # Fallback: deterministic enough for local dev.
         runner_id = f"runner-{socket.gethostname()}-{os.getpid()}"
 
-    sinks = []
-    telemetry_cfg = cfg.telemetry
+    tel = cfg.telemetry
 
-    if bool(telemetry_cfg.db_enabled) and bool(telemetry_cfg.db_dsn):
-        sinks.append(
-            DbExecutionJournalSink(
-                dsn=str(telemetry_cfg.db_dsn),
-                enabled_flag=True,
-                channels=set(telemetry_cfg.db_channels or ["audit", "ops"]),
-                min_level=TelemetryLevel.coerce(telemetry_cfg.db_min_level),
-                batch_size=int(telemetry_cfg.db_batch_size or 50),
-            )
+    try:
+        from tycherion.adapters.observability.otel.otel_observability import (
+            OtelObservability,
+            OtelObservabilityConfig,
         )
 
-    if bool(telemetry_cfg.mongo_enabled) and bool(telemetry_cfg.mongo_uri):
-        sinks.append(
-            MongoExecutionJournalSink(
-                uri=str(telemetry_cfg.mongo_uri),
-                db_name=str(telemetry_cfg.mongo_db or "tycherion"),
-                collection_name=str(telemetry_cfg.mongo_collection or "execution_journal_events"),
-                enabled_flag=True,
-                channels=set(telemetry_cfg.mongo_channels or ["audit", "ops"]),
-                min_level=TelemetryLevel.coerce(telemetry_cfg.mongo_min_level),
-                batch_size=int(telemetry_cfg.mongo_batch_size or 200),
+        return OtelObservability(
+            OtelObservabilityConfig(
+                runner_id=runner_id,
+                schema_version=TYCHERION_SCHEMA_VERSION,
+                console_enabled=bool(tel.console_enabled),
+                console_min_severity=_parse_severity(tel.console_min_level),
+                console_show_span_lifecycle=True,
+                otlp_enabled=bool(getattr(tel, "otlp_enabled", False)),
+                otlp_endpoint=str(getattr(tel, "otlp_endpoint", "http://localhost:4317") or "http://localhost:4317"),
+                mongo_audit_enabled=bool(tel.mongo_enabled),
+                mongo_uri=str(tel.mongo_uri) if tel.mongo_uri else None,
+                mongo_db=str(tel.mongo_db or "tycherion"),
+                mongo_collection=str(tel.mongo_collection or "ops_journal"),
+                mongo_min_severity=_parse_severity(tel.mongo_min_level),
+                mongo_batch_size=int(tel.mongo_batch_size or 200),
             )
         )
-
-    if bool(telemetry_cfg.console_enabled):
-        sinks.append(
-            ConsoleTelemetrySink(
-                enabled_flag=True,
-                channels=set(telemetry_cfg.console_channels or ["ops"]),
-                min_level=TelemetryLevel.coerce(telemetry_cfg.console_min_level),
-            )
-        )
-
-    hub = TelemetryHub(sinks=sinks)
-    return TelemetryProvider(runner_id=runner_id, hub=hub)
+    except Exception as e:
+        # Hard-fail would be annoying during local dev if deps are missing, so we degrade to noop.
+        print(f"[tycherion] Observability disabled (failed to init OTel adapter): {e}")
+        return NoopObservability()
 
 --- src\tycherion\bootstrap\main.py:END ---
 
@@ -3364,6 +4860,158 @@ class UniversePort(Protocol):
 
 --- src\tycherion\ports\universe.py:END ---
 
+--- src\tycherion\ports\observability\logs.py:START ---
+from __future__ import annotations
+
+from typing import Protocol, runtime_checkable
+
+from .types import Attributes, Severity
+
+
+@runtime_checkable
+class LoggerPort(Protocol):
+    def emit(self, body: str, severity: Severity, attributes: Attributes | None = None) -> None: ...
+    def is_enabled(self, severity: Severity) -> bool: ...
+
+
+@runtime_checkable
+class LoggerProviderPort(Protocol):
+    def get_logger(self, name: str, version: str | None = None) -> LoggerPort: ...
+
+--- src\tycherion\ports\observability\logs.py:END ---
+
+--- src\tycherion\ports\observability\metrics.py:START ---
+from __future__ import annotations
+
+from typing import Protocol, runtime_checkable
+
+from .types import Attributes
+
+
+@runtime_checkable
+class CounterPort(Protocol):
+    def add(self, amount: int, attributes: Attributes | None = None) -> None: ...
+
+
+@runtime_checkable
+class MeterPort(Protocol):
+    def create_counter(self, name: str, unit: str | None = None, description: str | None = None) -> CounterPort: ...
+
+
+@runtime_checkable
+class MeterProviderPort(Protocol):
+    def get_meter(self, name: str, version: str | None = None) -> MeterPort: ...
+
+--- src\tycherion\ports\observability\metrics.py:END ---
+
+--- src\tycherion\ports\observability\observability.py:START ---
+from __future__ import annotations
+
+from typing import Protocol, runtime_checkable
+
+from .logs import LoggerProviderPort
+from .metrics import MeterProviderPort
+from .traces import TracerProviderPort
+
+
+@runtime_checkable
+class ObservabilityPort(Protocol):
+    @property
+    def traces(self) -> TracerProviderPort: ...
+
+    @property
+    def logs(self) -> LoggerProviderPort: ...
+
+    @property
+    def metrics(self) -> MeterProviderPort: ...
+
+    def shutdown(self) -> None: ...
+    def force_flush(self) -> None: ...
+
+--- src\tycherion\ports\observability\observability.py:END ---
+
+--- src\tycherion\ports\observability\traces.py:START ---
+from __future__ import annotations
+
+from contextlib import AbstractContextManager
+from typing import Protocol, runtime_checkable
+
+from .types import Attributes
+
+
+@runtime_checkable
+class SpanPort(Protocol):
+    def set_attribute(self, key: str, value: object) -> None: ...
+    def set_attributes(self, attributes: Attributes) -> None: ...
+    def add_event(self, name: str, attributes: Attributes | None = None) -> None: ...
+    def record_exception(self, exc: BaseException) -> None: ...
+    def set_status_ok(self) -> None: ...
+    def set_status_error(self, message: str | None = None) -> None: ...
+    def is_recording(self) -> bool: ...
+
+
+@runtime_checkable
+class TracerPort(Protocol):
+    def start_as_current_span(
+        self, name: str, attributes: Attributes | None = None
+    ) -> AbstractContextManager[SpanPort]:
+        ...
+
+
+@runtime_checkable
+class TracerProviderPort(Protocol):
+    def get_tracer(self, name: str, version: str | None = None) -> TracerPort: ...
+
+--- src\tycherion\ports\observability\traces.py:END ---
+
+--- src\tycherion\ports\observability\types.py:START ---
+from __future__ import annotations
+
+from enum import Enum
+from typing import Mapping, Sequence, Union
+
+# OpenTelemetry attribute values are limited to primitives and sequences of primitives.
+AttributePrimitive = Union[bool, str, int, float]
+AttributeValue = Union[AttributePrimitive, Sequence[AttributePrimitive]]
+Attributes = Mapping[str, AttributeValue]
+
+# NOTE:
+# Tycherion schema version for observability payloads. Keep stable and explicit.
+TYCHERION_SCHEMA_VERSION = "v3"
+
+
+class Severity(str, Enum):
+    TRACE = "TRACE"
+    DEBUG = "DEBUG"
+    INFO = "INFO"
+    WARN = "WARN"
+    ERROR = "ERROR"
+    FATAL = "FATAL"
+
+    def to_logging_level(self) -> int:
+        import logging
+
+        return {
+            Severity.TRACE: 5,  # custom level (below DEBUG)
+            Severity.DEBUG: logging.DEBUG,
+            Severity.INFO: logging.INFO,
+            Severity.WARN: logging.WARNING,
+            Severity.ERROR: logging.ERROR,
+            Severity.FATAL: logging.CRITICAL,
+        }[self]
+
+
+class SpanStatus(str, Enum):
+    UNSET = "UNSET"
+    OK = "OK"
+    ERROR = "ERROR"
+
+--- src\tycherion\ports\observability\types.py:END ---
+
+--- src\tycherion\ports\observability\__init__.py:START ---
+
+--- src\tycherion\ports\observability\__init__.py:END ---
+
 --- src\tycherion\shared\config.py:START ---
 from __future__ import annotations
 from pydantic import BaseModel, field_validator
@@ -3481,7 +5129,7 @@ class TelemetryCfg(BaseModel):
     # Mongo URI, e.g. "mongodb://user:pass@host:27017/?authSource=admin"
     mongo_uri: Optional[str] = None
     mongo_db: str = "tycherion"
-    mongo_collection: str = "execution_journal_events"
+    mongo_collection: str = "ops_journal"
     mongo_channels: list[str] = ["audit", "ops"]
     mongo_min_level: str = "INFO"
     mongo_batch_size: int = 200
@@ -3490,6 +5138,11 @@ class TelemetryCfg(BaseModel):
     console_enabled: bool = False
     console_channels: list[str] = ["ops"]
     console_min_level: str = "INFO"
+
+    # OTLP export (optional; prepared for Alloy/Collector fan-out)
+    otlp_enabled: bool = False
+    otlp_endpoint: str = "http://localhost:4317"
+
 
 
 class AppConfig(BaseModel):
@@ -3524,6 +5177,40 @@ def load_config(path: str) -> AppConfig:
     mt5_cfg["server"]        = coalesce(mt5_cfg.get("server"),        env_server)
     mt5_cfg["login"]         = coalesce(mt5_cfg.get("login"),         int(env_login) if env_login and env_login.isdigit() else None)
     mt5_cfg["password"]      = coalesce(mt5_cfg.get("password"),      env_pass)
+
+
+    # Observability/Telemetry env overrides (kept here to avoid leaking infra details into domain/application)
+    raw.setdefault("telemetry", {})
+    tel_cfg = raw["telemetry"] or {}
+
+    def env_bool(name: str) -> bool | None:
+        v = os.getenv(name)
+        if v is None:
+            return None
+        v = str(v).strip().lower()
+        if v in ("1", "true", "yes", "y", "on"):
+            return True
+        if v in ("0", "false", "no", "n", "off"):
+            return False
+        return None
+
+    def env_override(yaml_val, env_val):
+        return env_val if env_val is not None else yaml_val
+
+    tel_cfg["otlp_enabled"] = env_override(tel_cfg.get("otlp_enabled"), env_bool("TYCHERION_OTLP_ENABLED"))
+    tel_cfg["otlp_endpoint"] = env_override(tel_cfg.get("otlp_endpoint"), os.getenv("TYCHERION_OTLP_ENDPOINT"))
+
+    # Mongo ops journal (audit). Env keys are intentionally explicit.
+    tel_cfg["mongo_enabled"] = env_override(tel_cfg.get("mongo_enabled"), env_bool("TYCHERION_MONGO_AUDIT_ENABLED"))
+    tel_cfg["mongo_uri"] = env_override(tel_cfg.get("mongo_uri"), os.getenv("TYCHERION_MONGO_URI"))
+    tel_cfg["mongo_db"] = env_override(tel_cfg.get("mongo_db"), os.getenv("TYCHERION_MONGO_DB"))
+    tel_cfg["mongo_collection"] = env_override(tel_cfg.get("mongo_collection"), os.getenv("TYCHERION_MONGO_COLLECTION"))
+
+    # Console output for local dev
+    tel_cfg["console_enabled"] = env_override(tel_cfg.get("console_enabled"), env_bool("TYCHERION_CONSOLE_ENABLED"))
+    tel_cfg["console_min_level"] = env_override(tel_cfg.get("console_min_level"), os.getenv("TYCHERION_CONSOLE_MIN_LEVEL"))
+
+    raw["telemetry"] = tel_cfg
 
     raw["mt5"] = mt5_cfg
     return AppConfig.model_validate(raw)

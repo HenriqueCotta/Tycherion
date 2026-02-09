@@ -114,7 +114,7 @@ class TelemetryCfg(BaseModel):
     # Mongo URI, e.g. "mongodb://user:pass@host:27017/?authSource=admin"
     mongo_uri: Optional[str] = None
     mongo_db: str = "tycherion"
-    mongo_collection: str = "execution_journal_events"
+    mongo_collection: str = "ops_journal"
     mongo_channels: list[str] = ["audit", "ops"]
     mongo_min_level: str = "INFO"
     mongo_batch_size: int = 200
@@ -123,6 +123,11 @@ class TelemetryCfg(BaseModel):
     console_enabled: bool = False
     console_channels: list[str] = ["ops"]
     console_min_level: str = "INFO"
+
+    # OTLP export (optional; prepared for Alloy/Collector fan-out)
+    otlp_enabled: bool = False
+    otlp_endpoint: str = "http://localhost:4317"
+
 
 
 class AppConfig(BaseModel):
@@ -157,6 +162,40 @@ def load_config(path: str) -> AppConfig:
     mt5_cfg["server"]        = coalesce(mt5_cfg.get("server"),        env_server)
     mt5_cfg["login"]         = coalesce(mt5_cfg.get("login"),         int(env_login) if env_login and env_login.isdigit() else None)
     mt5_cfg["password"]      = coalesce(mt5_cfg.get("password"),      env_pass)
+
+
+    # Observability/Telemetry env overrides (kept here to avoid leaking infra details into domain/application)
+    raw.setdefault("telemetry", {})
+    tel_cfg = raw["telemetry"] or {}
+
+    def env_bool(name: str) -> bool | None:
+        v = os.getenv(name)
+        if v is None:
+            return None
+        v = str(v).strip().lower()
+        if v in ("1", "true", "yes", "y", "on"):
+            return True
+        if v in ("0", "false", "no", "n", "off"):
+            return False
+        return None
+
+    def env_override(yaml_val, env_val):
+        return env_val if env_val is not None else yaml_val
+
+    tel_cfg["otlp_enabled"] = env_override(tel_cfg.get("otlp_enabled"), env_bool("TYCHERION_OTLP_ENABLED"))
+    tel_cfg["otlp_endpoint"] = env_override(tel_cfg.get("otlp_endpoint"), os.getenv("TYCHERION_OTLP_ENDPOINT"))
+
+    # Mongo ops journal (audit). Env keys are intentionally explicit.
+    tel_cfg["mongo_enabled"] = env_override(tel_cfg.get("mongo_enabled"), env_bool("TYCHERION_MONGO_AUDIT_ENABLED"))
+    tel_cfg["mongo_uri"] = env_override(tel_cfg.get("mongo_uri"), os.getenv("TYCHERION_MONGO_URI"))
+    tel_cfg["mongo_db"] = env_override(tel_cfg.get("mongo_db"), os.getenv("TYCHERION_MONGO_DB"))
+    tel_cfg["mongo_collection"] = env_override(tel_cfg.get("mongo_collection"), os.getenv("TYCHERION_MONGO_COLLECTION"))
+
+    # Console output for local dev
+    tel_cfg["console_enabled"] = env_override(tel_cfg.get("console_enabled"), env_bool("TYCHERION_CONSOLE_ENABLED"))
+    tel_cfg["console_min_level"] = env_override(tel_cfg.get("console_min_level"), os.getenv("TYCHERION_CONSOLE_MIN_LEVEL"))
+
+    raw["telemetry"] = tel_cfg
 
     raw["mt5"] = mt5_cfg
     return AppConfig.model_validate(raw)

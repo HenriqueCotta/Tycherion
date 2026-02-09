@@ -16,11 +16,15 @@ from tycherion.domain.signals.entities import (
 from tycherion.domain.signals.models.base import SignalModel
 from tycherion.domain.signals.indicators.base import BaseIndicator
 from tycherion.ports.market_data import MarketDataPort
-from tycherion.application.telemetry import TraceTelemetry
-from tycherion.ports.telemetry import TelemetryLevel
+
+from tycherion.ports.observability.observability import ObservabilityPort
+from tycherion.ports.observability.traces import SpanPort
+from tycherion.ports.observability.logs import LoggerPort
+from tycherion.ports.observability.types import Severity, TYCHERION_SCHEMA_VERSION
 
 from .config import PipelineConfig, PipelineStageConfig
 from .result import PipelineRunResult
+
 
 @dataclass(slots=True)
 class ModelPipelineService:
@@ -38,20 +42,23 @@ class ModelPipelineService:
         universe_symbols: list[str],
         portfolio_snapshot: PortfolioSnapshot,
         pipeline_config: PipelineConfig,
-        tracer: TraceTelemetry,
+        *,
+        observability: ObservabilityPort,
     ) -> PipelineRunResult:
-        t = tracer.child({"component": "pipeline"})
+        tracer = observability.traces.get_tracer("tycherion.pipeline", version=TYCHERION_SCHEMA_VERSION)
+        logger = observability.logs.get_logger("tycherion.pipeline", version=TYCHERION_SCHEMA_VERSION)
+
         held_symbols = set(portfolio_snapshot.positions.keys())
 
-        with t.span(
+        with tracer.start_as_current_span(
             "pipeline",
-            channel="ops",
-            level=TelemetryLevel.INFO,
-            data={
+            attributes={
                 "symbols_count": int(len(universe_symbols)),
                 "stages": [st.name for st in pipeline_config.stages],
+                "timeframe": self.timeframe,
+                "lookback_days": int(self.lookback_days),
             },
-        ):
+        ) as span:
             # 1) Init per-symbol state
             states: Dict[str, SymbolState] = {
                 sym: SymbolState(symbol=sym, is_held=(sym in held_symbols))
@@ -67,7 +74,6 @@ class ModelPipelineService:
                 try:
                     needed_keys.update(model.requires() or set())
                 except Exception:
-                    # a model might not implement requires()
                     pass
 
             # 4) Time window for analysis
@@ -78,39 +84,38 @@ class ModelPipelineService:
             stage_passed: Dict[str, int] = {st.name: 0 for st in pipeline_config.stages}
 
             for st in pipeline_config.stages:
-                t.emit(
-                    name="pipeline.stage_started",
-                    channel="ops",
-                    level=TelemetryLevel.INFO,
-                    attributes={"stage": st.name},
-                    data={"threshold": st.drop_threshold},
+                span.add_event(
+                    "pipeline.stage_started",
+                    {"stage": st.name, "threshold": st.drop_threshold},
                 )
 
             for symbol, state in states.items():
                 if not state.alive and not state.is_held:
                     continue
 
-                df = self._safe_get_bars(symbol, start, end, state, t)
+                df = self._safe_get_bars(symbol, start, end, state, span, logger)
                 if df is None or df.empty:
                     if not state.is_held:
-                        t.emit(
-                            name="pipeline.symbol_dropped",
-                            channel="audit",
-                            level=TelemetryLevel.WARN,
-                            attributes={"symbol": symbol},
-                            data={"reason": "no_market_data"},
+                        logger.emit(
+                            "pipeline.symbol_dropped",
+                            Severity.WARN,
+                            {
+                                "tycherion.channel": "audit",
+                                "symbol": symbol,
+                                "reason": "no_market_data",
+                            },
                         )
                         state.alive = False
                     continue
 
-                if t.enabled("debug", TelemetryLevel.DEBUG):
+                if logger.is_enabled(Severity.DEBUG):
                     try:
-                        t.emit(
-                            name="market_data.sample",
-                            channel="debug",
-                            level=TelemetryLevel.DEBUG,
-                            attributes={"symbol": symbol},
-                            data={
+                        logger.emit(
+                            "market_data.sample",
+                            Severity.DEBUG,
+                            {
+                                "tycherion.channel": "debug",
+                                "symbol": symbol,
                                 "rows": int(len(df)),
                                 "columns": list(df.columns)[:20],
                                 "head": df.head(2).to_dict(orient="list"),
@@ -120,7 +125,7 @@ class ModelPipelineService:
                     except Exception:
                         pass
 
-                bundle = self._compute_indicators(df, needed_keys, state, t)
+                bundle = self._compute_indicators(df, needed_keys, state, span, logger)
 
                 # Pipeline execution per stage
                 for stage_cfg, model in resolved:
@@ -128,7 +133,7 @@ class ModelPipelineService:
                         break
 
                     stage_passed[stage_cfg.name] = int(stage_passed.get(stage_cfg.name, 0)) + 1
-                    score = self._run_stage(symbol, stage_cfg, model, bundle, state, t)
+                    score = self._run_stage(symbol, stage_cfg, model, bundle, state, span, logger)
 
                     # Drop policy
                     if stage_cfg.drop_threshold is not None and score < float(stage_cfg.drop_threshold):
@@ -138,12 +143,13 @@ class ModelPipelineService:
                         state.alive = False
                         state.notes[f"dropped_by_{stage_cfg.name}"] = 1.0
                         stage_stats[stage_cfg.name] = int(stage_stats.get(stage_cfg.name, 0)) + 1
-                        t.emit(
-                            name="pipeline.symbol_dropped",
-                            channel="audit",
-                            level=TelemetryLevel.INFO,
-                            attributes={"symbol": symbol, "stage": stage_cfg.name},
-                            data={
+                        logger.emit(
+                            "pipeline.symbol_dropped",
+                            Severity.INFO,
+                            {
+                                "tycherion.channel": "audit",
+                                "symbol": symbol,
+                                "stage": stage_cfg.name,
                                 "score": float(score),
                                 "threshold": float(stage_cfg.drop_threshold),
                                 "reason": "below_threshold",
@@ -164,34 +170,33 @@ class ModelPipelineService:
                 signed = float(state.alpha_score)
                 confidence = float(state.notes.get("final_confidence", abs(signed)))
                 signals[symbol] = Signal(symbol=symbol, signed=signed, confidence=confidence)
-                t.emit(
-                    name="pipeline.signal_emitted",
-                    channel="audit",
-                    level=TelemetryLevel.INFO,
-                    attributes={"symbol": symbol},
-                    data={"signed": signed, "confidence": confidence},
+                logger.emit(
+                    "pipeline.signal_emitted",
+                    Severity.INFO,
+                    {
+                        "tycherion.channel": "audit",
+                        "symbol": symbol,
+                        "signed": signed,
+                        "confidence": confidence,
+                    },
                 )
 
             for st in pipeline_config.stages:
                 dropped = int(stage_stats.get(st.name, 0))
                 passed = int(stage_passed.get(st.name, 0))
-                t.emit(
-                    name="pipeline.stage_completed",
-                    channel="ops",
-                    level=TelemetryLevel.INFO,
-                    attributes={"stage": st.name},
-                    data={
+                span.add_event(
+                    "pipeline.stage_completed",
+                    {
+                        "stage": st.name,
                         "passed_count": passed,
                         "dropped_count": dropped,
                         "threshold": st.drop_threshold,
                     },
                 )
 
-            t.emit(
-                name="pipeline.summary",
-                channel="ops",
-                level=TelemetryLevel.INFO,
-                data={
+            span.add_event(
+                "pipeline.summary",
+                {
                     "signals_count": int(len(signals)),
                     "alive_count": int(sum(1 for s in states.values() if s.alive or s.is_held)),
                 },
@@ -221,18 +226,24 @@ class ModelPipelineService:
         start: datetime,
         end: datetime,
         state: SymbolState,
-        t: TraceTelemetry,
+        span: SpanPort,
+        logger: LoggerPort,
     ) -> pd.DataFrame | None:
         try:
             return self.market_data.get_bars(symbol, self.timeframe, start, end)
         except Exception as e:
             state.notes["data_error"] = 1.0
-            t.emit(
-                name="error.exception",
-                channel="ops",
-                level=TelemetryLevel.ERROR,
-                attributes={"symbol": symbol},
-                data={"exception_type": type(e).__name__, "message": str(e), "stage": "get_bars"},
+            span.record_exception(e)
+            logger.emit(
+                "error.exception",
+                Severity.ERROR,
+                {
+                    "tycherion.channel": "ops",
+                    "symbol": symbol,
+                    "exception_type": type(e).__name__,
+                    "message": str(e),
+                    "stage": "get_bars",
+                },
             )
             return None
 
@@ -241,7 +252,8 @@ class ModelPipelineService:
         df: pd.DataFrame,
         needed_keys: set[str],
         state: SymbolState,
-        t: TraceTelemetry,
+        span: SpanPort,
+        logger: LoggerPort,
     ) -> Dict[str, IndicatorOutput]:
         bundle: Dict[str, IndicatorOutput] = {}
         for key in needed_keys:
@@ -250,11 +262,12 @@ class ModelPipelineService:
                 bundle[key] = ind.compute(df.copy())
             except Exception as e:
                 state.notes[f"indicator_error_{key}"] = 1.0
-                t.emit(
-                    name="error.exception",
-                    channel="ops",
-                    level=TelemetryLevel.ERROR,
-                    data={
+                span.record_exception(e)
+                logger.emit(
+                    "error.exception",
+                    Severity.ERROR,
+                    {
+                        "tycherion.channel": "ops",
                         "exception_type": type(e).__name__,
                         "message": str(e),
                         "stage": "indicator",
@@ -271,18 +284,21 @@ class ModelPipelineService:
         model: SignalModel,
         indicators: Dict[str, IndicatorOutput],
         state: SymbolState,
-        t: TraceTelemetry,
+        span: SpanPort,
+        logger: LoggerPort,
     ) -> float:
         stage_name = stage_cfg.name
         try:
-            if t.enabled("debug", TelemetryLevel.DEBUG):
+            if logger.is_enabled(Severity.DEBUG):
                 try:
-                    t.emit(
-                        name="model.input_snapshot",
-                        channel="debug",
-                        level=TelemetryLevel.DEBUG,
-                        attributes={"symbol": symbol, "stage": stage_name, "model": stage_name},
-                        data={
+                    logger.emit(
+                        "model.input_snapshot",
+                        Severity.DEBUG,
+                        {
+                            "tycherion.channel": "debug",
+                            "symbol": symbol,
+                            "stage": stage_name,
+                            "model": stage_name,
                             "indicator_keys": list(indicators.keys())[:30],
                             "features_keys": {
                                 k: list(v.features.keys())[:20]
@@ -293,27 +309,37 @@ class ModelPipelineService:
                     )
                 except Exception:
                     pass
+
             decision = model.decide(indicators)
         except Exception as e:
             state.notes[f"model_error_{stage_name}"] = 1.0
-            t.emit(
-                name="error.exception",
-                channel="ops",
-                level=TelemetryLevel.ERROR,
-                attributes={"symbol": symbol, "stage": stage_name, "model": stage_name},
-                data={"exception_type": type(e).__name__, "message": str(e), "stage": "model"},
+            span.record_exception(e)
+            logger.emit(
+                "error.exception",
+                Severity.ERROR,
+                {
+                    "tycherion.channel": "ops",
+                    "symbol": symbol,
+                    "stage": stage_name,
+                    "model": stage_name,
+                    "exception_type": type(e).__name__,
+                    "message": str(e),
+                    "stage_kind": "model",
+                },
             )
             decision = ModelDecision(side="HOLD", weight=0.0, confidence=0.0)
 
         score = self._decision_to_score(decision)
         state.pipeline_results.append(ModelStageResult(model_name=stage_name, score=score))
 
-        t.emit(
-            name="model.decided",
-            channel="audit",
-            level=TelemetryLevel.INFO,
-            attributes={"symbol": symbol, "stage": stage_name, "model": stage_name},
-            data={
+        logger.emit(
+            "model.decided",
+            Severity.INFO,
+            {
+                "tycherion.channel": "audit",
+                "symbol": symbol,
+                "stage": stage_name,
+                "model": stage_name,
                 "score": float(score),
                 "side": decision.side,
                 "weight": float(decision.weight or 0.0),
@@ -335,4 +361,3 @@ class ModelPipelineService:
         else:
             s = 0.0
         return max(-1.0, min(1.0, s))
-

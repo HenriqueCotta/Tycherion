@@ -1,0 +1,2 @@
+project_doc_fallback_filenames = ["tycherion_guidelines.md"]
+project_doc_max_bytes = 65536

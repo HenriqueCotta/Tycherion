@@ -1,62 +1,52 @@
-timeframe: "H1"
-
+timeframe: H1
 lookback_days: 15
-
 trading:
   dry_run: true
   require_demo: true
   deviation_points: 10
-  volume_mode: "min"
+  volume_mode: min
   fixed_volume: 100.0
-
 risk:
   risk_per_trade_pct: 0.5
   max_daily_loss_pct: 2.0
-
 mt5:
   terminal_path: null
   server: null
   login: null
   password: null
-
 application:
   run_mode:
-    name: "live_multimodel"
-  playbook: "default"
+    name: live_multimodel
+  playbook: default
   schedule:
     run_forever: true
     interval_seconds: 60
-
   coverage:
-    source: "static"
-    symbols: ["PETR4", "VALE3", "WIN$", "WDO$"]
+    source: static
+    symbols:
+    - PETR4
+    - VALE3
+    - WIN$
+    - WDO$
     pattern: null
-
   models:
     pipeline:
-      - "trend_following"
-      - "mean_reversion"
-
+    - trend_following
+    - mean_reversion
   portfolio:
-    allocator: "proportional"
-    balancer: "threshold"
+    allocator: proportional
+    balancer: threshold
     threshold_weight: 0.25
-
 telemetry:
   db_enabled: false
-  db_min_level: "INFO"
-  db_channels: ["audit", "ops"]        # adicione "debug" se quiser persistir debug
+  db_min_level: INFO
   db_batch_size: 50
-  # db_dsn: "postgresql://user:pass@host:5432/dbname"  # opcional
-
   mongo_enabled: false
-  mongo_min_level: "INFO"
-  mongo_channels: ["audit", "ops"]
+  mongo_min_level: INFO
   mongo_batch_size: 200
-  # mongo_uri: "mongodb://user:pass@host:27017/?authSource=admin"  # opcional
-  # mongo_db: "tycherion"
-  # mongo_collection: "execution_journal_events"
-
   console_enabled: true
-  console_min_level: "INFO"
-  console_channels: ["ops"]            # adicione "debug" para ver debug no terminal
+  console_min_level: INFO
+  otlp_enabled: false
+  otlp_endpoint: http://localhost:4317
+  mongo_db: tycherion
+  mongo_collection: ops_journal
