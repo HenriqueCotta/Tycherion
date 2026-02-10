@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import socket
+import uuid
 
 import MetaTrader5 as mt5
 
@@ -13,6 +14,7 @@ from tycherion.adapters.mt5.universe_mt5 import MT5Universe
 
 from tycherion.adapters.observability.noop.noop_observability import NoopObservability
 
+from tycherion.ports.observability import semconv
 from tycherion.ports.observability.observability import ObservabilityPort
 from tycherion.ports.observability.types import Severity, TYCHERION_SCHEMA_VERSION
 
@@ -42,9 +44,9 @@ def run_app(config_path: str) -> None:
     tracer = obs.traces.get_tracer("tycherion.bootstrap", version=TYCHERION_SCHEMA_VERSION)
     logger = obs.logs.get_logger("tycherion.bootstrap", version=TYCHERION_SCHEMA_VERSION)
 
-    with tracer.start_as_current_span("bootstrap.discover", attributes={"component": "bootstrap"}):
+    with tracer.start_as_current_span(semconv.SPAN_BOOTSTRAP_DISCOVER, attributes={"component": "bootstrap"}):
         _registry.auto_discover(observability=obs)
-        logger.emit("Plugin discovery completed", Severity.INFO, {"tycherion.channel": "ops"})
+        logger.emit("Plugin discovery completed", Severity.INFO, {semconv.ATTR_CHANNEL: "ops"})
 
     _ensure_initialized(cfg)
     try:
@@ -107,8 +109,10 @@ def _build_observability(cfg: AppConfig, config_path: str) -> ObservabilityPort:
     if not runner_id:
         # Fallback: deterministic enough for local dev.
         runner_id = f"runner-{socket.gethostname()}-{os.getpid()}"
+    run_id = uuid.uuid4().hex
 
-    tel = cfg.telemetry
+    tel = cfg.observability or cfg.telemetry  # telemetry kept for backward compat
+    deployment_env = (tel.deployment_env or "").strip() or None
 
     try:
         from tycherion.adapters.observability.otel.otel_observability import (
@@ -119,18 +123,18 @@ def _build_observability(cfg: AppConfig, config_path: str) -> ObservabilityPort:
         return OtelObservability(
             OtelObservabilityConfig(
                 runner_id=runner_id,
+                run_id=run_id,
                 schema_version=TYCHERION_SCHEMA_VERSION,
+                deployment_env=deployment_env,
                 console_enabled=bool(tel.console_enabled),
                 console_min_severity=_parse_severity(tel.console_min_level),
                 console_show_span_lifecycle=True,
+                log_format=str(getattr(tel, "log_format", "pretty") or "pretty"),
                 otlp_enabled=bool(getattr(tel, "otlp_enabled", False)),
                 otlp_endpoint=str(getattr(tel, "otlp_endpoint", "http://localhost:4317") or "http://localhost:4317"),
-                mongo_audit_enabled=bool(tel.mongo_enabled),
-                mongo_uri=str(tel.mongo_uri) if tel.mongo_uri else None,
-                mongo_db=str(tel.mongo_db or "tycherion"),
-                mongo_collection=str(tel.mongo_collection or "ops_journal"),
-                mongo_min_severity=_parse_severity(tel.mongo_min_level),
-                mongo_batch_size=int(tel.mongo_batch_size or 200),
+                otlp_protocol=str(getattr(tel, "otlp_protocol", "grpc") or "grpc"),
+                otlp_headers=getattr(tel, "otlp_headers", None),
+                otlp_insecure=getattr(tel, "otlp_insecure", None),
             )
         )
     except Exception as e:

@@ -17,6 +17,7 @@ from tycherion.domain.signals.models.base import SignalModel
 from tycherion.domain.signals.indicators.base import BaseIndicator
 from tycherion.ports.market_data import MarketDataPort
 
+from tycherion.ports.observability import semconv
 from tycherion.ports.observability.observability import ObservabilityPort
 from tycherion.ports.observability.traces import SpanPort
 from tycherion.ports.observability.logs import LoggerPort
@@ -51,7 +52,7 @@ class ModelPipelineService:
         held_symbols = set(portfolio_snapshot.positions.keys())
 
         with tracer.start_as_current_span(
-            "pipeline",
+            semconv.SPAN_PIPELINE,
             attributes={
                 "symbols_count": int(len(universe_symbols)),
                 "stages": [st.name for st in pipeline_config.stages],
@@ -84,9 +85,12 @@ class ModelPipelineService:
             stage_passed: Dict[str, int] = {st.name: 0 for st in pipeline_config.stages}
 
             for st in pipeline_config.stages:
+                attrs = {"stage": st.name}
+                if st.drop_threshold is not None:
+                    attrs["threshold"] = float(st.drop_threshold)
                 span.add_event(
-                    "pipeline.stage_started",
-                    {"stage": st.name, "threshold": st.drop_threshold},
+                    semconv.EVT_PIPELINE_STAGE_STARTED,
+                    attrs,
                 )
 
             for symbol, state in states.items():
@@ -100,7 +104,7 @@ class ModelPipelineService:
                             "pipeline.symbol_dropped",
                             Severity.WARN,
                             {
-                                "tycherion.channel": "audit",
+                                semconv.ATTR_CHANNEL: "audit",
                                 "symbol": symbol,
                                 "reason": "no_market_data",
                             },
@@ -114,7 +118,7 @@ class ModelPipelineService:
                             "market_data.sample",
                             Severity.DEBUG,
                             {
-                                "tycherion.channel": "debug",
+                                semconv.ATTR_CHANNEL: "debug",
                                 "symbol": symbol,
                                 "rows": int(len(df)),
                                 "columns": list(df.columns)[:20],
@@ -147,7 +151,7 @@ class ModelPipelineService:
                             "pipeline.symbol_dropped",
                             Severity.INFO,
                             {
-                                "tycherion.channel": "audit",
+                                semconv.ATTR_CHANNEL: "audit",
                                 "symbol": symbol,
                                 "stage": stage_cfg.name,
                                 "score": float(score),
@@ -174,7 +178,7 @@ class ModelPipelineService:
                     "pipeline.signal_emitted",
                     Severity.INFO,
                     {
-                        "tycherion.channel": "audit",
+                        semconv.ATTR_CHANNEL: "audit",
                         "symbol": symbol,
                         "signed": signed,
                         "confidence": confidence,
@@ -185,17 +189,21 @@ class ModelPipelineService:
                 dropped = int(stage_stats.get(st.name, 0))
                 passed = int(stage_passed.get(st.name, 0))
                 span.add_event(
-                    "pipeline.stage_completed",
+                    semconv.EVT_PIPELINE_STAGE_COMPLETED,
                     {
                         "stage": st.name,
                         "passed_count": passed,
                         "dropped_count": dropped,
-                        "threshold": st.drop_threshold,
+                        **(
+                            {"threshold": float(st.drop_threshold)}
+                            if st.drop_threshold is not None
+                            else {}
+                        ),
                     },
                 )
 
             span.add_event(
-                "pipeline.summary",
+                semconv.EVT_PIPELINE_SUMMARY,
                 {
                     "signals_count": int(len(signals)),
                     "alive_count": int(sum(1 for s in states.values() if s.alive or s.is_held)),
@@ -238,7 +246,7 @@ class ModelPipelineService:
                 "error.exception",
                 Severity.ERROR,
                 {
-                    "tycherion.channel": "ops",
+                    semconv.ATTR_CHANNEL: "ops",
                     "symbol": symbol,
                     "exception_type": type(e).__name__,
                     "message": str(e),
@@ -267,7 +275,7 @@ class ModelPipelineService:
                     "error.exception",
                     Severity.ERROR,
                     {
-                        "tycherion.channel": "ops",
+                        semconv.ATTR_CHANNEL: "ops",
                         "exception_type": type(e).__name__,
                         "message": str(e),
                         "stage": "indicator",
@@ -295,7 +303,7 @@ class ModelPipelineService:
                         "model.input_snapshot",
                         Severity.DEBUG,
                         {
-                            "tycherion.channel": "debug",
+                            semconv.ATTR_CHANNEL: "debug",
                             "symbol": symbol,
                             "stage": stage_name,
                             "model": stage_name,
@@ -318,7 +326,7 @@ class ModelPipelineService:
                 "error.exception",
                 Severity.ERROR,
                 {
-                    "tycherion.channel": "ops",
+                    semconv.ATTR_CHANNEL: "ops",
                     "symbol": symbol,
                     "stage": stage_name,
                     "model": stage_name,
@@ -336,7 +344,7 @@ class ModelPipelineService:
             "model.decided",
             Severity.INFO,
             {
-                "tycherion.channel": "audit",
+                semconv.ATTR_CHANNEL: "audit",
                 "symbol": symbol,
                 "stage": stage_name,
                 "model": stage_name,

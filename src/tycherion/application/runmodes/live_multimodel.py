@@ -10,6 +10,7 @@ from tycherion.ports.trading import TradingPort
 from tycherion.ports.account import AccountPort
 from tycherion.ports.universe import UniversePort
 
+from tycherion.ports.observability import semconv
 from tycherion.ports.observability.observability import ObservabilityPort
 from tycherion.ports.observability.types import Severity, TYCHERION_SCHEMA_VERSION
 
@@ -73,26 +74,26 @@ def run_live_multimodel(
         cfg_hash = _stable_config_hash(cfg.model_dump())
 
         with tracer.start_as_current_span(
-            "run",
+            semconv.SPAN_RUN,
             attributes={
-                "run_mode": "live_multimodel",
+                semconv.ATTR_RUN_MODE: "live_multimodel",
                 "timeframe": cfg.timeframe,
                 "lookback_days": int(cfg.lookback_days),
                 "pipeline_stages": [st.name for st in pipeline_config.stages],
-                "config_hash": cfg_hash,
-                "config_path": config_path,
+                semconv.ATTR_CONFIG_HASH: cfg_hash,
+                semconv.ATTR_CONFIG_PATH: config_path,
             },
         ) as span_run:
             try:
                 # 1) Structural universe from coverage + ensure held symbols are included
-                with tracer.start_as_current_span("coverage.fetch") as span_cov:
+                with tracer.start_as_current_span(semconv.SPAN_COVERAGE_FETCH) as span_cov:
                     coverage = build_coverage(cfg, pipeline_service.market_data, universe)
                     portfolio = _build_portfolio_snapshot(account)
                     held_symbols = set(portfolio.positions.keys())
                     universe_symbols = sorted(set(coverage) | held_symbols)
 
                     span_cov.add_event(
-                        "coverage.summary",
+                        semconv.EVT_COVERAGE_SUMMARY,
                         {
                             "symbols_count": int(len(universe_symbols)),
                             "symbols_sample": universe_symbols[: min(10, len(universe_symbols))],
@@ -108,28 +109,28 @@ def run_live_multimodel(
                 )
 
                 span_run.add_event(
-                    "pipeline.run_summary",
-                    {"stage_stats": dict(result.stage_stats or {})},
+                    semconv.EVT_PIPELINE_RUN_SUMMARY,
+                    {f"stage_stats.{k}": int(v) for k, v in (result.stage_stats or {}).items()},
                 )
 
                 # 3) Allocation -> target weights
-                with tracer.start_as_current_span("allocator") as span_alloc:
+                with tracer.start_as_current_span(semconv.SPAN_ALLOCATOR) as span_alloc:
                     target_alloc = allocator.allocate(result.signals_by_symbol)
-                    span_alloc.add_event("allocator.completed", {"symbols_count": int(len(result.signals_by_symbol))})
+                    span_alloc.add_event(semconv.EVT_ALLOCATOR_COMPLETED, {"symbols_count": int(len(result.signals_by_symbol))})
 
                 # 4) Balancing -> rebalance plan
-                with tracer.start_as_current_span("balancer") as span_bal:
+                with tracer.start_as_current_span(semconv.SPAN_BALANCER) as span_bal:
                     plan = balancer.plan(
                         portfolio=portfolio,
                         target=target_alloc,
                         threshold=cfg.application.portfolio.threshold_weight,
                     )
-                    span_bal.add_event("rebalance.plan_built", {"instructions_count": int(len(plan))})
+                    span_bal.add_event(semconv.EVT_REBALANCE_PLAN_BUILT, {"instructions_count": int(len(plan))})
 
                 # 5) Orders -> execution
-                with tracer.start_as_current_span("execution") as span_exec:
+                with tracer.start_as_current_span(semconv.SPAN_EXECUTION) as span_exec:
                     orders = build_orders(portfolio, plan, cfg.trading)
-                    span_exec.add_event("orders.built", {"orders_count": int(len(orders))})
+                    span_exec.add_event(semconv.EVT_ORDERS_BUILT, {"orders_count": int(len(orders))})
 
                     for od in orders:
                         if od.side.upper() == "BUY":
@@ -141,7 +142,7 @@ def run_live_multimodel(
                             "trade.executed",
                             Severity.INFO,
                             {
-                                "tycherion.channel": "ops",
+                                semconv.ATTR_CHANNEL: "ops",
                                 "symbol": od.symbol,
                                 "side": od.side,
                                 "volume": float(od.volume),
@@ -157,7 +158,7 @@ def run_live_multimodel(
                     "run.exception",
                     Severity.ERROR,
                     {
-                        "tycherion.channel": "ops",
+                        semconv.ATTR_CHANNEL: "ops",
                         "run_mode": "live_multimodel",
                         "exception_type": type(e).__name__,
                         "message": str(e),
@@ -175,7 +176,7 @@ def run_live_multimodel(
                     "run.stopped",
                     Severity.INFO,
                     {
-                        "tycherion.channel": "ops",
+                        semconv.ATTR_CHANNEL: "ops",
                         "run_mode": "live_multimodel",
                         "reason": "KeyboardInterrupt",
                     },
@@ -187,7 +188,7 @@ def run_live_multimodel(
                     "run.loop_exception",
                     Severity.ERROR,
                     {
-                        "tycherion.channel": "ops",
+                        semconv.ATTR_CHANNEL: "ops",
                         "run_mode": "live_multimodel",
                         "exception_type": type(e).__name__,
                         "message": str(e),
