@@ -1,17 +1,16 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
 import time
-from typing import Any, Mapping
+from contextlib import contextmanager
+from typing import Any
 
-from opentelemetry import trace as otel_trace
-from opentelemetry.trace.status import Status, StatusCode
+from opentelemetry import trace as otel_trace  # type: ignore
+from opentelemetry.trace.status import Status, StatusCode  # type: ignore
 
-from tycherion.adapters.observability.otel.console import ConsoleRenderer
-from tycherion.adapters.observability.otel.event_seq import EventSeqManager
-from tycherion.adapters.observability.otel.mongo_audit import MongoOpsJournal
+from tycherion.adapters.observability.otel.console_dev import ConsoleRenderer
+from tycherion.ports.observability import semconv
 from tycherion.ports.observability.traces import SpanPort, TracerPort, TracerProviderPort
-from tycherion.ports.observability.types import Attributes, TYCHERION_SCHEMA_VERSION
+from tycherion.ports.observability.types import Attributes
 
 
 def _hex_trace_id(span_or_ctx: Any) -> str | None:
@@ -40,15 +39,11 @@ class OtelSpan(SpanPort):
         span: Any,
         *,
         schema_version: str,
-        event_seq: EventSeqManager,
         console: ConsoleRenderer,
-        mongo: MongoOpsJournal | None,
     ) -> None:
         self._span = span
         self._schema_version = schema_version
-        self._event_seq = event_seq
         self._console = console
-        self._mongo = mongo
 
         self._trace_id_hex = _hex_trace_id(span) or None
         self._span_id_hex = _hex_span_id(span) or None
@@ -83,13 +78,7 @@ class OtelSpan(SpanPort):
 
     def _decorate_event_attrs(self, attributes: Attributes | None) -> dict[str, Any]:
         attrs: dict[str, Any] = dict(attributes or {})
-        attrs["tycherion.schema_version"] = self._schema_version
-        if self._trace_id_hex:
-            seq = self._event_seq.next_for_trace(self._trace_id_hex)
-        else:
-            seq = None
-        if seq is not None:
-            attrs["tycherion.event_seq"] = seq
+        attrs[semconv.TYCHERION_SCHEMA_VERSION] = self._schema_version
         return attrs
 
     def add_event(self, name: str, attributes: Attributes | None = None) -> None:
@@ -105,17 +94,7 @@ class OtelSpan(SpanPort):
             attributes=attrs,
             trace_id=self._trace_id_hex,
             span_id=self._span_id_hex,
-            event_seq=attrs.get("tycherion.event_seq"),
         )
-
-        if self._mongo is not None:
-            self._mongo.emit_span_event(
-                name=name,
-                attributes=attrs,
-                trace_id=self._trace_id_hex,
-                span_id=self._span_id_hex,
-                event_seq=attrs.get("tycherion.event_seq"),
-            )
 
     def record_exception(self, exc: BaseException) -> None:
         try:
@@ -150,42 +129,30 @@ class OtelTracer(TracerPort):
         tracer: Any,
         *,
         schema_version: str,
-        event_seq: EventSeqManager,
         console: ConsoleRenderer,
-        mongo: MongoOpsJournal | None,
     ) -> None:
         self._tracer = tracer
         self._schema_version = schema_version
-        self._event_seq = event_seq
         self._console = console
-        self._mongo = mongo
 
     def _decorate_span_attrs(self, attributes: Attributes | None) -> dict[str, Any]:
         attrs: dict[str, Any] = dict(attributes or {})
-        attrs.setdefault("tycherion.schema_version", self._schema_version)
+        attrs.setdefault(semconv.TYCHERION_SCHEMA_VERSION, self._schema_version)
         return attrs
 
     @contextmanager
     def start_as_current_span(self, name: str, attributes: Attributes | None = None):
-        parent_ctx = otel_trace.get_current_span().get_span_context()
-        new_trace = not getattr(parent_ctx, "is_valid", False)
-
         attrs = self._decorate_span_attrs(attributes)
 
-        token = None
         start_ns = time.time_ns()
         with self._tracer.start_as_current_span(name, attributes=attrs) as span:
             trace_id_hex = _hex_trace_id(span) or ""
             span_id_hex = _hex_span_id(span) or ""
-            if new_trace:
-                token = self._event_seq.start_trace(trace_id_hex)
 
             wrapped = OtelSpan(
                 span,
                 schema_version=self._schema_version,
-                event_seq=self._event_seq,
                 console=self._console,
-                mongo=self._mongo,
             )
             self._console.span_started(
                 name=name,
@@ -207,8 +174,6 @@ class OtelTracer(TracerPort):
                     span_id=span_id_hex,
                     error=error,
                 )
-                if token is not None:
-                    self._event_seq.end_trace(token)
 
 
 class OtelTracerProvider(TracerProviderPort):
@@ -217,26 +182,16 @@ class OtelTracerProvider(TracerProviderPort):
         provider: Any,
         *,
         schema_version: str,
-        event_seq: EventSeqManager,
         console: ConsoleRenderer,
-        mongo: MongoOpsJournal | None,
     ) -> None:
         self._provider = provider
         self._schema_version = schema_version
-        self._event_seq = event_seq
         self._console = console
-        self._mongo = mongo
 
     def get_tracer(self, name: str, version: str | None = None) -> TracerPort:
-        # opentelemetry-python's TracerProvider.get_tracer() accepts the scope
-        # version as the *second positional argument* (keyword names differ
-        # across OTel releases: "instrumentation_scope_version", etc.).
-        # Using positional keeps us compatible with a wider range of versions.
         tracer = self._provider.get_tracer(name, version)
         return OtelTracer(
             tracer,
             schema_version=self._schema_version,
-            event_seq=self._event_seq,
             console=self._console,
-            mongo=self._mongo,
         )

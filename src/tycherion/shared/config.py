@@ -84,49 +84,24 @@ class ApplicationCfg(BaseModel):
     portfolio: PortfolioCfg = PortfolioCfg()
 
 
-class TelemetrySinkCfg(BaseModel):
-    enabled: bool = True
-    channels: list[str] = ["audit", "ops"]
-    min_level: str = "INFO"  # DEBUG/INFO/WARN/ERROR
+class ObservabilityCfg(BaseModel):
+    """Observability/OTel configuration used by bootstrap/application."""
 
-
-class TelemetryCfg(BaseModel):
-    """Telemetry configuration (bootstrap/application concern, not domain).
-
-    Notes about the two databases we plan to have in Tycherion:
-    - PostgreSQL: for *analytics* and structured datasets (models, indicators, actions, etc.).
-      The schema for this is not defined yet.
-    - MongoDB: for *operational health / audit journal* (telemetry events, errors, spans, etc.).
-
-    Right now this config focuses on telemetry sinks (journal-like append-only storage).
-    """
-
-    # PostgreSQL execution journal (optional)
-    db_enabled: bool = True
-    # PostgreSQL DSN, e.g. "postgresql://user:pass@host:5432/dbname"
-    db_dsn: Optional[str] = None
-    db_channels: list[str] = ["audit", "ops"]
-    db_min_level: str = "INFO"
-    db_batch_size: int = 50
-
-    # MongoDB execution journal (optional)
-    mongo_enabled: bool = False
-    # Mongo URI, e.g. "mongodb://user:pass@host:27017/?authSource=admin"
-    mongo_uri: Optional[str] = None
-    mongo_db: str = "tycherion"
-    mongo_collection: str = "ops_journal"
-    mongo_channels: list[str] = ["audit", "ops"]
-    mongo_min_level: str = "INFO"
-    mongo_batch_size: int = 200
-
-    # Console sink
+    # Console sink (dev)
     console_enabled: bool = False
     console_channels: list[str] = ["ops"]
     console_min_level: str = "INFO"
+    log_format: str = "pretty"  # pretty | json
 
-    # OTLP export (optional; prepared for Alloy/Collector fan-out)
+    # OTLP export (Collector/Alloy)
     otlp_enabled: bool = False
     otlp_endpoint: str = "http://localhost:4317"
+    otlp_protocol: str = "grpc"  # grpc|http
+    otlp_headers: str | None = None
+    otlp_insecure: bool | None = None  # None => infer from scheme
+
+    # Deployment metadata
+    deployment_env: str | None = None
 
 
 
@@ -137,7 +112,8 @@ class AppConfig(BaseModel):
     risk: Risk = Risk()
     mt5: MT5 = MT5()
     application: ApplicationCfg = ApplicationCfg()
-    telemetry: TelemetryCfg = TelemetryCfg()
+    observability: ObservabilityCfg = ObservabilityCfg()
+    telemetry: ObservabilityCfg | None = None  # backward compat
 
 def load_config(path: str) -> AppConfig:
     load_dotenv(override=False)
@@ -164,9 +140,10 @@ def load_config(path: str) -> AppConfig:
     mt5_cfg["password"]      = coalesce(mt5_cfg.get("password"),      env_pass)
 
 
-    # Observability/Telemetry env overrides (kept here to avoid leaking infra details into domain/application)
-    raw.setdefault("telemetry", {})
-    tel_cfg = raw["telemetry"] or {}
+    # Observability env overrides (kept here to avoid leaking infra details into domain/application)
+    # Support legacy 'telemetry' key as alias.
+    raw.setdefault("observability", raw.get({}))
+    obs_cfg = raw["observability"] or {}
 
     def env_bool(name: str) -> bool | None:
         v = os.getenv(name)
@@ -182,20 +159,22 @@ def load_config(path: str) -> AppConfig:
     def env_override(yaml_val, env_val):
         return env_val if env_val is not None else yaml_val
 
-    tel_cfg["otlp_enabled"] = env_override(tel_cfg.get("otlp_enabled"), env_bool("TYCHERION_OTLP_ENABLED"))
-    tel_cfg["otlp_endpoint"] = env_override(tel_cfg.get("otlp_endpoint"), os.getenv("TYCHERION_OTLP_ENDPOINT"))
-
-    # Mongo ops journal (audit). Env keys are intentionally explicit.
-    tel_cfg["mongo_enabled"] = env_override(tel_cfg.get("mongo_enabled"), env_bool("TYCHERION_MONGO_AUDIT_ENABLED"))
-    tel_cfg["mongo_uri"] = env_override(tel_cfg.get("mongo_uri"), os.getenv("TYCHERION_MONGO_URI"))
-    tel_cfg["mongo_db"] = env_override(tel_cfg.get("mongo_db"), os.getenv("TYCHERION_MONGO_DB"))
-    tel_cfg["mongo_collection"] = env_override(tel_cfg.get("mongo_collection"), os.getenv("TYCHERION_MONGO_COLLECTION"))
+    obs_cfg["otlp_enabled"] = env_override(obs_cfg.get("otlp_enabled"), env_bool("TYCHERION_OTLP_ENABLED"))
+    obs_cfg["otlp_endpoint"] = env_override(obs_cfg.get("otlp_endpoint"), os.getenv("TYCHERION_OTLP_ENDPOINT"))
+    obs_cfg["otlp_protocol"] = env_override(obs_cfg.get("otlp_protocol"), os.getenv("TYCHERION_OTLP_PROTOCOL"))
+    obs_cfg["otlp_headers"] = env_override(obs_cfg.get("otlp_headers"), os.getenv("TYCHERION_OTLP_HEADERS"))
+    obs_cfg["otlp_insecure"] = env_override(obs_cfg.get("otlp_insecure"), env_bool("TYCHERION_OTLP_INSECURE"))
+    obs_cfg["deployment_env"] = env_override(obs_cfg.get("deployment_env"), os.getenv("TYCHERION_DEPLOYMENT_ENV"))
+    obs_cfg["log_format"] = env_override(obs_cfg.get("log_format"), os.getenv("TYCHERION_LOG_FORMAT"))
 
     # Console output for local dev
-    tel_cfg["console_enabled"] = env_override(tel_cfg.get("console_enabled"), env_bool("TYCHERION_CONSOLE_ENABLED"))
-    tel_cfg["console_min_level"] = env_override(tel_cfg.get("console_min_level"), os.getenv("TYCHERION_CONSOLE_MIN_LEVEL"))
+    obs_cfg["console_enabled"] = env_override(obs_cfg.get("console_enabled"), env_bool("TYCHERION_CONSOLE_ENABLED"))
+    obs_cfg["console_min_level"] = env_override(obs_cfg.get("console_min_level"), os.getenv("TYCHERION_CONSOLE_MIN_LEVEL"))
+    obs_cfg["console_channels"] = env_override(obs_cfg.get("console_channels"), obs_cfg.get("console_channels"))
 
-    raw["telemetry"] = tel_cfg
+    raw["observability"] = obs_cfg
+    if "telemetry" in raw and raw["telemetry"] and "observability" not in raw:
+        print("[tycherion] WARNING: 'telemetry' config is deprecated; use 'observability'.")
 
     raw["mt5"] = mt5_cfg
     return AppConfig.model_validate(raw)

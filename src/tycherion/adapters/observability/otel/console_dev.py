@@ -50,12 +50,10 @@ class ConsoleRenderer:
             items.append(f"{k}={v}")
         return " ".join(items)
 
-    def log(self, *, body: str, severity: Severity, attributes: Mapping[str, Any] | None, trace_id: str | None, span_id: str | None, event_seq: int | None) -> None:
+    def log(self, *, body: str, severity: Severity, attributes: Mapping[str, Any] | None, trace_id: str | None, span_id: str | None) -> None:
         if not self.enabled_for(severity):
             return
         meta = []
-        if event_seq is not None:
-            meta.append(f"seq={event_seq}")
         if trace_id:
             meta.append(f"trace={trace_id if severity in (Severity.ERROR, Severity.FATAL) else self._short(trace_id)}")
         if span_id:
@@ -83,13 +81,11 @@ class ConsoleRenderer:
         meta = f"trace={trace_meta} span={self._short(span_id)}"
         print(f"{self._ts()} [SPAN] {name} ended status={status} dur={dur} | {meta}", file=sys.stdout)
 
-    def span_event(self, *, name: str, attributes: Mapping[str, Any] | None, trace_id: str | None, span_id: str | None, event_seq: int | None) -> None:
+    def span_event(self, *, name: str, attributes: Mapping[str, Any] | None, trace_id: str | None, span_id: str | None) -> None:
         # Span events are usually info-ish, but we still respect min_severity (INFO).
         if not self.enabled_for(Severity.INFO):
             return
         meta = []
-        if event_seq is not None:
-            meta.append(f"seq={event_seq}")
         if trace_id:
             # Span events don't carry severity. Keep output short by default.
             meta.append(f"trace={self._short(trace_id)}")

@@ -2,106 +2,71 @@
 id: eb18670e-f616-48e5-8b72-28a183db386f
 ---
 flowchart TD
+  %% High-level entry
   A["scripts/run_demo.py"] --> B["bootstrap/main.py<br/>run_app()"]
-  B --> C["bootstrap/main.py<br/>_build_observability()"]
-  C -->|success| D["Adapter: OtelObservability"]
+  B --> C["_build_observability()"]
+  C -->|if OTel deps/config| D["Adapter: OtelObservability"]
   C -->|fallback| Dn["Adapter: NoopObservability"]
-  D --> E["Port Facade: ObservabilityPort"]
-  Dn --> E
+  D --> OP["ObservabilityPort facade"]
+  Dn --> OP
 
-  subgraph CORE["Core: Application & Domain"]
+  %% Core layer (no OTel imports)
+  subgraph CORE["Core (application + domain)"]
     direction TB
-    R["application/runmodes/live_multimodel.py"] -->|inject ObservabilityPort| P["application/pipeline/service.py<br/>ModelPipelineService.run()"]
-    R --> S1["macro spans<br/>run, coverage.fetch, pipeline,<br/>allocator, balancer, execution"]
-    P --> S2["span events<br/>pipeline.stage_started / completed"]
-    P --> L1["logs<br/>logger.emit(body, severity, attrs)"]
+    R["application/runmodes/live_multimodel.py"] -->|injects ObservabilityPort| P["application/pipeline/service.py"]
+    P -->|"span events / logs"| ECORE["business logic emits via ports"]
   end
 
+  %% Ports (stable API)
   subgraph PORTS["Ports: src/tycherion/ports/observability"]
     direction TB
-    OP["ObservabilityPort"]
-    TP["TracerProviderPort"] --> T["TracerPort"] --> SC["start_as_current_span(name, attrs)<br/>yields SpanPort"]
-    LP["LoggerProviderPort"] --> LG["LoggerPort.emit(...)"]
-    MP["MeterProviderPort"] --> M["MeterPort"] --> CTR["CounterPort.add(value, attrs)"]
+    TP["TracerProviderPort"] --> T["TracerPort"] --> SC["SpanPort"]
+    LP["LoggerProviderPort"] --> LG["LoggerPort"]
+    MP["MeterProviderPort"] --> M["MeterPort"]
   end
-
   CORE --> OP
-  OP --> TP
-  OP --> LP
-  OP --> MP
+  OP --> TP & LP & MP
 
-  subgraph ADAPTERS["Adapters: src/tycherion/adapters/observability/otel"]
+  %% OTel adapter
+  subgraph ADAPTER["Adapter: src/tycherion/adapters/observability/otel"]
     direction TB
-
-    D1["OtelObservability"]
-    ES["EventSeqManager<br/>(contextvars, per active trace)"]
-    CON["ConsoleRenderer<br/>(human-readable output)"]
-    MONGO["MongoOpsJournal<br/>(optional ops_journal sink)"]
-
-    RES["OTel Resource attributes<br/>service.name=tycherion<br/>service.instance.id=runner_id<br/>tycherion.runner_id, tycherion.schema_version"]
+    RES["Resource attrs<br/>service.name=tycherion<br/>service.instance.id=runner_id<br/>tycherion.runner_id / run_id<br/>tycherion.schema_version<br/>deployment.environment"]
     SDKTP["OTel SDK TracerProvider"]
     SDKMP["OTel SDK MeterProvider"]
-
-    WTP["OtelTracerProvider<br/>implements TracerProviderPort"]
-    WT["OtelTracer<br/>implements TracerPort"]
-    WS["OtelSpan<br/>implements SpanPort"]
-
-    WLP["OtelLoggerProvider<br/>implements LoggerProviderPort"]
-    WLG["OtelLogger<br/>implements LoggerPort"]
-
-    WMP["OtelMeterProvider<br/>implements MeterProviderPort"]
-
+    WTP["OtelTracerProvider (ports impl)"] --> WT["OtelTracer"] --> WS["OtelSpan"]
+    WLP["OtelLoggerProvider"] --> WLG["OtelLogger<br/>formats: pretty | json<br/>filters: console_channels"]
+    WMP["OtelMeterProvider"]
+    CON["ConsoleRenderer<br/>(dev pretty output)"]
     BSP["BatchSpanProcessor"]
-    OTLP["OTLP Span Exporter (optional)<br/>TYCHERION_OTLP_ENABLED + endpoint"]
-    COL["Collector target (future)<br/>Grafana Alloy / OTel Collector"]
-
     PMR["PeriodicExportingMetricReader"]
-    OTLPm["OTLP Metric Exporter (optional)"]
+    OTLP_SPAN["OTLP Span Exporter<br/>(grpc|http, headers, insecure inferred/overridden)"]
+    OTLP_METRIC["OTLP Metric Exporter<br/>(grpc|http)"]
+    COL["Collector / Alloy<br/>(Tempo/Loki/Prom etc)"]
   end
 
-  %% Adapter wiring
-  D1 --> RES --> SDKTP
-  D1 --> SDKMP
-  D1 --> ES
-  D1 --> CON
-  D1 -->|if enabled| MONGO
-
-  %% Providers returned by facade
-  D --> OP
-  D1 --> WTP --> WT --> WS
-  D1 --> WLP --> WLG
-  D1 --> WMP
-
-  %% Core calls through ports
-  TP --> WTP
-  T --> WT
-  SC --> WS
-  LG --> WLG
-  M --> WMP
-
-  %% Trace + event_seq behavior
-  WT -->|start span| SDKTP
-  WT -->|root trace begins| ES
-  WS -->|add_event attaches<br/>tycherion.schema_version + tycherion.event_seq| ES
-  WLG -->|emit correlates current span<br/>and attaches tycherion.event_seq| ES
-
-  %% Fan-out
-  WS --> CON
+  %% Wiring inside adapter
+  D --> RES --> SDKTP
+  D --> SDKMP
+  D --> WTP & WLP & WMP
+  WTP --> SDKTP
+  WLP --> CON
   WLG --> CON
-  WS -->|span events| MONGO
-  WLG -->|logs| MONGO
+  WS --> CON
+  SDKTP --> BSP --> OTLP_SPAN --> COL
+  SDKMP --> PMR --> OTLP_METRIC --> COL
 
-  %% OTLP export (spans/metrics)
-  SDKTP --> BSP --> OTLP --> COL
-  SDKMP --> PMR --> OTLPm --> COL
+  %% Core calls through ports -> adapter impl
+  TP --> WTP
+  LP --> WLP
+  MP --> WMP
 
   %% Notes
-  N1["Core never imports opentelemetry.*<br/>Only interacts via Ports API"]:::note
-  N2["Logs are correlated using OTel trace context.<br/>Current sinks: Console + optional Mongo.<br/>OTel Logs SDK can be added later without changing Ports."]:::note
-  N3["event_seq is Tycherion-specific.<br/>It increments only while a trace is active<br/>and is attached to logs + span events."]:::note
+  N1["Core nunca importa opentelemetry.*; só fala com Ports."]:::note
+  N2["Logs correlacionam com trace/span via contexto OTel.<br/>Produção: preferir stdout JSON (TYCHERION_LOG_FORMAT=json)."]:::note
+  N3["OTLP insecure é inferido (http → true, https → false) ou forçado via TYCHERION_OTLP_INSECURE."]:::note
 
   CORE --- N1
-  ADAPTERS --- N2
-  ES --- N3
+  ADAPTER --- N2
+  ADAPTER --- N3
 
   classDef note fill:#fff7e6,stroke:#f0b429,color:#4a3b00;

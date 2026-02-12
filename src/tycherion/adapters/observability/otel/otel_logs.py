@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from typing import Any, Mapping
+from datetime import datetime, timezone
+from typing import Any
 
-from opentelemetry import trace as otel_trace
+from opentelemetry import trace as otel_trace  # type: ignore
 
-from tycherion.adapters.observability.otel.console import ConsoleRenderer
-from tycherion.adapters.observability.otel.event_seq import EventSeqManager
-from tycherion.adapters.observability.otel.mongo_audit import MongoOpsJournal
+from tycherion.adapters.observability.otel.console_dev import ConsoleRenderer
+from tycherion.ports.observability import semconv
 from tycherion.ports.observability.logs import LoggerPort, LoggerProviderPort
 from tycherion.ports.observability.types import Attributes, Severity
 
@@ -31,14 +31,16 @@ class OtelLogger(LoggerPort):
         schema_version: str,
         min_severity: Severity,
         console: ConsoleRenderer,
-        event_seq: EventSeqManager,
-        mongo: MongoOpsJournal | None,
+        format: str = "pretty",  # pretty | json
+        allowed_channels: set[str] | None = None,
+        logger_name: str | None = None,
     ) -> None:
         self._schema_version = schema_version
         self._min_severity = min_severity
         self._console = console
-        self._event_seq = event_seq
-        self._mongo = mongo
+        self._format = (format or "pretty").lower()
+        self._allowed_channels = allowed_channels or None
+        self._logger_name = logger_name
         self._rank = {
             Severity.TRACE: 0,
             Severity.DEBUG: 10,
@@ -57,32 +59,47 @@ class OtelLogger(LoggerPort):
 
         trace_id, span_id = _current_trace_span_ids()
 
-        seq = None
-        if trace_id:
-            seq = self._event_seq.next_for_trace(trace_id)
-
         attrs: dict[str, Any] = dict(attributes or {})
-        attrs["tycherion.schema_version"] = self._schema_version
-        if seq is not None:
-            attrs["tycherion.event_seq"] = seq
+        attrs[semconv.TYCHERION_SCHEMA_VERSION] = self._schema_version
+        if self._logger_name:
+            attrs.setdefault("tycherion.logger", self._logger_name)
 
-        self._console.log(
-            body=body,
-            severity=severity,
-            attributes=attrs,
-            trace_id=trace_id,
-            span_id=span_id,
-            event_seq=seq,
-        )
+        channel = attrs.get(semconv.ATTR_CHANNEL)
+        if self._allowed_channels is not None:
+            if channel is None:
+                return
+            if str(channel) not in self._allowed_channels:
+                return
 
-        if self._mongo is not None:
-            self._mongo.emit_log(
+        if self._format == "json":
+            payload = {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "severity": severity.value,
+                "body": body,
+                "attributes": attrs,
+                "trace_id": trace_id,
+                "span_id": span_id,
+            }
+            try:
+                import json
+
+                print(json.dumps(payload, ensure_ascii=False))
+            except Exception:
+                # fallback to console if JSON fails
+                self._console.log(
+                    body=body,
+                    severity=severity,
+                    attributes=attrs,
+                    trace_id=trace_id,
+                    span_id=span_id,
+                )
+        else:
+            self._console.log(
                 body=body,
                 severity=severity,
                 attributes=attrs,
                 trace_id=trace_id,
                 span_id=span_id,
-                event_seq=seq,
             )
 
 
@@ -93,23 +110,22 @@ class OtelLoggerProvider(LoggerProviderPort):
         schema_version: str,
         min_severity: Severity,
         console: ConsoleRenderer,
-        event_seq: EventSeqManager,
-        mongo: MongoOpsJournal | None,
+        format: str = "pretty",
+        allowed_channels: set[str] | None = None,
     ) -> None:
         self._schema_version = schema_version
         self._min_severity = min_severity
         self._console = console
-        self._event_seq = event_seq
-        self._mongo = mongo
+        self._format = format
+        self._allowed_channels = allowed_channels
 
     def get_logger(self, name: str, version: str | None = None) -> LoggerPort:
-        # name/version are carried in OTel "instrumentation scope". For now, we keep them for
-        # API compatibility and future wiring into OTel Logs SDK.
         _ = (name, version)
         return OtelLogger(
             schema_version=self._schema_version,
             min_severity=self._min_severity,
             console=self._console,
-            event_seq=self._event_seq,
-            mongo=self._mongo,
+            format=self._format,
+            allowed_channels=self._allowed_channels,
+            logger_name=name or None,
         )

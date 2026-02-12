@@ -38,15 +38,13 @@ application:
     balancer: threshold
     threshold_weight: 0.25
 telemetry:
-  db_enabled: false
-  db_min_level: INFO
-  db_batch_size: 50
-  mongo_enabled: false
-  mongo_min_level: INFO
-  mongo_batch_size: 200
   console_enabled: true
+  console_channels:
+    - ops
   console_min_level: INFO
+  log_format: pretty
   otlp_enabled: false
   otlp_endpoint: http://localhost:4317
-  mongo_db: tycherion
-  mongo_collection: ops_journal
+  otlp_protocol: grpc
+  otlp_headers: null
+  deployment_env: dev
