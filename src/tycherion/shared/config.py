@@ -140,10 +140,20 @@ def load_config(path: str) -> AppConfig:
     mt5_cfg["password"]      = coalesce(mt5_cfg.get("password"),      env_pass)
 
 
-    # Observability env overrides (kept here to avoid leaking infra details into domain/application)
-    # Support legacy 'telemetry' key as alias.
-    raw.setdefault("observability", raw.get({}))
-    obs_cfg = raw["observability"] or {}
+    # Observability env overrides (kept here to avoid leaking infra details into domain/application).
+    # Canonical key: `observability`.
+    # Legacy alias: `telemetry` (accepted temporarily for backward compatibility).
+    obs_cfg_raw = raw.get("observability")
+    legacy_obs_cfg = raw.get("telemetry")
+    if obs_cfg_raw is None and legacy_obs_cfg is not None:
+        print("[tycherion] WARNING: 'telemetry' config is deprecated; use 'observability'.")
+        obs_cfg_raw = legacy_obs_cfg
+    elif obs_cfg_raw is not None and legacy_obs_cfg is not None:
+        print("[tycherion] WARNING: both 'observability' and deprecated 'telemetry' found; using 'observability'.")
+
+    obs_cfg: dict[str, Any] = ObservabilityCfg().model_dump()
+    if isinstance(obs_cfg_raw, dict):
+        obs_cfg.update(obs_cfg_raw)
 
     def env_bool(name: str) -> bool | None:
         v = os.getenv(name)
@@ -159,6 +169,14 @@ def load_config(path: str) -> AppConfig:
     def env_override(yaml_val, env_val):
         return env_val if env_val is not None else yaml_val
 
+    def env_csv_list(name: str) -> list[str] | None:
+        raw_val = os.getenv(name)
+        if raw_val is None:
+            return None
+        values = [part.strip() for part in str(raw_val).split(",")]
+        values = [v for v in values if v]
+        return values if values else []
+
     obs_cfg["otlp_enabled"] = env_override(obs_cfg.get("otlp_enabled"), env_bool("TYCHERION_OTLP_ENABLED"))
     obs_cfg["otlp_endpoint"] = env_override(obs_cfg.get("otlp_endpoint"), os.getenv("TYCHERION_OTLP_ENDPOINT"))
     obs_cfg["otlp_protocol"] = env_override(obs_cfg.get("otlp_protocol"), os.getenv("TYCHERION_OTLP_PROTOCOL"))
@@ -170,11 +188,11 @@ def load_config(path: str) -> AppConfig:
     # Console output for local dev
     obs_cfg["console_enabled"] = env_override(obs_cfg.get("console_enabled"), env_bool("TYCHERION_CONSOLE_ENABLED"))
     obs_cfg["console_min_level"] = env_override(obs_cfg.get("console_min_level"), os.getenv("TYCHERION_CONSOLE_MIN_LEVEL"))
-    obs_cfg["console_channels"] = env_override(obs_cfg.get("console_channels"), obs_cfg.get("console_channels"))
+    obs_cfg["console_channels"] = env_override(obs_cfg.get("console_channels"), env_csv_list("TYCHERION_CONSOLE_CHANNELS"))
 
     raw["observability"] = obs_cfg
-    if "telemetry" in raw and raw["telemetry"] and "observability" not in raw:
-        print("[tycherion] WARNING: 'telemetry' config is deprecated; use 'observability'.")
+    # Keep runtime config canonical and avoid validating partial legacy payloads.
+    raw["telemetry"] = None
 
     raw["mt5"] = mt5_cfg
     return AppConfig.model_validate(raw)

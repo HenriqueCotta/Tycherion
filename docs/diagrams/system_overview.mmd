@@ -1,0 +1,37 @@
+flowchart TB
+  subgraph Domain
+    ind[Indicators]
+    models[Signal Models]
+    alloc[Allocators]
+    bal[Balancers]
+    portfolio[Portfolio Entities]
+  end
+  subgraph Application
+    pipeline[Model Pipeline]
+    services[Coverage / Order Planner / Sizer]
+    runmodes[Run Modes]
+    registry[Plugins Registry]
+  end
+  subgraph Ports
+    md[MarketDataPort]
+    trader[TradingPort]
+    account[AccountPort]
+    universe[UniversePort]
+    obs[ObservabilityPort]
+  end
+  subgraph Adapters
+    mt5[MT5 MarketData/Trader/Account/Universe]
+    otel[OTel / Noop Observability]
+  end
+
+  ind --> models
+  models --> pipeline
+  pipeline --> services
+  services --> runmodes
+  runmodes --> md & trader & account & universe & obs
+  md --> mt5
+  trader --> mt5
+  account --> mt5
+  universe --> mt5
+  obs --> otel
+

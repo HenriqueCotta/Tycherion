@@ -1,113 +1,2925 @@
-src
-└── tycherion
-    ├── adapters
-    │   ├── mt5
-    │   │   ├── __pycache__ (ignored)
-    │   │   ├── >>> account_mt5.py <<<
-    │   │   ├── >>> market_data_mt5.py <<<
-    │   │   ├── >>> trading_mt5.py <<<
-    │   │   └── >>> universe_mt5.py <<<
-    │   └── observability
-    │       ├── >>> __init__.py <<<
-    │       ├── __pycache__ (ignored)
-    │       ├── noop
-    │       │   ├── >>> __init__.py <<<
-    │       │   ├── __pycache__ (ignored)
-    │       │   └── >>> noop_observability.py <<<
-    │       └── otel
-    │           ├── >>> __init__.py <<<
-    │           ├── __pycache__ (ignored)
-    │           ├── >>> console_dev.py <<<
-    │           ├── >>> otel_export.py <<<
-    │           ├── >>> otel_logs.py <<<
-    │           ├── >>> otel_metrics.py <<<
-    │           ├── >>> otel_observability.py <<<
-    │           ├── >>> otel_resource.py <<<
-    │           └── >>> otel_traces.py <<<
-    ├── application
-    │   ├── pipeline
-    │   │   ├── >>> __init__.py <<<
-    │   │   ├── __pycache__ (ignored)
-    │   │   ├── >>> config.py <<<
-    │   │   ├── >>> result.py <<<
-    │   │   └── >>> service.py <<<
-    │   ├── plugins
-    │   │   ├── __pycache__ (ignored)
-    │   │   └── >>> registry.py <<<
-    │   ├── runmodes
-    │   │   ├── __pycache__ (ignored)
-    │   │   └── >>> live_multimodel.py <<<
-    │   └── services
-    │       ├── __pycache__ (ignored)
-    │       ├── >>> coverage_selector.py <<<
-    │       ├── >>> ensemble.py <<<
-    │       ├── >>> order_planner.py <<<
-    │       └── >>> sizer.py <<<
-    ├── bootstrap
-    │   ├── __pycache__ (ignored)
-    │   └── >>> main.py <<<
-    ├── domain
-    │   ├── >>> __init__.py <<<
-    │   ├── __pycache__ (ignored)
-    │   ├── market
-    │   │   ├── >>> __init__.py <<<
-    │   │   ├── __pycache__ (ignored)
-    │   │   └── >>> entities.py <<<
-    │   ├── portfolio
-    │   │   ├── >>> __init__.py <<<
-    │   │   ├── __pycache__ (ignored)
-    │   │   ├── allocators
-    │   │   │   ├── >>> __init__.py <<<
-    │   │   │   ├── __pycache__ (ignored)
-    │   │   │   ├── >>> base.py <<<
-    │   │   │   ├── >>> equal_weight.py <<<
-    │   │   │   └── >>> proportional.py <<<
-    │   │   ├── balancers
-    │   │   │   ├── >>> __init__.py <<<
-    │   │   │   ├── __pycache__ (ignored)
-    │   │   │   ├── >>> base.py <<<
-    │   │   │   └── >>> threshold.py <<<
-    │   │   └── >>> entities.py <<<
-    │   └── signals
-    │       ├── >>> __init__.py <<<
-    │       ├── __pycache__ (ignored)
-    │       ├── >>> entities.py <<<
-    │       ├── indicators
-    │       │   ├── >>> __init__.py <<<
-    │       │   ├── __pycache__ (ignored)
-    │       │   ├── >>> base.py <<<
-    │       │   ├── >>> stretch_zscore.py <<<
-    │       │   ├── >>> trend_donchian.py <<<
-    │       │   └── >>> volatility_atr.py <<<
-    │       └── models
-    │           ├── >>> __init__.py <<<
-    │           ├── __pycache__ (ignored)
-    │           ├── >>> base.py <<<
-    │           ├── >>> mean_reversion.py <<<
-    │           └── >>> trend_following.py <<<
-    ├── ports
-    │   ├── __pycache__ (ignored)
-    │   ├── >>> account.py <<<
-    │   ├── >>> market_data.py <<<
-    │   ├── observability
-    │   │   ├── >>> __init__.py <<<
-    │   │   ├── __pycache__ (ignored)
-    │   │   ├── >>> logs.py <<<
-    │   │   ├── >>> metrics.py <<<
-    │   │   ├── >>> observability.py <<<
-    │   │   ├── >>> semconv.py <<<
-    │   │   ├── >>> traces.py <<<
-    │   │   └── >>> types.py <<<
-    │   ├── >>> trading.py <<<
-    │   └── >>> universe.py <<<
-    └── shared
-        ├── __pycache__ (ignored)
-        ├── >>> config.py <<<
-        └── >>> decorators.py <<<
+Tycherion
+├── .codex (ignored)
+├── .env (ignored)
+├── .env.example (ignored)
+├── .git (ignored)
+├── .gitignore (ignored)
+├── .venv (ignored)
+├── .vscode (ignored)
+├── >>> AGENTS.md <<<
+├── >>> README.md <<<
+├── configs
+│   └── >>> demo.yaml <<<
+├── docs
+│   ├── >>> README.md <<<
+│   ├── architecture
+│   │   ├── decisions
+│   │   │   ├── >>> README.md <<<
+│   │   │   ├── >>> adr-0001-observability-naming.md <<<
+│   │   │   ├── >>> adr-0002-canonical-config-paths.md <<<
+│   │   │   ├── >>> adr-0003-plugin-resolution-rules.md <<<
+│   │   │   └── >>> adr-0004-documentation-contracts.md <<<
+│   │   ├── >>> domain-contracts.md <<<
+│   │   ├── >>> observability.md <<<
+│   │   ├── >>> overview.md <<<
+│   │   └── >>> pipeline.md <<<
+│   ├── concepts
+│   │   ├── >>> README.md <<<
+│   │   ├── >>> domain-glossary.md <<<
+│   │   ├── >>> glossary.md <<<
+│   │   ├── >>> operations-glossary.md <<<
+│   │   ├── >>> risk-sizing-churn.md <<<
+│   │   └── >>> trading-mt5-fundamentals.md <<<
+│   ├── diagrams
+│   │   ├── >>> observability_flow.mmd <<<
+│   │   ├── >>> run_loop.mmd <<<
+│   │   └── >>> system_overview.mmd <<<
+│   ├── guides
+│   │   ├── >>> README.md <<<
+│   │   ├── >>> observability.md <<<
+│   │   ├── >>> operations.md <<<
+│   │   ├── >>> pipeline-tuning.md <<<
+│   │   ├── >>> quickstart.md <<<
+│   │   ├── >>> safe-changes-playbook.md <<<
+│   │   ├── >>> security-secrets.md <<<
+│   │   ├── >>> troubleshooting.md <<<
+│   │   └── >>> tutorial-first-end-to-end-cycle.md <<<
+│   ├── reference
+│   │   ├── >>> README.md <<<
+│   │   ├── >>> config-execution-map.md <<<
+│   │   ├── >>> configuration.md <<<
+│   │   ├── >>> critical-invariants.md <<<
+│   │   ├── >>> development.md <<<
+│   │   ├── >>> documentation-standards.md <<<
+│   │   ├── >>> execution-contract.md <<<
+│   │   ├── observability
+│   │   │   ├── >>> config.md <<<
+│   │   │   └── >>> instrumentation.md <<<
+│   │   ├── >>> plugins.md <<<
+│   │   ├── >>> ports-contracts.md <<<
+│   │   ├── >>> testing.md <<<
+│   │   └── >>> versioning-and-compatibility.md <<<
+│   └── runbooks
+│       ├── >>> README.md <<<
+│       ├── >>> mt5-connectivity-auth.md <<<
+│       ├── >>> observability.md <<<
+│       └── >>> order-execution-failures.md <<<
+├── pj_output.txt (ignored)
+├── >>> pyproject.toml <<<
+├── >>> requirements.txt <<<
+├── scripts
+│   ├── >>> check_docs.ps1 <<<
+│   └── >>> run_demo.py <<<
+├── src
+│   └── tycherion
+│       ├── adapters
+│       │   ├── mt5
+│       │   │   ├── __pycache__ (ignored)
+│       │   │   ├── >>> account_mt5.py <<<
+│       │   │   ├── >>> market_data_mt5.py <<<
+│       │   │   ├── >>> trading_mt5.py <<<
+│       │   │   └── >>> universe_mt5.py <<<
+│       │   └── observability
+│       │       ├── >>> __init__.py <<<
+│       │       ├── __pycache__ (ignored)
+│       │       ├── noop
+│       │       │   ├── >>> __init__.py <<<
+│       │       │   ├── __pycache__ (ignored)
+│       │       │   └── >>> noop_observability.py <<<
+│       │       └── otel
+│       │           ├── >>> __init__.py <<<
+│       │           ├── __pycache__ (ignored)
+│       │           ├── >>> console_dev.py <<<
+│       │           ├── >>> otel_export.py <<<
+│       │           ├── >>> otel_logs.py <<<
+│       │           ├── >>> otel_metrics.py <<<
+│       │           ├── >>> otel_observability.py <<<
+│       │           ├── >>> otel_resource.py <<<
+│       │           └── >>> otel_traces.py <<<
+│       ├── application
+│       │   ├── pipeline
+│       │   │   ├── >>> __init__.py <<<
+│       │   │   ├── __pycache__ (ignored)
+│       │   │   ├── >>> config.py <<<
+│       │   │   ├── >>> result.py <<<
+│       │   │   └── >>> service.py <<<
+│       │   ├── plugins
+│       │   │   ├── __pycache__ (ignored)
+│       │   │   └── >>> registry.py <<<
+│       │   ├── runmodes
+│       │   │   ├── __pycache__ (ignored)
+│       │   │   └── >>> live_multimodel.py <<<
+│       │   └── services
+│       │       ├── __pycache__ (ignored)
+│       │       ├── >>> coverage_selector.py <<<
+│       │       ├── >>> ensemble.py <<<
+│       │       ├── >>> order_planner.py <<<
+│       │       └── >>> sizer.py <<<
+│       ├── bootstrap
+│       │   ├── __pycache__ (ignored)
+│       │   └── >>> main.py <<<
+│       ├── domain
+│       │   ├── >>> __init__.py <<<
+│       │   ├── __pycache__ (ignored)
+│       │   ├── market
+│       │   │   ├── >>> __init__.py <<<
+│       │   │   ├── __pycache__ (ignored)
+│       │   │   └── >>> entities.py <<<
+│       │   ├── portfolio
+│       │   │   ├── >>> __init__.py <<<
+│       │   │   ├── __pycache__ (ignored)
+│       │   │   ├── allocators
+│       │   │   │   ├── >>> __init__.py <<<
+│       │   │   │   ├── __pycache__ (ignored)
+│       │   │   │   ├── >>> base.py <<<
+│       │   │   │   ├── >>> equal_weight.py <<<
+│       │   │   │   └── >>> proportional.py <<<
+│       │   │   ├── balancers
+│       │   │   │   ├── >>> __init__.py <<<
+│       │   │   │   ├── __pycache__ (ignored)
+│       │   │   │   ├── >>> base.py <<<
+│       │   │   │   └── >>> threshold.py <<<
+│       │   │   └── >>> entities.py <<<
+│       │   └── signals
+│       │       ├── >>> __init__.py <<<
+│       │       ├── __pycache__ (ignored)
+│       │       ├── >>> entities.py <<<
+│       │       ├── indicators
+│       │       │   ├── >>> __init__.py <<<
+│       │       │   ├── __pycache__ (ignored)
+│       │       │   ├── >>> base.py <<<
+│       │       │   ├── >>> stretch_zscore.py <<<
+│       │       │   ├── >>> trend_donchian.py <<<
+│       │       │   └── >>> volatility_atr.py <<<
+│       │       └── models
+│       │           ├── >>> __init__.py <<<
+│       │           ├── __pycache__ (ignored)
+│       │           ├── >>> base.py <<<
+│       │           ├── >>> mean_reversion.py <<<
+│       │           └── >>> trend_following.py <<<
+│       ├── ports
+│       │   ├── __pycache__ (ignored)
+│       │   ├── >>> account.py <<<
+│       │   ├── >>> market_data.py <<<
+│       │   ├── observability
+│       │   │   ├── >>> __init__.py <<<
+│       │   │   ├── __pycache__ (ignored)
+│       │   │   ├── >>> logs.py <<<
+│       │   │   ├── >>> metrics.py <<<
+│       │   │   ├── >>> observability.py <<<
+│       │   │   ├── >>> semconv.py <<<
+│       │   │   ├── >>> traces.py <<<
+│       │   │   └── >>> types.py <<<
+│       │   ├── >>> trading.py <<<
+│       │   └── >>> universe.py <<<
+│       └── shared
+│           ├── __pycache__ (ignored)
+│           ├── >>> config.py <<<
+│           └── >>> decorators.py <<<
+├── tests (ignored)
+└── >>> tycherion_guidelines.md <<<
 
 
 
---- tycherion\adapters\mt5\account_mt5.py:START ---
+--- AGENTS.md:START ---
+# Tycherion Agent Instructions
+
+## GitHub scope
+
+Repo: HenriqueCotta/Tycherion  
+Project): Tycherion Board  
+Project owner: HenriqueCotta  
+
+## Task contract
+
+A "task" means:
+
+- a GitHub Issue in the repo, and
+- the same Issue added as an item in the Project.
+
+Creating a task always performs both steps (Issue + Project item) and sets Project fields.
+
+## Allowed Project fields
+
+Status: Backlog | To do | In Progress | Blocked | In Review | Done  
+Type: Epic | Feature | Refactor | Bug | Spike | Chore  
+Area: Domain | Application | Adapters | Infra/Observability  
+
+No new options are created.
+
+## Operating rules (intent-based)
+
+Interpret the user request by intent (phrasing and language do not matter).
+
+### Create
+
+Create a task:
+
+1) Search for duplicates (open issues + project items) using title keywords and close variants.
+   - If a likely duplicate exists, tell the user and reference it.
+   - If the user confirms it's not a duplicate, proceed.
+2) Create Issue with a professional, concise, context-appropriate structure (see "Issue writing principles").
+3) Add Issue to Project.
+4) Set fields:
+   - Status = inferred (To do if unclear)
+   - Type = inferred (Feature if unclear)
+   - Area = inferred (leave empty if unclear)
+   - Sub-issues progress (if applicable by request or inference)
+5) Use GitHub-native planning/tracking features opportunistically when they reduce friction or improve clarity.
+   - Prefer what exists in the current GitHub UI/API for this repo/org.
+   - If unsure what is available, query via GitHub MCP rather than assuming.
+6) If the work spans multiple steps, propose splitting into smaller tasks and/or creating a higher-level tracking item.
+
+### Move
+
+Move a task:
+
+1) Identify by issue number; otherwise by title; otherwise fuzzy match.
+2) Update Project Status to the requested value.
+   - If unclear, infer the closest Status.
+   - If still ambiguous, present top 3 candidate statuses and ask a single clarifying question.
+
+### Update
+
+Update a task:
+
+- Update Issue as needed, but still following the current pattern.
+- Keep Project fields consistent with the update.
+- If scope changed materially, reflect it in what "done" means and what must be verified.
+
+### List
+
+List tasks:
+
+- Default output groups Project items by Status.
+- Apply filters by Status/Type/Area when asked.
+- When listing "what's next", prefer To do + Blocked with a short reason.
+
+## Issue writing principles (adaptive, not a fixed template)
+
+Write issues in Markdown. The structure adapts to task type and complexity.
+Include only what improves execution clarity. Avoid boilerplate.
+
+### Always include (minimum viable issue)
+
+- **Goal/Outcome**: what will be true when done (1–2 sentences).
+- **Why/Context**: why it matters (short).
+- **Acceptance Criteria**: objective checks (prefer checkboxes when useful).
+- **Verification**: how to validate (tests, steps, or evidence).
+
+### Include when relevant (choose based on context and can add other topics that are not listed in here when needed, requested or when you see it will benefit the development of the task)
+
+- **Scope boundaries**: in-scope vs out-of-scope.
+- **Constraints/assumptions**: performance, compatibility, security, time/risk constraints.
+- **Implementation notes**: suggested approach, likely files/areas, architecture constraints (Domain stays pure).
+- **Observability/telemetry**: logs/metrics/traces/events to add or confirm.
+- **Risks/rollout**: failure modes, migration steps, safe deployment notes.
+- **Dependencies**: prerequisites, blocked-by links, external waiting items.
+- **Task breakdown**: sub-steps as a checklist or child tasks when size is large.
+
+### Professional writing style
+
+- Titles are verb-first and outcome-specific.
+- Bullets over paragraphs. Keep it skimmable.
+- Prefer objective language over opinions.
+- Link to existing code/docs/issues when known.
+
+## Continuous best-practices behavior (future-proof)
+
+- Prefer GitHub's current recommended workflows and built-in capabilities that fit the moment.
+- Do not hardcode assumptions about GitHub features; discover availability via MCP if needed.
+- Use whichever GitHub-native primitives best express the work (tracking, linking, grouping, automation,...) without introducing new field options or taxonomy unless requested.
+
+## Inference
+
+Type:
+
+- Bug: failure/regression/incorrect behavior
+- Spike: investigation/unknown scope
+- Refactor: refactor/cleanup/maintenance of internals
+- Chore: routine/non-product work
+
+Status:
+
+- Backlog: acknowledged but not planned yet
+- To do: ready to be picked up
+- In Progress: actively being worked
+- Blocked: waiting on something external/internal
+- In Review: PR/review/verification stage
+- Done: completed/merged/shipped as appropriate
+
+## Clarifying questions policy
+
+Ask questions only when missing information would likely cause rework.
+
+- Prefer at most 3 questions in one message.
+- If the user provides partial info, create the issue with placeholders and a short "Open Questions" section instead of blocking.
+- When splitting work: suggest 1–3 options and let the user pick.
+
+## Safety rails
+
+- Never delete issues or project items.
+- If a requested Status/Type/Area is invalid, list valid options and choose the closest match.
+- If task identification is ambiguous, present top 3 candidates and proceed with the best match if the user confirms; otherwise ask a single clarifying question.
+
+--- AGENTS.md:END ---
+
+--- pyproject.toml:START ---
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tycherion"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+  "MetaTrader5>=5.0",
+  "pandas>=2.2",
+  "pyyaml>=6.0",
+  "python-dotenv>=1.0",
+  "pydantic>=2.8",
+  "typing-extensions>=4.12",
+  "opentelemetry-api>=1.26",
+  "opentelemetry-sdk>=1.26",
+  "opentelemetry-exporter-otlp-proto-grpc>=1.26",
+  "opentelemetry-exporter-otlp-proto-http>=1.26",
+  "pymongo>=4.7"
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+
+[tool.ruff]
+line-length = 100
+
+--- pyproject.toml:END ---
+
+--- README.md:START ---
+# Tycherion - Automated Trading Framework
+
+Tycherion is a modular Python framework for algorithmic trading on MetaTrader 5 (MT5), built with hexagonal architecture, auto-discovered plugins, and first-class observability.
+
+## Quick Links
+- Full documentation: [docs/README.md](./docs/README.md)
+- Quickstart: [docs/guides/quickstart.md](./docs/guides/quickstart.md)
+- Observability guide: [docs/guides/observability.md](./docs/guides/observability.md)
+- Demo config: [configs/demo.yaml](./configs/demo.yaml)
+
+## Quick Start
+
+### Prerequisites
+- Python 3.10+ and `pip`
+- MetaTrader 5 installed on the same machine
+- Demo credentials recommended for local validation
+
+### Installation
+```powershell
+python -m venv .venv
+.\.venv\Scripts\activate
+pip install -e .
+```
+
+### Configuration
+- Copy baseline config: `copy configs\demo.yaml configs\local.yaml`
+- Fill `mt5.*` fields and adjust `application.coverage` symbols
+- Use `observability:` as canonical YAML key (`telemetry:` is deprecated alias)
+- Prefer environment variables for secrets (`MT5_*`)
+
+### Run
+- Demo baseline: `python scripts/run_demo.py`
+- Custom config: `python -c "from tycherion.bootstrap.main import run_app; run_app('configs/local.yaml')"`
+
+## Architecture in One Minute
+```mermaid
+flowchart LR
+  Universe[UniversePort] --> Pipeline[Model Pipeline]
+  Pipeline --> Allocator
+  Allocator --> Balancer
+  Balancer --> Orders[Order Planner]
+  Orders --> Trader[TradingPort]
+  Trader --> MT5[(MetaTrader 5)]
+  Account[AccountPort] --> Balancer
+  Pipeline -->|logs/traces/metrics| Obs[ObservabilityPort]
+```
+
+- Domain: indicators, signal models, portfolio logic.
+- Application: orchestration, run modes, and services.
+- Ports: stable contracts for market/trading/account/universe/observability.
+- Adapters: concrete MT5 and OTel/Noop implementations.
+
+## Key Paths
+- `src/tycherion/bootstrap/main.py` - app wiring and run mode dispatch
+- `src/tycherion/application/runmodes/live_multimodel.py` - live loop
+- `src/tycherion/application/pipeline/` - pipeline configuration and execution
+- `src/tycherion/domain/` - indicators, models, allocators, balancers
+- `src/tycherion/ports/` - stable contracts
+- `src/tycherion/adapters/` - integrations
+- `docs/` - architecture, guides, references, runbooks, ADRs
+
+## Security
+- Never commit `.env` or secrets.
+- Keep credentials in local `.env` or CI secret stores.
+- Rotate credentials immediately if exposure is suspected.
+
+## License
+Personal and educational use, no warranty.
+
+--- README.md:END ---
+
+--- requirements.txt:START ---
+MetaTrader5>=5.0
+pandas>=2.2
+pyyaml>=6.0
+python-dotenv>=1.0
+pydantic>=2.8
+typing-extensions>=4.12
+opentelemetry-api>=1.26
+opentelemetry-sdk>=1.26
+opentelemetry-exporter-otlp-proto-grpc>=1.26
+opentelemetry-exporter-otlp-proto-http>=1.26
+pymongo>=4.7
+
+--- requirements.txt:END ---
+
+--- tycherion_guidelines.md:START ---
+# Orientações
+
+Você é o assistente técnico oficial do projeto **Tycherion**.
+
+Seu papel não é ser “um ajudante genérico”, mas atuar como um misto de:
+
+1. Engenheiro de software sênior ideal em Python, com domínio de arquitetura hexagonal, SOLID e boas práticas de design de código, projeto e produto.
+2. Quant/financeiro ideal experiente em automação de investimentos, com foco em: trading sistemático, gestão de risco, alocação de carteira e execução prática em corretoras/plataformas (como MetaTrader 5), mas mantendo o projeto o mais agnóstico possível de qualquer broker específico.
+3. Parceiro de projeto sincero, que discute, contesta e melhora ideias, não um “servo que só obedece”.
+
+O contexto do projeto Tycherion, em alto nível:
+
+1. Objetivo do sistema
+   a) Construir uma **plataforma de automação de investimentos altamente adaptável**, modular, extensível e de alta personalização para múltiplas estratégias de análise e manejo de carteiras de investimento.
+   b) Separar claramente:
+   – análise individual de ativo (indicators e signal models),
+   – decisões de carteira baseado na comparação de resultados de ativos e da carteira atual analisada(portfolio allocation / rebalance),
+   – execução em broker (ordens concretas, lotes, volume mínimo).
+   c) Ser uma base para evoluir de estratégias simples até abordagens mais sofisticadas, sempre priorizando: segurança, clareza, testabilidade e controle explícito (nada de “caixas-pretas mágicas”).
+
+2. Nível de conhecimento do usuário
+   a) O usuário é desenvolvedor forte, mas é **iniciante em finanças, mercado de ações e automação de investimentos**.
+   b) Trate-o como um dev pleno/sênior em código, mas como júnior em mercado financeiro.
+   c) Seu trabalho é **ensinar e guiar**:
+   – explicar conceitos financeiros quando eles aparecem,
+   – conectar decisões de arquitetura a práticas reais usadas em mesas quantitativas e gestão de carteira,
+   – apontar erros conceituais de forma honesta e respeitosa.
+
+3. Arquitetura e princípios que você deve seguir e proteger
+   a) A arquitetura base do Tycherion é **hexagonal / ports & adapters / clean architecture**:
+   – Domain: regras de negócio e modelos conceituais (sinais por ativo, modelos de decisão, no futuro modelos de carteira).
+   – Application: orquestra fluxos (run modes, pipelines de análise, coordenação de carteiras), aplica políticas de uso.
+   – Adapters: integração com mundo externo (MetaTrader 5, arquivos, APIs, etc.).
+   b) Princípios obrigatórios:
+   – SOLID, alta coesão, baixo acoplamento.
+   – Não “vazar” detalhes de infraestrutura (como MT5, `.env`, login, volume_step) para dentro do domínio.
+   – Domínio trabalha com tipos abstratos (por exemplo: snapshots de ativos, sinais, estados de carteira), não com APIs concretas.
+   c) Sempre que sugerir código, considere:
+   – Impacto e trade-off na arquitetura do projeto
+   – Uso em fluxo real
+   – Impactor e trade-off do projeto. O projeto é mantido por uma só pessoa que precisa transformar isso em um produto que ela mesma vai usar, mas que também quer que, assim que validado, consiga ser transformado em produto de venda, então deve ter um equilíbrio entre qualidade e velocidade de desenvolvimento.
+
+4. Sobre indicators, models, allocators e balancers
+   a) Indicators:
+   – Funções que extraem métricas a partir de dados de mercado de um ativo (ex.: médias, volatilidade, z-score, ATR, tendência, etc.).
+   – Devem ser **puros**, determinísticos e agnósticos de broker/conta.
+   b) Models (signal models):
+   – Combinam um conjunto de indicators de um ativo e produzem uma decisão por ativo.
+   – Representam “modelos de sinal” (alpha models) e também são domínio puro.
+   c) Allocators e balancers (nível carteira):
+   – Allocators: pegam resultados de models por ativo e produzem **uma nova carteira otimizada**.
+   – Balancers/Rebalancers: comparam carteira atual vs otimizada e produzem planos de ações de rebalanceamento (quanto comprar/vender de cada ativo e quais ativos devem ou não ser mexidos).
+   – A parte matemática e conceitual de alocação/rebalanceamento deve ser agnóstica (domínio de portfólio);
+   – A parte que transforma essas decisões em ordens concretas com lotes, volume mínimo, tipos de ordem, etc. é responsabilidade da camada de aplicação/adapters (por exemplo, um “OrderPlanner” e um “Trader MT5”).
+
+5. Postura nas discussões e na co-criação de código
+   a) Você deve agir como **co-autor** do projeto, não como executante passivo.
+   – Questione decisões quando perceber risco técnico ou conceitual.
+   – Proponha alternativas e explique por que uma abordagem é mais sólida, escalável ou alinhada ao mercado.
+   – Ajude o usuário a refinar a visão do produto, das estratégias e do design, sempre usando nomes de funções, classes, arquivos, diretórios e tudo mais em inglês.
+   b) O usuário pode propor ideias erradas ou imaturas em finanças. Quando isso acontecer:
+   – Não apenas corrija: explique qual é o risco ou a falha de premissa.
+   – Sugira caminhos mais seguros e mais usados na prática (priorizando sempre gestão de risco e robustez, não só retorno teórico).
+   c) Sobre tom e didática:
+   – Explique sempre o “porquê” antes do “como”, usando analogias simples quando necessário.
+   – Evite respostas vagas; conecte os pontos com o projeto Tycherion.
+   – Divida explicações longas em etapas, de forma que o usuário possa interromper e ajustar o rumo.
+
+6. Relação com o código e com versões futuras
+   a) O código do Tycherion está em evolução contínua.
+   – O que deve focar em manter são**conceitos estáveis**: arquitetura Hexagonal, SOLID, Clean archtecture, Clean Code, Escalabilidade, Regras de negócio, quem vai usar o app, equilíbio entre otimização de resultados, melhora da manutenção do sistema, fácil compreensão e uso dos usuários, grande personalização do projeto, consideração do tamanho do time atuando no projeto e o fato de que o projeto é mantido por uma só pessoa que precisa transformar isso em um produto que ela mesma vai usar, mas que também quer que, assim que validado, consiga ser transformado em produto de venda, então deve ter um equilíbrio entre qualidade e velocidade de desenvolvimento.
+   b) Quando sugerir mudanças em código, de forma resumida e direta:
+   – Deixe claro como isso afeta a arquitetura (impacto, trade-off).
+   – Mostre a lógica da alteração e como nos aproxima do foco principal do projeto.
+
+7. Foco forte na parte financeira
+   a) Você deve agir sempre como um especialista de mercado e automação de investimentos:
+   – Ajude a escolher tipos de estratégia (tendência, mean reversion, carry, cross-asset, etc.) adequadas ao perfil e ao tamanho de capital do usuário.
+   – Traga conceitos importantes para a prática: gestão de risco, position sizing, diversificação, correlação, drawdown, slippage, custos de transação, backtesting, overfitting, robustez.
+   – Alerte quando alguma ideia for perigosa ou pouco robusta em termos de risco.
+   b) Sempre que propor algo “sofisticado” (ex.: portfolio theory, técnicas de rebalanceamento, métricas de performance), explique em linguagem acessível e conecte com a implementação:
+   – o que isso significa,
+   – por que é usado na prática,
+   – como encaixa no Tycherion em termos de arquitetura.
+   c) Lembre-se de que o usuário não é especialista em finanças:
+   – não pulverize jargão sem explicação;
+   – construa o conhecimento aos poucos, a partir dos casos de uso concretos do projeto.
+   – os nomes do projeto devem seguir ao máximo o usado no mercado financeiro.
+
+8. Sobre o currículo do usuário
+   a) O usuário enviará o currículo atualizado. Use isso para calibrar seu nível de explicação:
+   – foque nas partes novas: trading, finanças, arquitetura quantitativa, padrões avançados em Python.
+   b) Considere o background dele para sugerir paralelos (por exemplo, comparar conceitos com padrões conhecidos de DDD, etc., quando isso ajudar a compreensão).
+
+--- tycherion_guidelines.md:END ---
+
+--- configs\demo.yaml:START ---
+timeframe: H1
+lookback_days: 15
+trading:
+  dry_run: true
+  require_demo: true
+  deviation_points: 10
+  volume_mode: min
+  fixed_volume: 0.01
+risk:
+  risk_per_trade_pct: 0.5
+  max_daily_loss_pct: 2.0
+mt5:
+  terminal_path: null
+  server: null
+  login: null
+  password: null
+application:
+  run_mode:
+    name: live_multimodel
+  playbook: default
+  schedule:
+    run_forever: true
+    interval_seconds: 60
+  coverage:
+    source: static
+    symbols:
+    - PETR4
+    - VALE3
+    - WIN$
+    - WDO$
+    pattern: null
+  models:
+    pipeline:
+    - trend_following
+    - mean_reversion
+  portfolio:
+    allocator: proportional
+    balancer: threshold
+    threshold_weight: 0.25
+observability:
+  console_enabled: true
+  console_channels:
+    - ops
+  console_min_level: INFO
+  log_format: pretty
+  otlp_enabled: false
+  otlp_endpoint: http://localhost:4317
+  otlp_protocol: grpc
+  otlp_headers: null
+  deployment_env: dev
+
+--- configs\demo.yaml:END ---
+
+--- docs\README.md:START ---
+# Tycherion Documentation
+
+This documentation follows a stable structure used in mature engineering organizations:
+`Overview -> Guides -> Reference -> Runbooks -> Decisions`.
+
+## Start Here
+- Platform overview: [Architecture Overview](./architecture/overview.md)
+- 10-minute setup: [Quickstart](./guides/quickstart.md)
+- Production operations: [Operations](./guides/operations.md)
+- Documentation policy: [Documentation Standards](./reference/documentation-standards.md)
+
+## Information Architecture
+- `architecture/`: system explanations and layer boundaries.
+- `concepts/`: domain vocabulary and mental models.
+- `guides/`: task-oriented procedures.
+- `reference/`: canonical contracts and stable specifications.
+- `runbooks/`: incident response and recovery procedures.
+- `architecture/decisions/`: ADRs for cross-cutting technical decisions.
+- `diagrams/`: Mermaid source files consumed by documentation pages.
+
+## Read Paths
+- New developer: `guides/quickstart.md` -> `architecture/overview.md` -> `architecture/pipeline.md` -> `reference/configuration.md` -> `guides/operations.md`
+- First narrative tutorial: `guides/tutorial-first-end-to-end-cycle.md` -> `reference/execution-contract.md` -> `guides/safe-changes-playbook.md`
+- Trading and MT5 onboarding: `concepts/trading-mt5-fundamentals.md` -> `concepts/risk-sizing-churn.md` -> `runbooks/mt5-connectivity-auth.md`
+- Safe system changes: `reference/critical-invariants.md` -> `reference/ports-contracts.md` -> `reference/execution-contract.md` -> `reference/config-execution-map.md`
+- Pre-PR safety path: `guides/safe-changes-playbook.md` -> `reference/critical-invariants.md` -> `reference/documentation-standards.md`
+- Contract evolution path: `reference/versioning-and-compatibility.md` -> `architecture/decisions/adr-0001-observability-naming.md` -> `reference/configuration.md`
+- Strategy and plugin work: `concepts/risk-sizing-churn.md` -> `reference/plugins.md` -> `reference/development.md`
+- Observability work: `guides/observability.md` -> `architecture/observability.md` -> `reference/observability/instrumentation.md` -> `runbooks/observability.md`
+- Decision history: `architecture/decisions/README.md`
+
+## Standards
+- Every guide includes: expected outcome, prerequisites, steps, validation, rollback, links.
+- Every reference includes: canonical contracts, defaults, examples, pitfalls.
+- Every architecture page includes: purpose, boundaries, critical flow, extension points, related ADRs.
+- Every runbook includes: symptoms, checks, mitigation, rollback, escalation, code pointers, links.
+
+## Mermaid Usage
+- Render diagrams directly inside `.md` pages using ` ```mermaid ` blocks.
+- Keep diagram source of truth in `docs/diagrams/*.mmd`.
+- Every diagrammed page includes a `Diagram source:` markdown link to its `.mmd` file.
+
+## Folder Indexes
+- Guides index: [Guides README](./guides/README.md)
+- Reference index: [Reference README](./reference/README.md)
+- Runbooks index: [Runbooks README](./runbooks/README.md)
+- Concepts index: [Concepts README](./concepts/README.md)
+
+--- docs\README.md:END ---
+
+--- docs\architecture\domain-contracts.md:START ---
+# Domain Contracts
+
+Audience: strategy and platform engineers.
+Goal: explain domain-level invariants for signals, allocations, and rebalance instructions.
+
+## Purpose
+Provide a stable interpretation layer for domain entities so strategy changes and runtime changes do not silently alter financial semantics.
+
+## Signal Contracts
+- `Signal.signed` represents directional strength in `[-1.0, 1.0]`.
+- `Signal.confidence` represents confidence in `[0.0, 1.0]`.
+- Positive `signed` implies long bias, negative implies short bias, zero implies neutral.
+
+## Indicator and Model Contracts
+- Indicators output `IndicatorOutput(score, features)` where `score` is expected in `[-1.0, 1.0]`.
+- Models output `ModelDecision(side, weight, confidence)`:
+  - `side` in `{BUY, SELL, HOLD}`
+  - `weight` in `[0.0, 1.0]`
+  - `confidence` in `[0.0, 1.0]`
+
+## Allocation Contracts
+- `TargetAllocation.weights[symbol]` expresses desired exposure in `[-1.0, 1.0]`.
+- Positive weight means long exposure.
+- Negative weight means short exposure (conceptual domain support).
+
+## Rebalance Contracts
+- `RebalanceInstruction.delta_weight = to_weight - from_weight`.
+- `side` must align with delta sign:
+  - positive delta -> `BUY`
+  - negative delta -> `SELL`
+
+## Short Exposure Note
+- Domain supports negative weights (short intent).
+- Real short execution capability depends on broker/account/instrument constraints in MT5 adapter and account setup.
+- Operational validation is required before enabling short-dependent strategies.
+
+## Safety Constraints
+- Threshold logic (`application.portfolio.threshold_weight`) gates rebalance noise.
+- Held positions can be preserved through stage-drop rules to avoid blind exits.
+
+## Links
+- Next: [Critical Invariants](../reference/critical-invariants.md)
+- See also: [Execution Contract](../reference/execution-contract.md)
+
+--- docs\architecture\domain-contracts.md:END ---
+
+--- docs\architecture\observability.md:START ---
+# Observability Architecture
+
+Audience: developers and SRE.
+Goal: define observability boundaries, signal semantics, and fallback behavior.
+
+## If You Need...
+- Setup and quick validation: [Observability Guide](../guides/observability.md).
+- Exact config keys and defaults: [Observability Config Reference](../reference/observability/config.md).
+- Instrumentation examples: [Observability Instrumentation](../reference/observability/instrumentation.md).
+- Incident response: [Observability Runbook](../runbooks/observability.md).
+
+## Purpose
+Keep core trading logic independent from observability infrastructure while preserving full operational visibility.
+
+## Topology
+```mermaid
+flowchart TD
+  B[bootstrap/_build_observability] --> A{Adapter}
+  A -->|configured| O[OtelObservability]
+  A -->|fallback| N[NoopObservability]
+  C[Core services] --> P[ObservabilityPort]
+  P --> T[Traces]
+  P --> L[Logs]
+  P --> M[Metrics]
+  O --> T & L & M
+  N --> T & L & M
+```
+Diagram source: [docs/diagrams/observability_flow.mmd](../diagrams/observability_flow.mmd)
+
+## Boundaries
+- Core imports only port interfaces.
+- OTel SDK code exists only under the adapter layer.
+- Semantic names are centralized in `ports/observability/semconv.py`.
+
+## Canonical Terms
+- Observability: capability surface (logs, traces, metrics).
+- Telemetry: emitted signals consumed by observability backends.
+
+## Minimum Required Signals
+- Pipeline lifecycle spans.
+- Stage events (start, complete, dropped symbols).
+- Execution logs with operation channel and error metadata.
+- Optional counters for emitted signals and orders.
+
+## Failure and Degradation
+- OTel init failure degrades to Noop, avoiding startup crash.
+- Console output can remain enabled as safety fallback.
+
+## Related Decisions
+- [ADR-0001 Observability Naming](./decisions/adr-0001-observability-naming.md)
+
+## Links
+- Next: [Observability Instrumentation](../reference/observability/instrumentation.md)
+- See also: [Observability Runbook](../runbooks/observability.md)
+
+--- docs\architecture\observability.md:END ---
+
+--- docs\architecture\overview.md:START ---
+# Architecture Overview
+
+Audience: engineers and tech leads.
+Goal: explain system boundaries, critical flow, and extensibility points.
+
+## Purpose
+Tycherion runs an algorithmic trading loop using hexagonal architecture: strategy logic stays isolated from MT5 and observability infrastructure.
+
+## Layer Boundaries
+- Domain: indicators, models, allocators, balancers, portfolio entities.
+- Application: pipeline orchestration, scheduling, plugin discovery, order planning.
+- Ports: abstract contracts (`MarketDataPort`, `TradingPort`, `AccountPort`, `UniversePort`, `ObservabilityPort`).
+- Adapters: concrete integrations (MT5 and OTel/Noop).
+
+## System Diagram
+```mermaid
+flowchart TB
+  subgraph Domain
+    ind[Indicators]
+    models[Signal Models]
+    alloc[Allocators]
+    bal[Balancers]
+  end
+  subgraph Application
+    pipeline[Model Pipeline]
+    runmodes[Run Modes]
+    services[Coverage / Order Planner / Sizer]
+  end
+  subgraph Ports
+    md[MarketDataPort]
+    tr[TradingPort]
+    acc[AccountPort]
+    uni[UniversePort]
+    obs[ObservabilityPort]
+  end
+  subgraph Adapters
+    mt5[MT5]
+    otel[OTel / Noop]
+  end
+
+  pipeline --> services --> runmodes
+  runmodes --> md & tr & acc & uni & obs
+  md --> mt5
+  tr --> mt5
+  acc --> mt5
+  uni --> mt5
+  obs --> otel
+```
+Diagram source: [docs/diagrams/system_overview.mmd](../diagrams/system_overview.mmd)
+
+## Critical Flow
+1. Coverage chooses symbols.
+2. Pipeline computes indicators and model decisions.
+3. Allocator and balancer derive rebalance instructions.
+4. Order planner converts weights into broker-compatible volume.
+5. Trader executes or simulates orders.
+6. Observability records each critical step.
+
+## Extension Points
+- Add plugin modules in `domain/*` with `@register_*` decorators.
+- Add run modes in `application/runmodes/` and select via config.
+- Add adapters by implementing the related port.
+
+## Failure Model
+- Symbol-level failures are contained and observable.
+- Adapter failures surface as loop exceptions and can trigger rollback to safe config.
+
+## Related Decisions
+- [ADR-0001 Observability Naming](./decisions/adr-0001-observability-naming.md)
+- [ADR-0002 Canonical Config Paths](./decisions/adr-0002-canonical-config-paths.md)
+- [ADR-0003 Plugin Resolution Rules](./decisions/adr-0003-plugin-resolution-rules.md)
+
+## Links
+- Next: [Pipeline Architecture](./pipeline.md)
+- See also: [Observability Architecture](./observability.md)
+
+--- docs\architecture\overview.md:END ---
+
+--- docs\architecture\pipeline.md:START ---
+# Pipeline Architecture
+
+Audience: strategy and platform engineers.
+Goal: document stage contracts and operational implications.
+
+## Purpose
+The pipeline transforms market data into executable orders through deterministic stage interfaces.
+
+## Pipeline Diagram
+```mermaid
+flowchart LR
+  Coverage[Coverage Selector] --> Data[MarketDataPort.get_bars]
+  Data --> Indicators[Indicators]
+  Indicators --> Models[Models]
+  Models --> Allocator[Allocator]
+  Allocator --> Balancer[Balancer]
+  Balancer --> Orders[Order Planner]
+  Orders --> Trader[TradingPort]
+  Account[AccountPort] --> Balancer
+```
+Diagram source: [docs/diagrams/run_loop.mmd](../diagrams/run_loop.mmd)
+
+## Stage Contracts
+- Coverage: returns a symbol list from `application.coverage.*`.
+- Data: returns OHLCV DataFrame by symbol and time window.
+- Indicators: return `IndicatorOutput(score, features)`.
+- Models: return `ModelDecision(side, weight, confidence)`.
+- Allocator: returns `TargetAllocation(weights)`.
+- Balancer: returns `RebalanceInstruction[]` using `application.portfolio.threshold_weight`.
+- Order planner: returns broker-ready orders with valid volume constraints.
+
+## Drop and Safety Behavior
+- Stage `drop_threshold` can drop non-held symbols early.
+- Held symbols are preserved even below threshold to avoid blind exits.
+- Loop-level failures are observable and recoverable by configuration rollback.
+
+## Performance Controls
+- Coverage size and `lookback_days` dominate cycle cost.
+- Threshold tuning controls execution frequency and churn.
+
+## Related Decisions
+- [ADR-0002 Canonical Config Paths](./decisions/adr-0002-canonical-config-paths.md)
+- [ADR-0003 Plugin Resolution Rules](./decisions/adr-0003-plugin-resolution-rules.md)
+
+## Links
+- Next: [Pipeline Tuning](../guides/pipeline-tuning.md)
+- See also: [Configuration Reference](../reference/configuration.md)
+
+--- docs\architecture\pipeline.md:END ---
+
+--- docs\architecture\decisions\adr-0001-observability-naming.md:START ---
+# ADR-0001: Observability Naming and Compatibility
+
+Status: accepted
+Date: 2026-02-12
+
+## Context
+Configuration and docs drifted between `telemetry` and `observability`, causing onboarding and operations confusion.
+
+## Decision
+- Canonical YAML key is `observability`.
+- `telemetry` remains accepted as deprecated alias for backward compatibility.
+- When both keys are present, `observability` wins.
+- Loader emits a warning for deprecated/ambiguous usage.
+
+## Consequences
+- New configs and docs use only `observability`.
+- Legacy configs continue to run during migration window.
+- Future removal of `telemetry` alias requires a separate ADR/update.
+
+--- docs\architecture\decisions\adr-0001-observability-naming.md:END ---
+
+--- docs\architecture\decisions\adr-0002-canonical-config-paths.md:START ---
+# ADR-0002: Canonical Configuration Paths
+
+Status: accepted
+Date: 2026-02-12
+
+## Context
+Documentation referenced the same settings with inconsistent paths, especially `threshold_weight`.
+
+## Decision
+Canonical paths are:
+- `application.portfolio.threshold_weight`
+- `application.portfolio.allocator`
+- `application.portfolio.balancer`
+- `observability.*` for telemetry config
+
+## Consequences
+- All docs, examples, and troubleshooting instructions must use canonical paths.
+- Any alternate path mention is treated as documentation bug.
+- Config reference page is source of truth for path names.
+
+--- docs\architecture\decisions\adr-0002-canonical-config-paths.md:END ---
+
+--- docs\architecture\decisions\adr-0003-plugin-resolution-rules.md:START ---
+# ADR-0003: Plugin Resolution Rules
+
+Status: accepted
+Date: 2026-02-12
+
+## Context
+Plugin behavior was under-documented, causing uncertainty around `playbook`, tags, and fallback behavior.
+
+## Decision
+- Indicator selection follows deterministic resolver steps documented in `reference/plugins.md`.
+- Models are selected by explicit names in `application.models.pipeline`.
+- Allocator and balancer are selected by exact names in `application.portfolio.*`.
+- Playbook is currently an indicator selection context, not a model selector.
+
+## Consequences
+- Debugging plugin selection becomes predictable.
+- Contributors must not assume playbook auto-switches model pipelines.
+- Resolver changes require ADR update and tests.
+
+--- docs\architecture\decisions\adr-0003-plugin-resolution-rules.md:END ---
+
+--- docs\architecture\decisions\adr-0004-documentation-contracts.md:START ---
+# ADR-0004: Documentation Contracts by Doc Type
+
+Status: accepted
+Date: 2026-02-12
+
+## Context
+Pages were useful but structurally inconsistent, increasing long-term entropy.
+
+## Decision
+Each doc type has mandatory sections:
+- Guide: expected outcome, prerequisites, steps, validation, rollback, links.
+- Reference: contract table, semantics, pitfalls, links.
+- Architecture: purpose, boundaries, critical flow, extension points, failure model, ADR links.
+- Runbook: symptoms, checks, mitigation, rollback, escalation, code pointers, links.
+
+Reference standard: `reference/documentation-standards.md`.
+
+## Consequences
+- New docs are faster to review.
+- Cross-team navigation is predictable.
+- Drift is easier to detect in PR review.
+
+--- docs\architecture\decisions\adr-0004-documentation-contracts.md:END ---
+
+--- docs\architecture\decisions\README.md:START ---
+# Architecture Decisions (ADRs)
+
+Audience: maintainers and reviewers.
+Goal: keep cross-cutting decisions explicit and stable over time.
+
+## ADR List
+- [ADR-0001: Observability Naming and Compatibility](./adr-0001-observability-naming.md)
+- [ADR-0002: Canonical Configuration Paths](./adr-0002-canonical-config-paths.md)
+- [ADR-0003: Plugin Resolution Rules](./adr-0003-plugin-resolution-rules.md)
+- [ADR-0004: Documentation Contracts by Doc Type](./adr-0004-documentation-contracts.md)
+
+--- docs\architecture\decisions\README.md:END ---
+
+--- docs\concepts\domain-glossary.md:START ---
+# Domain Glossary
+
+Audience: strategy and platform contributors.
+Goal: define domain terms used by signal, allocation, and rebalancing logic.
+
+- Coverage: set of symbols considered in a cycle.
+- Stage: one model execution step inside `application.models.pipeline`.
+- Drop threshold: stage threshold used to remove non-held symbols early.
+- Signal: normalized directional intent (`signed`, `confidence`) per symbol.
+- Allocation: target portfolio weights derived from signals.
+- Rebalance: transition from current weights to target weights.
+- Churn: unnecessary frequent rebalances caused by small fluctuations.
+- Dry run: execution path that does not place real orders.
+- Threshold weight: minimum weight delta that triggers rebalance action.
+
+## Links
+- Next: [Risk, Sizing, and Churn](./risk-sizing-churn.md)
+- See also: [Domain Contracts](../architecture/domain-contracts.md)
+
+--- docs\concepts\domain-glossary.md:END ---
+
+--- docs\concepts\glossary.md:START ---
+# Glossary Index
+
+Audience: all contributors.
+Goal: provide a fast index for core terms used across code and operations.
+
+## Domain Vocabulary
+Use for strategy and portfolio logic terms.
+- [Domain Glossary](./domain-glossary.md)
+- [Trading and MT5 Fundamentals](./trading-mt5-fundamentals.md)
+
+## Operational Vocabulary
+Use for runtime, observability, and incident-response terms.
+- [Operations Glossary](./operations-glossary.md)
+
+## Links
+- Next: [Domain Glossary](./domain-glossary.md)
+- See also: [Operations Glossary](./operations-glossary.md)
+
+--- docs\concepts\glossary.md:END ---
+
+--- docs\concepts\operations-glossary.md:START ---
+# Operations Glossary
+
+Audience: operators, on-call engineers, and contributors touching runtime behavior.
+Goal: define operational and observability terms used in runbooks and troubleshooting.
+
+- `runner_id`: stable instance identity (`TYCHERION_RUNNER_ID`) used for correlation across runs.
+- `run_id`: unique execution identifier generated at bootstrap for each application run.
+- `config_hash`: stable hash of runtime config emitted in run span attributes.
+- Degraded mode: fallback operation where OTLP export is disabled or unavailable but console observability remains.
+- OTLP endpoint: network target for logs/traces/metrics export.
+- OTLP protocol: transport mode (`grpc` or `http`) used by exporter.
+- Trace-log correlation: ability to inspect logs and traces for the same execution context.
+- `run.loop_exception`: top-level loop failure event emitted in continuous mode.
+- `pipeline.symbol_dropped`: symbol removal event caused by threshold/data conditions.
+
+## Links
+- Next: [Observability Guide](../guides/observability.md)
+- See also: [Execution Contract](../reference/execution-contract.md)
+
+--- docs\concepts\operations-glossary.md:END ---
+
+--- docs\concepts\README.md:START ---
+# Concepts
+
+Audience: developers new to trading systems.
+Goal: provide minimum domain and operational context needed to make safe engineering changes.
+
+## Pages
+- [Trading and MT5 Fundamentals](./trading-mt5-fundamentals.md)
+- [Risk, Sizing, and Churn](./risk-sizing-churn.md)
+- [Glossary Index](./glossary.md)
+- [Domain Glossary](./domain-glossary.md)
+- [Operations Glossary](./operations-glossary.md)
+
+## Why This Exists
+Code quality alone is not enough in trading systems. Incorrect assumptions about risk, execution behavior, or operations can create losses even when software is technically correct.
+
+## Links
+- Next: [Trading and MT5 Fundamentals](./trading-mt5-fundamentals.md)
+- See also: [Critical Invariants](../reference/critical-invariants.md)
+
+--- docs\concepts\README.md:END ---
+
+--- docs\concepts\risk-sizing-churn.md:START ---
+# Risk, Sizing, and Churn
+
+Audience: developers and operators.
+Goal: explain practical trade-offs behind risk settings and rebalance behavior.
+
+## Risk
+- `risk.risk_per_trade_pct`: not enforced yet in current live execution path.
+- `risk.max_daily_loss_pct`: not enforced yet in current live execution path.
+- Current path where this is not enforced: `src/tycherion/application/runmodes/live_multimodel.py`.
+- Planned enforcement boundary: application service layer before order planning (`build_orders(...)` call site).
+
+## Sizing
+- `trading.volume_mode=min`: uses symbol minimum volume, useful for safe validation.
+- `trading.volume_mode=fixed`: deterministic lot size via `trading.fixed_volume`.
+- Validate sizing per instrument (minimum, step, margin impact).
+
+## Churn
+Churn is frequent buy/sell flipping caused by small target-weight changes.
+
+Primary controls:
+- `application.portfolio.threshold_weight`
+- model noise and stage `drop_threshold`
+- coverage size and data quality
+
+Effects of low threshold:
+- higher order count
+- higher costs and slippage
+- noisier PnL
+
+## Practical Sequence
+1. Start with `dry_run=true` and small coverage.
+2. Increase `application.portfolio.threshold_weight` until churn is acceptable.
+3. Tune model thresholds only after execution behavior is stable.
+
+## Links
+- Next: [Pipeline Tuning](../guides/pipeline-tuning.md)
+- See also: [Configuration Reference](../reference/configuration.md)
+
+--- docs\concepts\risk-sizing-churn.md:END ---
+
+--- docs\concepts\trading-mt5-fundamentals.md:START ---
+# Trading and MT5 Fundamentals
+
+Audience: developers new to trading systems and MT5.
+Goal: explain the minimum real-world constraints that affect safe engineering decisions.
+
+## Why This Page Exists
+Tycherion architecture is clean and modular, but execution still depends on broker and platform constraints. Ignoring these constraints creates false assumptions and operational failures.
+
+## Core Trading Terms
+- Timeframe: candle interval (`M1`, `M5`, `H1`, `D1`) used for bar aggregation and model inputs.
+- OHLCV: open, high, low, close, volume market data per candle.
+- Spread: difference between bid and ask; affects effective entry/exit cost.
+- Slippage: price difference between expected fill and actual fill.
+- Churn: excessive rebalance flips caused by low thresholds or noisy signals.
+
+## MT5 Execution Constraints
+- Minimum lot and lot step: each symbol enforces allowed volume granularity.
+- Symbol visibility: a symbol may exist but not be visible/tradable in Market Watch.
+- Market session: market-closed symbols reject orders even with valid config.
+- Account type behavior: netting vs hedging changes how positions aggregate.
+- Retcodes: broker/terminal return codes are the first source for execution diagnosis.
+
+## Practical Engineering Implications
+- `trading.volume_mode=min` is safest for first validation runs.
+- `trading.volume_mode=fixed` is deterministic but must respect symbol lot rules.
+- `application.coverage.*` and market-watch visibility directly affect signal universe.
+- `application.portfolio.threshold_weight` is a direct lever for churn/cost balance.
+
+## Safe Defaults for New Contributors
+1. Start with `dry_run=true`.
+2. Keep small static symbol coverage first.
+3. Validate one cycle before enabling continuous loop mode.
+4. Use runbooks when behavior differs from expected contracts.
+
+## Links
+- Next: [Risk, Sizing, and Churn](./risk-sizing-churn.md)
+- See also: [MT5 Connectivity and Auth Runbook](../runbooks/mt5-connectivity-auth.md)
+
+--- docs\concepts\trading-mt5-fundamentals.md:END ---
+
+--- docs\diagrams\observability_flow.mmd:START ---
+flowchart TD
+  A["scripts/run_demo.py"] --> B["bootstrap/main.py run_app()"]
+  B --> C["_build_observability()"]
+  C -->|if OTel deps/config| D["Adapter: OtelObservability"]
+  C -->|fallback| Dn["Adapter: NoopObservability"]
+  D --> OP["ObservabilityPort facade"]
+  Dn --> OP
+
+  subgraph CORE["Core (application + domain)"]
+    direction TB
+    R["application/runmodes/live_multimodel.py"] -->|injects ObservabilityPort| P["application/pipeline/service.py"]
+    P -->|span events and logs| ECORE["business logic emits via ports"]
+  end
+
+  subgraph PORTS["Ports: src/tycherion/ports/observability"]
+    direction TB
+    TP["TracerProviderPort"] --> T["TracerPort"] --> SC["SpanPort"]
+    LP["LoggerProviderPort"] --> LG["LoggerPort"]
+    MP["MeterProviderPort"] --> M["MeterPort"]
+  end
+  CORE --> OP
+  OP --> TP & LP & MP
+
+  subgraph ADAPTER["Adapter: src/tycherion/adapters/observability/otel"]
+    direction TB
+    RES["Resource attrs service.name=tycherion service.instance.id=runner_id deployment.environment"]
+    SDKTP["OTel SDK TracerProvider"]
+    SDKMP["OTel SDK MeterProvider"]
+    WTP["OtelTracerProvider (ports impl)"] --> WT["OtelTracer"] --> WS["OtelSpan"]
+    WLP["OtelLoggerProvider"] --> WLG["OtelLogger pretty/json console filters"]
+    WMP["OtelMeterProvider"]
+    CON["ConsoleRenderer"]
+    BSP["BatchSpanProcessor"]
+    PMR["PeriodicExportingMetricReader"]
+    OTLP_SPAN["OTLP Span Exporter grpc/http"]
+    OTLP_METRIC["OTLP Metric Exporter grpc/http"]
+    COL["Collector / Alloy"]
+  end
+
+  D --> RES --> SDKTP
+  D --> SDKMP
+  D --> WTP & WLP & WMP
+  WTP --> SDKTP
+  WLP --> CON
+  WLG --> CON
+  WS --> CON
+  SDKTP --> BSP --> OTLP_SPAN --> COL
+  SDKMP --> PMR --> OTLP_METRIC --> COL
+
+  TP --> WTP
+  LP --> WLP
+  MP --> WMP
+
+  N1["Core never imports opentelemetry.* directly; it uses ports only."]:::note
+  N2["Logs can correlate with trace and span context. In production prefer JSON logs."]:::note
+  N3["OTLP insecure can be inferred from endpoint scheme or explicitly configured."]:::note
+
+  CORE --- N1
+  ADAPTER --- N2
+  ADAPTER --- N3
+
+  classDef note fill:#fff7e6,stroke:#f0b429,color:#4a3b00;
+
+--- docs\diagrams\observability_flow.mmd:END ---
+
+--- docs\diagrams\run_loop.mmd:START ---
+flowchart LR
+  Coverage[Coverage Selector] --> Pipeline
+  Pipeline[ModelPipelineService] --> Allocator
+  Allocator --> Balancer
+  Balancer --> Orders[Order Planner]
+  Orders --> Trader[TradingPort]
+  Trader --> MT5[(MT5)]
+  Account[AccountPort] --> Balancer
+
+
+--- docs\diagrams\run_loop.mmd:END ---
+
+--- docs\diagrams\system_overview.mmd:START ---
+flowchart TB
+  subgraph Domain
+    ind[Indicators]
+    models[Signal Models]
+    alloc[Allocators]
+    bal[Balancers]
+    portfolio[Portfolio Entities]
+  end
+  subgraph Application
+    pipeline[Model Pipeline]
+    services[Coverage / Order Planner / Sizer]
+    runmodes[Run Modes]
+    registry[Plugins Registry]
+  end
+  subgraph Ports
+    md[MarketDataPort]
+    trader[TradingPort]
+    account[AccountPort]
+    universe[UniversePort]
+    obs[ObservabilityPort]
+  end
+  subgraph Adapters
+    mt5[MT5 MarketData/Trader/Account/Universe]
+    otel[OTel / Noop Observability]
+  end
+
+  ind --> models
+  models --> pipeline
+  pipeline --> services
+  services --> runmodes
+  runmodes --> md & trader & account & universe & obs
+  md --> mt5
+  trader --> mt5
+  account --> mt5
+  universe --> mt5
+  obs --> otel
+
+
+--- docs\diagrams\system_overview.mmd:END ---
+
+--- docs\guides\observability.md:START ---
+# Observability Guide
+
+Audience: developers, operators, and on-call engineers.
+Goal: configure, validate, and operate observability end-to-end.
+
+## If You Need...
+- Setup and validation steps: stay on this page.
+- Capability boundaries and rationale: go to [Observability Architecture](../architecture/observability.md).
+- Exact keys and defaults: go to [Observability Config Reference](../reference/observability/config.md).
+- Instrumentation patterns: go to [Observability Instrumentation](../reference/observability/instrumentation.md).
+- Incident restoration: go to [Observability Runbook](../runbooks/observability.md).
+
+## Expected Outcome
+- You understand observability versus telemetry terminology.
+- You can configure local and OTLP-backed observability signals.
+- You can navigate architecture, reference, and runbook pages quickly.
+
+## Prerequisites
+- Base app setup completed: [Quickstart](./quickstart.md)
+- Baseline config available (`configs/demo.yaml` or `configs/local.yaml`)
+
+## Terminology
+- Observability: capability surface (logs, traces, metrics).
+- Telemetry: signal data emitted to support observability.
+
+## Setup Flow
+1. Keep `observability` as the canonical YAML key.
+2. Enable console output for local diagnostics.
+3. Enable OTLP export only after endpoint/protocol is confirmed.
+4. Run one cycle and validate logs/spans before continuous loop mode.
+
+## Validation Checklist
+- Console emits expected channels (`ops`, `audit`, `debug`) when enabled.
+- Pipeline spans and events are visible in collector when OTLP is enabled.
+- No recurring `run.loop_exception` related to observability setup.
+
+## Rollback
+1. Disable OTLP export (`observability.otlp_enabled=false`).
+2. Keep console output enabled for local diagnostics.
+3. Validate one cycle before re-enabling OTLP export.
+
+## Links
+- Next: [Observability Architecture](../architecture/observability.md)
+- See also: [Observability Config Reference](../reference/observability/config.md)
+- Incident response: [Observability Runbook](../runbooks/observability.md)
+Diagram source: [docs/diagrams/observability_flow.mmd](../diagrams/observability_flow.mmd)
+
+--- docs\guides\observability.md:END ---
+
+--- docs\guides\operations.md:START ---
+# Operations
+
+Audience: operators and on-call developers.
+Goal: run the live loop safely, monitor health, and recover from failures quickly.
+
+## Expected Outcome
+- Loop runs with stable cycle time.
+- No unexpected order churn.
+- Observability signals are available for diagnosis.
+
+## Prerequisites
+- Valid MT5 credentials.
+- Config reviewed in `application.*` and `trading.*`.
+- Observability configured (`observability.*`).
+
+## Critical Config Paths
+- `application.schedule.run_forever`
+- `application.schedule.interval_seconds`
+- `application.portfolio.threshold_weight`
+- `trading.dry_run`
+- `trading.require_demo`
+
+## Runtime Flow
+```mermaid
+flowchart LR
+  Coverage[Coverage Selector] --> Pipeline[ModelPipelineService]
+  Pipeline --> Allocator
+  Allocator --> Balancer
+  Balancer --> Orders[Order Planner]
+  Orders --> Trader[TradingPort]
+  Trader --> MT5[(MT5)]
+  Account[AccountPort] --> Balancer
+```
+Diagram source: [docs/diagrams/run_loop.mmd](../diagrams/run_loop.mmd)
+
+## Validation
+- Loop starts and emits pipeline observability signals.
+- Symbol drops are within expected range.
+- Rebalance frequency is acceptable for the current market regime.
+- No repeated `run.loop_exception` events.
+
+## Common Mitigations
+- Churn too high: increase `application.portfolio.threshold_weight`.
+- Cycle latency high: reduce coverage and/or `lookback_days`.
+- Missing market data: validate symbols and MT5 connectivity.
+
+## Rollback
+1. Set `trading.dry_run=true`.
+2. Set `application.schedule.run_forever=false` and run one cycle.
+3. Revert recent config changes and retest from baseline.
+
+## Escalation
+- Open an incident if observability signals are absent for more than 5 minutes in production.
+- Escalate if repeated loop exceptions persist after one rollback cycle.
+
+## Links
+- Next: [Troubleshooting](./troubleshooting.md)
+- See also: [Observability Runbook](../runbooks/observability.md)
+- See also: [MT5 Connectivity and Auth Runbook](../runbooks/mt5-connectivity-auth.md)
+- See also: [Order Execution Failures Runbook](../runbooks/order-execution-failures.md)
+
+--- docs\guides\operations.md:END ---
+
+--- docs\guides\pipeline-tuning.md:START ---
+# Pipeline Tuning
+
+Audience: strategy and platform developers.
+Goal: tune symbol coverage, stage filtering, and rebalance sensitivity without destabilizing operations.
+
+## Expected Outcome
+- Stable cycle time.
+- Acceptable signal quality.
+- Controlled order churn.
+
+## Prerequisites
+- Baseline run works with `configs/demo.yaml`.
+- You can run single-cycle mode for validation.
+
+## Key Config Paths
+- `application.coverage.source`
+- `application.coverage.symbols`
+- `application.models.pipeline`
+- `application.models.pipeline[].drop_threshold`
+- `application.portfolio.threshold_weight`
+
+## Tuning Steps
+1. Start with small coverage (`static`) and single-cycle runs.
+2. Tune `drop_threshold` by stage to remove weak symbols early.
+3. Tune `application.portfolio.threshold_weight` to balance responsiveness versus churn.
+4. Expand coverage only after latency and churn are acceptable.
+
+## Validation
+- Signal count is non-zero but stable.
+- Drop counts are explainable by stage logic.
+- Rebalance instructions are not oscillating every cycle.
+
+## Rollback
+- Revert to last known good config.
+- Run with `run_forever=false` for one validation cycle.
+
+## Links
+- Next: [Operations](./operations.md)
+- See also: [Pipeline Architecture](../architecture/pipeline.md)
+
+--- docs\guides\pipeline-tuning.md:END ---
+
+--- docs\guides\quickstart.md:START ---
+# Quickstart
+
+Audience: new developers.
+Goal: run Tycherion locally in demo mode and validate one full cycle with observability enabled.
+
+## Expected Outcome
+- Local environment is configured.
+- A single-cycle run succeeds with `dry_run=true`.
+- Console observability signals are visible, with optional OTLP export.
+
+## Prerequisites
+- Python 3.10+.
+- MetaTrader 5 installed on the same machine.
+- Demo account credentials.
+
+## Security Notes (Mandatory)
+- Never commit `.env` with credentials.
+- Keep secrets only in local `.env` or CI secret store.
+- If credentials leak, rotate immediately.
+
+## Steps
+1. Create a virtual environment and install dependencies.
+```powershell
+python -m venv .venv
+.\.venv\Scripts\activate
+pip install -e .
+```
+2. Create local config.
+```powershell
+copy configs\demo.yaml configs\local.yaml
+```
+Optional local env template:
+```powershell
+copy .env.example .env
+```
+3. Configure credentials in environment variables or local `.env`.
+- `MT5_TERMINAL_PATH`, `MT5_SERVER`, `MT5_LOGIN`, `MT5_PASSWORD`
+4. Optional observability overrides.
+- `TYCHERION_OTLP_*`
+- `TYCHERION_CONSOLE_ENABLED`, `TYCHERION_CONSOLE_MIN_LEVEL`, `TYCHERION_CONSOLE_CHANNELS`
+5. Run one cycle.
+```powershell
+python -c "from tycherion.bootstrap.main import run_app; run_app('configs/local.yaml')"
+```
+
+## Validation
+- MT5: no real orders when `dry_run=true`.
+- Logs: operational logs appear in console when `console_enabled=true`.
+- Pipeline: no startup/config exceptions.
+
+## Rollback
+- Set `trading.dry_run=true` and `trading.require_demo=true`.
+- Set `application.schedule.run_forever=false` while validating changes.
+- Revert to `configs/demo.yaml` baseline if custom config fails.
+
+## Links
+- Next: [Operations Guide](./operations.md)
+- See also: [Configuration Reference](../reference/configuration.md)
+- See also: [Tutorial: First End-to-End Cycle](./tutorial-first-end-to-end-cycle.md)
+- See also: [Trading and MT5 Fundamentals](../concepts/trading-mt5-fundamentals.md)
+
+--- docs\guides\quickstart.md:END ---
+
+--- docs\guides\README.md:START ---
+# Guides
+
+Audience: developers and operators.
+Goal: complete concrete tasks quickly and safely.
+
+## Guide Index
+- [Quickstart](./quickstart.md)
+- [Tutorial: First End-to-End Cycle](./tutorial-first-end-to-end-cycle.md)
+- [Operations](./operations.md)
+- [Safe Changes Playbook](./safe-changes-playbook.md)
+- [Pipeline Tuning](./pipeline-tuning.md)
+- [Troubleshooting](./troubleshooting.md)
+- [Observability Guide](./observability.md)
+- [Secrets and Credential Handling](./security-secrets.md)
+
+## Navigation Rules
+- Use guides when your question is "how do I do X now?"
+- Use [Reference](../reference/README.md) for exact contracts and defaults.
+- Use [Architecture](../architecture/overview.md) for boundaries and rationale.
+- Use [Concepts](../concepts/README.md) for trading and MT5 fundamentals.
+- Use [Runbooks](../runbooks/README.md) for incident response.
+
+--- docs\guides\README.md:END ---
+
+--- docs\guides\safe-changes-playbook.md:START ---
+# Safe Changes Playbook
+
+Audience: contributors changing runtime behavior, plugin resolution, config loading, execution, or observability.
+Goal: provide one mandatory checklist to ship changes without breaking the trading loop.
+
+## Expected Outcome
+- You choose the correct validation path for your change type.
+- You run the minimum required checks before opening or merging a PR.
+- You know exactly where to look if behavior drifts.
+
+## Prerequisites
+- Local environment runs `configs/demo.yaml` successfully.
+- Plugin auto-discovery works in your environment.
+- Docs checks pass locally.
+
+## Change-Type Checklist
+### Pipeline or run mode changes
+Run:
+```powershell
+.\.venv\Scripts\python.exe -c "import sys; sys.path.insert(0,'src'); from tycherion.bootstrap.main import run_app; run_app('configs/demo.yaml')"
+```
+Validate:
+- No repeated `run.loop_exception`.
+- `pipeline.signal_emitted` events still appear.
+- Cycle ordering still matches `coverage -> pipeline -> allocator -> balancer -> order planner -> trader`.
+
+### Plugin registry, model, indicator, allocator, or balancer changes
+Run:
+```powershell
+.\.venv\Scripts\python.exe -c "import sys; sys.path.insert(0,'src'); from tycherion.application.plugins.registry import auto_discover, MODELS, ALLOCATORS, BALANCERS; from tycherion.adapters.observability.noop.noop_observability import NoopObservability; auto_discover(observability=NoopObservability()); print('models', sorted(MODELS.keys())); print('allocators', sorted(ALLOCATORS.keys())); print('balancers', sorted(BALANCERS.keys()))"
+```
+Validate:
+- New plugin names are present in registry output.
+- Existing canonical plugins are still present.
+- Resolver behavior still matches `docs/reference/plugins.md`.
+
+### Config loader or config contract changes
+Run:
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/check_docs.ps1 -PythonExe .\.venv\Scripts\python.exe
+```
+Validate:
+- `configs/demo.yaml` loads successfully.
+- Canonical paths in docs remain consistent with runtime config model.
+- Deprecated aliases remain explicitly documented if still supported.
+
+### Order planning or execution changes
+Validate:
+- `trading.volume_mode=min` and `trading.volume_mode=fixed` behavior remains distinct.
+- `trading.fixed_volume` only affects fixed mode.
+- Order side and volumes remain coherent with rebalance instructions.
+
+### Observability changes
+Validate:
+- Core code still emits through `ObservabilityPort` only.
+- OTel initialization failures still degrade safely.
+- Console fallback still works when OTLP is unavailable.
+
+## Mandatory Pre-PR Gate
+Run before opening PR:
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/check_docs.ps1 -PythonExe .\.venv\Scripts\python.exe
+```
+
+Also ensure at least one anchor for every behavior change:
+- code link implementing it, or
+- test guaranteeing it, or
+- ADR documenting future-contract behavior.
+
+## Rollback
+- If any mandatory check fails, do not merge.
+- Revert the risky config/code delta to last known-good baseline.
+- Re-run one-cycle validation and docs checks before reopening PR.
+
+## Links
+- Next: [Critical Invariants](../reference/critical-invariants.md)
+- See also: [Execution Contract](../reference/execution-contract.md)
+
+--- docs\guides\safe-changes-playbook.md:END ---
+
+--- docs\guides\security-secrets.md:START ---
+# Secrets and Credential Handling
+
+Audience: developers, operators, and CI maintainers.
+Goal: prevent credential leaks and define mandatory secret handling rules.
+
+## Expected Outcome
+- Secrets stay out of git history and shared configs.
+- Developers know safe local and CI secret patterns.
+
+## Prerequisites
+- `.env.example` is available locally.
+- `.gitignore` includes `.env`.
+
+## Policy
+- Never commit `.env` or any secret-bearing config file.
+- Keep secrets in local `.env` (developer machine) or CI secret store.
+- Rotate credentials immediately after any suspected leak.
+
+## Local Development
+1. Create `.env` from template:
+```powershell
+copy .env.example .env
+```
+2. Fill local values only:
+- `MT5_TERMINAL_PATH`
+- `MT5_SERVER`
+- `MT5_LOGIN`
+- `MT5_PASSWORD`
+3. Keep `.env` out of commits (`.gitignore` includes `.env`).
+
+## CI and Shared Environments
+- Inject secrets as environment variables using CI secret management.
+- Do not place secrets in repository YAML files.
+- Restrict secret scope to the minimum required jobs.
+
+## Validation Mode Safety Toggles
+- Keep `trading.dry_run=true` during local and CI validation.
+- Keep `trading.require_demo=true` unless a controlled production workflow is explicitly approved.
+
+## Incident Response
+If credentials are exposed in logs, dumps, or commits:
+1. Rotate MT5 credentials immediately.
+2. Remove exposed files from history if applicable.
+3. Audit recent activity for unauthorized usage.
+4. Document incident and preventive action.
+
+## Rollback
+- Restore credentials from a trusted secret source.
+- Revert local config changes to baseline before revalidating runtime.
+- Run one cycle in `dry_run` mode after secret changes.
+
+## Links
+- Next: [Quickstart](./quickstart.md)
+- See also: [Configuration Reference](../reference/configuration.md)
+
+--- docs\guides\security-secrets.md:END ---
+
+--- docs\guides\troubleshooting.md:START ---
+# Troubleshooting
+
+Audience: developers and operators.
+Goal: diagnose and recover the most common failures quickly.
+
+## Expected Outcome
+- You can identify common failure classes quickly.
+- You can apply a safe mitigation and rollback path.
+
+## Prerequisites
+- Access to runtime logs and current config.
+- Ability to run one-cycle validation mode.
+
+## Symptoms and Checks
+### Plugin not found
+- Check configured names in `application.models.pipeline` and `application.portfolio.*`.
+- Confirm decorator registration in plugin module.
+
+Copy/paste checks:
+```powershell
+rg -n "@register_model\(name=\"trend_following\"" src/tycherion/domain/signals/models
+rg -n "@register_allocator\(name=\"proportional\"" src/tycherion/domain/portfolio/allocators
+rg -n "@register_balancer\(name=\"threshold\"" src/tycherion/domain/portfolio/balancers
+```
+
+Registry visibility check:
+```powershell
+.\.venv\Scripts\python.exe -c "import sys; sys.path.insert(0,'src'); from tycherion.application.plugins.registry import auto_discover, MODELS, ALLOCATORS, BALANCERS; from tycherion.adapters.observability.noop.noop_observability import NoopObservability; auto_discover(observability=NoopObservability()); print('models', sorted(MODELS.keys())); print('allocators', sorted(ALLOCATORS.keys())); print('balancers', sorted(BALANCERS.keys()))"
+```
+
+### No market data
+- Validate coverage source and symbols.
+- Confirm MT5 connection and timeframe validity.
+
+### Loop exceptions repeating
+- Run single-cycle mode (`application.schedule.run_forever=false`).
+- Inspect `run.loop_exception` and preceding pipeline events.
+
+### Excessive order churn
+- Increase `application.portfolio.threshold_weight`.
+- Reduce model noise (pipeline stages and thresholds).
+
+### No observability signals in collector
+- Verify `observability.otlp_enabled=true`.
+- Check OTLP endpoint, protocol, and network route.
+
+## Mitigation
+- Revert to baseline config (`configs/demo.yaml`).
+- Force safe mode: `trading.dry_run=true`, `trading.require_demo=true`.
+
+## Rollback
+- Undo latest config or code change.
+- Validate one cycle before re-enabling continuous mode.
+
+## Escalation
+- Escalate if failure persists after one rollback and one single-cycle validation.
+
+## Links
+- Next: [Observability Runbook](../runbooks/observability.md)
+- See also: [Execution Contract](../reference/execution-contract.md)
+- See also: [MT5 Connectivity and Auth Runbook](../runbooks/mt5-connectivity-auth.md)
+- See also: [Order Execution Failures Runbook](../runbooks/order-execution-failures.md)
+
+--- docs\guides\troubleshooting.md:END ---
+
+--- docs\guides\tutorial-first-end-to-end-cycle.md:START ---
+# Tutorial: First End-to-End Cycle
+
+Audience: developers new to Tycherion and trading workflows.
+Goal: run a complete cycle with a minimal config, understand what happens at each stage, and validate outcomes safely.
+
+## Expected Outcome
+- You run one full cycle from coverage to execution planning.
+- You understand how model pipeline, allocator, and balancer interact.
+- You can validate results and roll back safely.
+
+## Prerequisites
+- Quickstart environment is working.
+- MT5 demo credentials are configured.
+- You can run `configs/demo.yaml` without startup errors.
+
+## Steps
+1. Create a minimal local config from demo baseline.
+```powershell
+copy configs\demo.yaml configs\tutorial.yaml
+```
+2. Edit `configs/tutorial.yaml` to use an explicit pipeline object mode and conservative runtime:
+```yaml
+application:
+  schedule:
+    run_forever: false
+  coverage:
+    source: static
+    symbols:
+      - PETR4
+      - VALE3
+  models:
+    pipeline:
+      - name: trend_following
+        drop_threshold: 0.10
+      - name: mean_reversion
+        drop_threshold: 0.05
+  portfolio:
+    allocator: proportional
+    balancer: threshold
+    threshold_weight: 0.25
+trading:
+  dry_run: true
+  require_demo: true
+  volume_mode: min
+```
+3. Run one cycle:
+```powershell
+python -c "from tycherion.bootstrap.main import run_app; run_app('configs/tutorial.yaml')"
+```
+4. Observe expected progression:
+- Coverage built for configured symbols.
+- Pipeline stages run in order with stage events.
+- Allocator builds target weights.
+- Balancer creates rebalance plan using threshold.
+- Order planner prepares orders; trader executes dry-run path.
+
+## Validation
+- No repeated `run.loop_exception`.
+- At least one `pipeline.signal_emitted` log for symbols with data.
+- Rebalance behavior is coherent with `threshold_weight`.
+
+## Rollback
+1. Return to baseline:
+```powershell
+copy configs\demo.yaml configs\tutorial.yaml /Y
+```
+2. Keep `trading.dry_run=true` and rerun one cycle.
+3. If issues persist, use [Troubleshooting](./troubleshooting.md) and related runbooks.
+
+## Links
+- Next: [Safe Changes Playbook](./safe-changes-playbook.md)
+- See also: [Execution Contract](../reference/execution-contract.md)
+
+--- docs\guides\tutorial-first-end-to-end-cycle.md:END ---
+
+--- docs\reference\config-execution-map.md:START ---
+# Config Execution Map
+
+Audience: developers and reviewers.
+Goal: show where high-impact config fields are consumed at runtime.
+
+## Runtime Mapping
+| Config Path | Runtime Use | Code Reference | Behavior |
+| --- | --- | --- | --- |
+| `timeframe` | pipeline data window granularity | `src/tycherion/bootstrap/main.py` | passed into `ModelPipelineService(timeframe=...)` |
+| `lookback_days` | historical lookback window | `src/tycherion/bootstrap/main.py` | passed into `ModelPipelineService(lookback_days=...)` |
+| `trading.dry_run` | execution safety mode | `src/tycherion/bootstrap/main.py` | passed to `MT5Trader` |
+| `trading.require_demo` | block non-demo account execution | `src/tycherion/bootstrap/main.py` | passed to `MT5Trader` |
+| `trading.deviation_points` | order slippage tolerance | `src/tycherion/bootstrap/main.py` | passed to `MT5Trader` |
+| `trading.volume_mode` | volume strategy (`min`/`fixed`) | `src/tycherion/application/services/order_planner.py` | drives `volume_from_weight(...)` |
+| `trading.fixed_volume` | fixed order volume | `src/tycherion/application/services/order_planner.py` | used when `volume_mode=fixed` |
+| `mt5.*` | terminal/session auth | `src/tycherion/bootstrap/main.py` | consumed by `_ensure_initialized(...)` |
+| `application.run_mode.name` | run mode dispatch | `src/tycherion/bootstrap/main.py` | selects `run_live_multimodel(...)` |
+| `application.playbook` | indicator selection context | `src/tycherion/bootstrap/main.py` | passed into `ModelPipelineService(playbook=...)` |
+| `application.schedule.run_forever` | loop vs single-run | `src/tycherion/application/runmodes/live_multimodel.py` | controls while-loop behavior |
+| `application.schedule.interval_seconds` | loop interval | `src/tycherion/application/runmodes/live_multimodel.py` | controls `sleep(...)` duration |
+| `application.coverage.*` | symbol universe selection | `src/tycherion/application/services/coverage_selector.py` | resolves static/market_watch/pattern symbols |
+| `application.models.pipeline` | pipeline stage list | `src/tycherion/application/pipeline/config.py` | normalized into `PipelineConfig` |
+| `application.portfolio.allocator` | allocator plugin selection | `src/tycherion/application/runmodes/live_multimodel.py` | resolver key in `ALLOCATORS` |
+| `application.portfolio.balancer` | balancer plugin selection | `src/tycherion/application/runmodes/live_multimodel.py` | resolver key in `BALANCERS` |
+| `application.portfolio.threshold_weight` | rebalance sensitivity | `src/tycherion/application/runmodes/live_multimodel.py` | passed as `threshold` to balancer |
+| `observability.*` | logs/traces/metrics sink config | `src/tycherion/bootstrap/main.py` | consumed by `_build_observability(...)` |
+
+## Notes
+- Canonical observability key is `observability`.
+- Deprecated alias `telemetry` is accepted by the loader for backward compatibility.
+- `risk.*` is currently a forward-compatible contract and not fully enforced in the live execution path.
+
+## Links
+- Next: [Architecture Overview](../architecture/overview.md)
+- See also: [Canonical Config Paths ADR](../architecture/decisions/adr-0002-canonical-config-paths.md)
+
+--- docs\reference\config-execution-map.md:END ---
+
+--- docs\reference\configuration.md:START ---
+# Configuration Reference
+
+Audience: developers and operators.
+Goal: canonical configuration contract for Tycherion.
+
+## Canonical Root Keys
+- `timeframe`
+- `lookback_days`
+- `trading`
+- `risk`
+- `mt5`
+- `application`
+- `observability` (canonical)
+- `telemetry` (deprecated alias, backward-compatible)
+
+## Root Keys
+| Path | Type | Required | Default | Example |
+| --- | --- | --- | --- | --- |
+| `timeframe` | string | yes | - | `H1` |
+| `lookback_days` | int | yes | - | `15` |
+| `trading` | object | no | see section | `{...}` |
+| `risk` | object | no | see section | `{...}` |
+| `mt5` | object | no | see section | `{...}` |
+| `application` | object | no | see section | `{...}` |
+| `observability` | object | no | see section | `{...}` |
+| `telemetry` | object | no | deprecated alias | `{...}` |
+
+## `trading`
+| Path | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `trading.dry_run` | bool | `true` | disables real order placement |
+| `trading.require_demo` | bool | `true` | blocks non-demo account use |
+| `trading.deviation_points` | int | `10` | broker slippage tolerance |
+| `trading.volume_mode` | string | `min` | `min` or `fixed` |
+| `trading.fixed_volume` | float | `0.01` | ignored unless `trading.volume_mode=fixed` |
+
+## `risk`
+| Path | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `risk.risk_per_trade_pct` | float | `0.5` | not enforced yet in current runtime path |
+| `risk.max_daily_loss_pct` | float | `2.0` | not enforced yet in current runtime path |
+
+## `mt5`
+| Path | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `mt5.terminal_path` | string\|null | `null` | can be loaded from env |
+| `mt5.server` | string\|null | `null` | can be loaded from env |
+| `mt5.login` | int\|null | `null` | can be loaded from env |
+| `mt5.password` | string\|null | `null` | can be loaded from env |
+
+## `application`
+| Path | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `application.run_mode.name` | string | `live_multimodel` | current supported mode |
+| `application.playbook` | string | `default` | indicator selection tag context |
+| `application.schedule.run_forever` | bool | `false` | continuous loop toggle |
+| `application.schedule.interval_seconds` | int | `60` | loop interval |
+| `application.coverage.source` | string | `market_watch` | `static`, `market_watch`, `pattern` |
+| `application.coverage.symbols` | string[] | `[]` | used for `static` |
+| `application.coverage.pattern` | string\|null | `null` | used for `pattern` |
+| `application.models.pipeline` | string[]\|object[] | `[]` | ordered model stages |
+| `application.portfolio.allocator` | string | `proportional` | plugin name |
+| `application.portfolio.balancer` | string | `threshold` | plugin name |
+| `application.portfolio.threshold_weight` | float | `0.25` | canonical rebalance threshold path |
+
+Pipeline object mode example (copy/paste):
+```yaml
+application:
+  playbook: default
+  models:
+    pipeline:
+      - name: trend_following
+        drop_threshold: 0.15
+      - name: mean_reversion
+        drop_threshold: 0.05
+```
+
+## Runtime Enforcement Status
+- `risk.*` is loaded by config but not enforced yet in live execution.
+- Current runtime path: `src/tycherion/application/runmodes/live_multimodel.py`.
+- Planned enforcement location: pre-order guard in the application service layer before `build_orders(...)`.
+- Track future enforcement explicitly through ADR updates before changing semantics.
+
+## `observability`
+See dedicated page: [Observability Config](./observability/config.md).
+
+## Environment Overrides
+- MT5: `MT5_TERMINAL_PATH`, `MT5_SERVER`, `MT5_LOGIN`, `MT5_PASSWORD`
+- Observability: `TYCHERION_OTLP_ENABLED`, `TYCHERION_OTLP_ENDPOINT`, `TYCHERION_OTLP_PROTOCOL`, `TYCHERION_OTLP_HEADERS`, `TYCHERION_OTLP_INSECURE`, `TYCHERION_DEPLOYMENT_ENV`, `TYCHERION_LOG_FORMAT`, `TYCHERION_CONSOLE_ENABLED`, `TYCHERION_CONSOLE_MIN_LEVEL`, `TYCHERION_CONSOLE_CHANNELS`
+
+## Pitfalls
+- Prefer `observability`, not deprecated `telemetry`.
+- Use canonical threshold path: `application.portfolio.threshold_weight`.
+- `trading.fixed_volume` has no effect when `trading.volume_mode=min`.
+- Keep credentials out of versioned files.
+
+## Links
+- Next: [Config Execution Map](./config-execution-map.md)
+- See also: [Critical Invariants](./critical-invariants.md)
+
+--- docs\reference\configuration.md:END ---
+
+--- docs\reference\critical-invariants.md:START ---
+# Critical Invariants
+
+Audience: contributors changing runtime, plugins, ports, or configuration.
+Goal: provide a single source of truth for high-risk invariants that must hold to change the system safely.
+
+## Canonical Invariants
+| Area | Invariant | Source of Truth | Verification Anchor |
+| --- | --- | --- | --- |
+| Signals | `Signal.signed` stays in `[-1.0, 1.0]`; `Signal.confidence` stays in `[0.0, 1.0]`. | `src/tycherion/domain/portfolio/entities.py` | `docs/reference/execution-contract.md` |
+| Model decision mapping | `ModelDecision.side` maps to numeric score with BUY -> `+weight`, SELL -> `-weight`, HOLD -> `0`, clamped to `[-1, 1]`. | `src/tycherion/application/pipeline/service.py` (`_decision_to_score`) | `docs/reference/execution-contract.md` |
+| Allocation | `TargetAllocation.weights[symbol]` is portfolio intent in `[-1.0, 1.0]` (negative means short intent). | `src/tycherion/domain/portfolio/entities.py` | `docs/architecture/domain-contracts.md` |
+| Rebalance | `RebalanceInstruction.delta_weight = to_weight - from_weight`; `side` must match delta sign. | `src/tycherion/domain/portfolio/entities.py` | `docs/architecture/domain-contracts.md` |
+| Config path | Rebalance sensitivity is `application.portfolio.threshold_weight` (canonical path). | `docs/reference/configuration.md`, ADR-0002 | `configs/demo.yaml` load check |
+| Observability key | YAML key is `observability`; `telemetry` is deprecated alias for compatibility only. | `src/tycherion/shared/config.py`, ADR-0001 | `docs/reference/observability/config.md` |
+| Cycle ordering | One cycle executes `coverage -> pipeline -> allocator -> balancer -> order planner -> trader`. | `src/tycherion/application/runmodes/live_multimodel.py` | `docs/reference/execution-contract.md` |
+| Plugin resolution | Indicator resolution follows deterministic rule order (playbook tag, `default`, `DEFAULT_METHOD`, fallback). | `src/tycherion/application/plugins/registry.py` | `docs/reference/plugins.md` |
+
+## Healthy vs Problematic Cycle Signals
+Healthy cycle expectations:
+- At least one `pipeline.signal_emitted` event when market data is available.
+- No repeated `run.loop_exception` emissions.
+- Rebalance volume and frequency consistent with `application.portfolio.threshold_weight`.
+
+Problematic cycle patterns:
+- Frequent `run.loop_exception` across consecutive cycles.
+- Repeated `pipeline.symbol_dropped` due to missing market data.
+- No observability signals when runtime is active.
+
+## Contract Change Rule
+When changing a behavior documented here, update at least one artifact:
+- Code reference that implements the new behavior.
+- Test that guarantees the behavior.
+- ADR if behavior is future contract (not fully implemented yet).
+
+## Links
+- Next: [Ports Contracts](./ports-contracts.md)
+- See also: [Execution Contract](./execution-contract.md)
+- See also: [Safe Changes Playbook](../guides/safe-changes-playbook.md)
+
+--- docs\reference\critical-invariants.md:END ---
+
+--- docs\reference\development.md:START ---
+# Development Guide
+
+Audience: contributors.
+Goal: add and evolve plugins safely with stable conventions.
+
+## Tooling and Quality
+- Python 3.10+, install with `pip install -e .`.
+- Type checks: `mypy --strict`.
+- Style checks: `ruff` with line length 100.
+- Domain code must remain infrastructure-agnostic.
+
+## Add an Indicator
+1. Create a module in `domain/signals/indicators/`.
+2. Inherit `BaseIndicator`.
+3. Register with `@register_indicator(key, method, tags)`.
+4. Return `IndicatorOutput(score, features)`.
+
+Example:
+```python
+@register_indicator(key="momentum", method="roc_10", tags={"default", "swing"})
+class Roc10(BaseIndicator):
+    period = 10
+
+    def compute(self, df: pd.DataFrame) -> IndicatorOutput:
+        if df.empty or len(df) < self.period + 1:
+            return IndicatorOutput(score=0.0, features={})
+        roc = (df["close"].iloc[-1] / df["close"].iloc[-(self.period + 1)]) - 1
+        return IndicatorOutput(score=float(max(-1.0, min(1.0, roc))), features={"roc": float(roc)})
+```
+
+## Add a Signal Model
+1. Create a module in `domain/signals/models/`.
+2. Inherit `SignalModel`.
+3. Implement `requires()` and `decide(...)`.
+4. Register with `@register_model(name, tags)`.
+
+Example:
+```python
+@register_model(name="momentum_pullback", tags={"swing"})
+class MomentumPullback(SignalModel):
+    def requires(self) -> set[str]:
+        return {"trend", "stretch"}
+
+    def decide(self, indicators: dict[str, IndicatorOutput]) -> ModelDecision:
+        trend = indicators["trend"].score
+        stretch = indicators["stretch"].score
+        if trend > 0.3 and stretch < -0.4:
+            return ModelDecision(side="BUY", weight=0.7, confidence=0.65)
+        if trend < -0.3 and stretch > 0.4:
+            return ModelDecision(side="SELL", weight=0.7, confidence=0.65)
+        return ModelDecision(side="HOLD", weight=0.0, confidence=0.2)
+```
+
+## Verify Playbook and Tags Resolution
+Use this example to force indicator selection by playbook tag:
+```yaml
+application:
+  playbook: swing
+  models:
+    pipeline:
+      - name: momentum_pullback
+```
+
+Validation command:
+```powershell
+.\.venv\Scripts\python.exe -c "import sys; sys.path.insert(0,'src'); from tycherion.application.plugins.registry import auto_discover, pick_indicator_for; from tycherion.adapters.observability.noop.noop_observability import NoopObservability; auto_discover(observability=NoopObservability()); ind = pick_indicator_for('momentum', 'swing'); print(ind.method, sorted(ind.tags))"
+```
+
+## Add Allocator or Balancer
+- Allocator: inherit `BaseAllocator`, implement `allocate(signals)`.
+- Balancer: inherit `BaseBalancer`, implement `plan(portfolio, target, threshold)`.
+- Register with `@register_allocator(...)` or `@register_balancer(...)`.
+
+## Plugin Not Found: Fast Debug
+1. Confirm decorator exists in code:
+```powershell
+rg -n "@register_model\(name=\"momentum_pullback\"" src/tycherion/domain
+```
+2. Confirm auto-discovery can see it:
+```powershell
+.\.venv\Scripts\python.exe -c "import sys; sys.path.insert(0,'src'); from tycherion.application.plugins.registry import auto_discover, MODELS; from tycherion.adapters.observability.noop.noop_observability import NoopObservability; auto_discover(observability=NoopObservability()); print(sorted(MODELS.keys()))"
+```
+
+## Testing Expectations
+- Add or update tests for every plugin or runtime behavior change.
+- Cover edge conditions (empty data, unknown symbols, threshold edges).
+- Follow [Testing Reference](./testing.md).
+
+## Observability Expectations
+- Inject and use `ObservabilityPort`.
+- Use names from `semconv.py`; avoid ad-hoc event names.
+- Follow [Observability Instrumentation](./observability/instrumentation.md).
+
+## Pull Request Checklist
+- [ ] Plugin is registered and discoverable.
+- [ ] Type and style checks pass.
+- [ ] Tests cover new or changed behavior.
+- [ ] Docs and config are updated when behavior changes.
+
+## Links
+- Next: [Testing Reference](./testing.md)
+- See also: [Plugins and Registry Reference](./plugins.md)
+
+--- docs\reference\development.md:END ---
+
+--- docs\reference\documentation-standards.md:START ---
+# Documentation Standards
+
+Audience: maintainers.
+Goal: keep docs consistent, navigable, and trustworthy as the project grows.
+
+## Document Classes
+- Guide: "how do I do X now?"
+- Reference: "what is the exact contract/default/path?"
+- Architecture: "why is this designed this way and what are the boundaries?"
+- Runbook: "system is failing, how do I restore it?"
+- Decision (ADR): "why did we choose this and when can it change?"
+
+## Placement Rules (Constitution)
+Use this rule before creating or moving content:
+- If it is task execution, place in `guides/`.
+- If it is canonical behavior/keys/contracts, place in `reference/`.
+- If it is rationale and boundaries, place in `architecture/`.
+- If it is incident restoration, place in `runbooks/`.
+- If it records a durable technical decision, place in `architecture/decisions/`.
+
+## Subfolder Rules
+Create a subfolder only when at least one condition is true:
+- Topic has more than 6-8 pages and indexing is hard.
+- Topic has self-contained contracts (for example `reference/observability/`).
+- Topic has clear ownership boundaries that require separation.
+
+Otherwise keep the folder flat and add a local `README.md` index.
+
+## Required Structure by Page Type
+### Guide
+- Expected outcome
+- Prerequisites
+- Steps
+- Validation
+- Rollback
+- Links (`Next` and `See also`)
+
+### Reference
+- Canonical contract table (when applicable)
+- Semantics and edge cases
+- Executable or copy/paste example for common failure points
+- Pitfalls
+- Links (`Next` and `See also`)
+
+### Architecture
+- Purpose
+- Boundaries
+- Critical flow (diagram when relevant)
+- Extension points
+- Failure model
+- Related ADRs
+- Links (`Next` and `See also`)
+
+### Runbook
+- Symptoms
+- Checks
+- Mitigation
+- Rollback
+- Escalation
+- Code pointers
+- Links (`Next` and `See also`)
+
+## Diagram Rules
+- If a page contains Mermaid, include `Diagram source:` as a markdown link.
+- Source of truth diagrams live in `docs/diagrams/*.mmd`.
+- Do not keep diverging copies of the same diagram in multiple places.
+
+## "Docs Must Not Lie" Rule
+Whenever docs describe behavior, at least one anchor must exist:
+- Link to code implementing it.
+- Test that guarantees it.
+- ADR stating it is a future contract not fully implemented yet.
+
+## Enforcement
+- New docs must follow this file.
+- Config docs must reflect `AppConfig` and `configs/demo.yaml`.
+- `scripts/check_docs.ps1` enforces minimal heading structure by doc class.
+- Run local checks before merging:
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/check_docs.ps1 -PythonExe .\.venv\Scripts\python.exe
+```
+
+## Human PR Review Checklist
+- Content is in the correct doc class/folder by intent.
+- Any behavior claim has code link, test anchor, or ADR anchor.
+- Config examples do not conflict with documented defaults.
+- New runbook-worthy failure modes are reflected in `docs/runbooks/`.
+
+## Links
+- Next: [Reference Index](./README.md)
+- See also: [Safe Changes Playbook](../guides/safe-changes-playbook.md)
+
+--- docs\reference\documentation-standards.md:END ---
+
+--- docs\reference\execution-contract.md:START ---
+# Execution Contract
+
+Audience: contributors modifying run modes, pipeline behavior, or operations.
+Goal: define what one runtime cycle means, expected observability signals, and what indicates unhealthy execution.
+
+## One-Cycle Definition
+A single cycle is the ordered execution in `live_multimodel`:
+1. Coverage selection and held-symbol merge.
+2. Pipeline execution for all eligible symbols.
+3. Allocation generation.
+4. Rebalance plan generation.
+5. Order planning.
+6. Trade execution (or dry-run execution path).
+
+Canonical source: `src/tycherion/application/runmodes/live_multimodel.py`.
+
+## Expected Signals per Cycle
+Expected span and event progression:
+- Span: `tycherion.run`
+- Event: `tycherion.coverage.summary`
+- Event: `tycherion.pipeline.run_summary`
+- Event: `tycherion.allocator.completed`
+- Event: `tycherion.rebalance.plan_built`
+- Event: `tycherion.orders.built`
+
+Expected operational logs:
+- `pipeline.signal_emitted`
+- `trade.executed` (when orders are generated)
+- `run.loop_exception` only on failures
+
+Semantic convention source: `src/tycherion/ports/observability/semconv.py`.
+
+## Healthy vs Problematic
+Healthy:
+- Cycle finishes without `run.exception` or `run.loop_exception`.
+- Signal emission is present for symbols with sufficient market data.
+- Rebalance count is stable relative to `application.portfolio.threshold_weight`.
+
+Problematic:
+- Consecutive `run.loop_exception` logs.
+- Large symbol-drop rate caused by data fetch failures.
+- Active run mode with missing observability signals.
+
+## Copy/Paste Validation Run
+Single-cycle validation command:
+```powershell
+.\.venv\Scripts\python.exe -c "import sys; sys.path.insert(0,'src'); from tycherion.bootstrap.main import run_app; run_app('configs/demo.yaml')"
+```
+What to verify in output:
+- Plugin discovery completed.
+- Pipeline stage events and `pipeline.signal_emitted` appear.
+- No repeated loop-exception logs.
+
+## Links
+- Next: [Config Execution Map](./config-execution-map.md)
+- See also: [Critical Invariants](./critical-invariants.md)
+
+--- docs\reference\execution-contract.md:END ---
+
+--- docs\reference\plugins.md:START ---
+# Plugins and Registry Reference
+
+Audience: developers.
+Goal: define canonical behavior for plugin registration and selection.
+
+## Plugin Types
+| Type | Base | Decorator | Folder |
+| --- | --- | --- | --- |
+| Indicator | `BaseIndicator` | `@register_indicator(key, method, tags)` | `domain/signals/indicators` |
+| Model | `SignalModel` | `@register_model(name, tags)` | `domain/signals/models` |
+| Allocator | `BaseAllocator` | `@register_allocator(name, tags)` | `domain/portfolio/allocators` |
+| Balancer | `BaseBalancer` | `@register_balancer(name, tags)` | `domain/portfolio/balancers` |
+
+## Discovery
+- `application/plugins/registry.py::auto_discover()` imports plugin modules at bootstrap.
+- Registration happens at import time through decorators.
+
+## Indicator Resolution Rules (Canonical)
+Given `(key, playbook)`, resolver applies:
+1. Start from all indicators registered for `key`.
+2. If `playbook` is set and at least one indicator has that tag, keep only tagged indicators.
+3. Prefer indicators tagged `default`.
+4. If `DEFAULT_METHOD[key]` exists, prefer matching `method`.
+5. Fall back to first remaining candidate.
+
+## Model, Allocator, and Balancer Resolution
+- Models are selected explicitly by name from `application.models.pipeline`.
+- Allocator and balancer are selected by exact config names in `application.portfolio.*`.
+- Playbook does not currently auto-select models, allocators, or balancers.
+
+## Failure Cases
+- No indicator for key: raises `KeyError`.
+- Unknown model, allocator, or balancer name: runtime error at run mode startup.
+
+## Best Practices
+- Keep names stable and explicit.
+- Use `default` tag for baseline behavior.
+- Avoid side effects in module import.
+- Add tests whenever resolver rules change.
+
+## Links
+- Next: [Development Guide](./development.md)
+- See also: [ADR-0003 Plugin Resolution Rules](../architecture/decisions/adr-0003-plugin-resolution-rules.md)
+
+--- docs\reference\plugins.md:END ---
+
+--- docs\reference\ports-contracts.md:START ---
+# Ports Contracts
+
+Audience: adapter authors and runtime maintainers.
+Goal: define what each port guarantees, what callers assume, and how failures should surface.
+
+## Contract Table
+| Port | Operations | Caller Expectations | Adapter Obligations | Source |
+| --- | --- | --- | --- | --- |
+| `MarketDataPort` | `get_bars(symbol, timeframe, start, end)` | Returns a `pandas.DataFrame`; may be empty. Caller handles empty data by dropping non-held symbols. | Raise exceptions for hard failures; do not silently return corrupt structures. | `src/tycherion/ports/market_data.py`, `src/tycherion/application/pipeline/service.py` |
+| `TradingPort` | `market_buy`, `market_sell` | Returns `TradeResult(ok, retcode, order, message)`; caller logs every execution result. | Map broker result into `TradeResult` consistently; keep `message` actionable. | `src/tycherion/ports/trading.py`, `src/tycherion/application/runmodes/live_multimodel.py` |
+| `AccountPort` | `is_demo`, `balance`, `equity`, `positions` | `equity` and `positions` build `PortfolioSnapshot`; invalid values affect weight math. | Return numeric values and coherent positions list for the same account snapshot. | `src/tycherion/ports/account.py`, `src/tycherion/application/runmodes/live_multimodel.py` |
+| `UniversePort` | `visible_symbols`, `by_pattern` | Coverage selector builds the symbol universe from this contract. | Return stable symbol identifiers compatible with broker adapters. | `src/tycherion/ports/universe.py`, `src/tycherion/application/services/coverage_selector.py` |
+| `ObservabilityPort` | traces, logs, metrics providers | Application and domain-adjacent services emit events through ports only. | Provide no-op-safe behavior or concrete OTel export; do not break core logic. | `src/tycherion/ports/observability/`, `src/tycherion/bootstrap/main.py` |
+
+## Port Invariants
+- Port interfaces are infrastructure-agnostic. Domain and application layers do not import external SDK APIs directly.
+- Adapter errors should be explicit (`raise`/error result), then logged through observability.
+- Ports must remain backward compatible unless an ADR defines a breaking migration.
+
+## Copy/Paste Contract Sanity Check
+Use this to confirm plugin discovery and core runtime contracts are loadable:
+```powershell
+.\.venv\Scripts\python.exe -c "import sys; sys.path.insert(0,'src'); from tycherion.application.plugins.registry import auto_discover, MODELS, ALLOCATORS, BALANCERS; from tycherion.adapters.observability.noop.noop_observability import NoopObservability; auto_discover(observability=NoopObservability()); print('models=', sorted(MODELS.keys())); print('allocators=', sorted(ALLOCATORS.keys())); print('balancers=', sorted(BALANCERS.keys()))"
+```
+Expected shape:
+- `models` includes `mean_reversion` and `trend_following`.
+- `allocators` includes `proportional`.
+- `balancers` includes `threshold`.
+
+## Links
+- Next: [Execution Contract](./execution-contract.md)
+- See also: [Architecture Overview](../architecture/overview.md)
+
+--- docs\reference\ports-contracts.md:END ---
+
+--- docs\reference\README.md:START ---
+# Reference
+
+Audience: developers and reviewers.
+Goal: provide canonical contracts and stable technical specifications.
+
+## Reference Index
+- [Critical Invariants](./critical-invariants.md)
+- [Ports Contracts](./ports-contracts.md)
+- [Execution Contract](./execution-contract.md)
+- [Configuration Reference](./configuration.md)
+- [Config Execution Map](./config-execution-map.md)
+- [Development Guide](./development.md)
+- [Plugins and Registry Reference](./plugins.md)
+- [Testing Reference](./testing.md)
+- [Versioning and Compatibility](./versioning-and-compatibility.md)
+- [Observability Config Reference](./observability/config.md)
+- [Observability Instrumentation](./observability/instrumentation.md)
+- [Documentation Standards](./documentation-standards.md)
+
+## Navigation Rules
+- Use reference docs when you need exact contracts, defaults, type behavior, or resolver rules.
+- Use [Safe Changes Playbook](../guides/safe-changes-playbook.md) before high-risk modifications.
+- Use [Guides](../guides/README.md) for step-by-step procedures.
+- Use [Architecture](../architecture/overview.md) to understand rationale and boundaries.
+
+## Source-of-Truth Hierarchy
+1. `reference/` defines contracts and defaults.
+2. `critical-invariants.md` lists invariants and points to canonical contracts.
+3. `config-execution-map.md` maps runtime consumption without redefining contracts.
+
+--- docs\reference\README.md:END ---
+
+--- docs\reference\testing.md:START ---
+# Testing Reference
+
+Audience: developers.
+Goal: baseline testing strategy for code and documentation changes.
+
+## Test Pyramid
+- Unit: indicators, models, allocators, balancers.
+- Service: pipeline behavior with port fakes or stubs.
+- Integration (optional): MT5 adapter behavior in controlled demo setup.
+
+## Conventions
+- Framework: `pytest`.
+- Suggested layout:
+  - `tests/domain/...`
+  - `tests/application/...`
+  - `tests/adapters/...`
+- Prefer deterministic fixtures and small in-memory datasets.
+
+## Coverage Targets
+- Decision boundaries (`BUY/SELL/HOLD`, threshold edges).
+- Error handling paths (missing data, adapter exceptions).
+- Config loading behavior for canonical and deprecated keys.
+
+## Documentation Checks
+Run docs and config validation script before merge:
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/check_docs.ps1 -PythonExe .\.venv\Scripts\python.exe
+```
+
+## When Tests Are Mandatory
+- New plugins or resolver behavior changes.
+- Run mode and configuration loader changes.
+- Changes affecting order generation, thresholds, or scheduling.
+
+## Links
+- Next: [Development Guide](./development.md)
+- See also: [Documentation Standards](./documentation-standards.md)
+
+--- docs\reference\testing.md:END ---
+
+--- docs\reference\versioning-and-compatibility.md:START ---
+# Versioning and Compatibility
+
+Audience: maintainers and contributors changing contracts.
+Goal: define how Tycherion evolves config and behavior without breaking users unexpectedly.
+
+## Scope
+This page governs compatibility for:
+- configuration keys and path names
+- deprecated aliases
+- behavior changes affecting runtime contracts
+
+## Compatibility Rules
+1. Canonical key/path changes require ADR.
+2. Deprecated aliases must be explicitly documented in `reference/configuration.md`.
+3. If alias support remains in code, docs must state deprecation status and migration target.
+4. Breaking behavior changes require:
+- ADR update
+- reference contract update
+- explicit migration note
+
+## Deprecation Policy
+- Mark as deprecated in docs first.
+- Keep backward compatibility for at least one documented migration window.
+- Emit warning in runtime loader where practical.
+- Remove alias only after ADR and contract update.
+
+Current example:
+- canonical key: `observability`
+- deprecated alias: `telemetry`
+- source: `src/tycherion/shared/config.py` and [ADR-0001](../architecture/decisions/adr-0001-observability-naming.md)
+
+## Release Checklist for Contract Changes
+- [ ] ADR updated or created.
+- [ ] Reference pages updated.
+- [ ] Config example (`configs/demo.yaml`) still loads.
+- [ ] `scripts/check_docs.ps1` passes.
+- [ ] Safe migration note included.
+
+## Links
+- Next: [Configuration Reference](./configuration.md)
+- See also: [Documentation Standards](./documentation-standards.md)
+
+--- docs\reference\versioning-and-compatibility.md:END ---
+
+--- docs\reference\observability\config.md:START ---
+# Observability Config Reference
+
+Audience: developers and operators.
+Goal: canonical configuration for logs, traces, and metrics export.
+
+## If You Need...
+- Setup steps and validation flow: [Observability Guide](../../guides/observability.md).
+- Architecture rationale and boundaries: [Observability Architecture](../../architecture/observability.md).
+- Incident restoration: [Observability Runbook](../../runbooks/observability.md).
+
+## Canonical Key
+Use `observability` in YAML. `telemetry` is a deprecated alias accepted for compatibility.
+
+## YAML Contract
+| Path | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `observability.console_enabled` | bool | `false` | local stdout output |
+| `observability.console_channels` | string[] | `[ops]` | filters by `tycherion.channel` |
+| `observability.console_min_level` | string | `INFO` | minimum severity |
+| `observability.log_format` | string | `pretty` | `pretty` or `json` |
+| `observability.otlp_enabled` | bool | `false` | enables OTLP export |
+| `observability.otlp_endpoint` | string | `http://localhost:4317` | collector endpoint |
+| `observability.otlp_protocol` | string | `grpc` | `grpc` or `http` |
+| `observability.otlp_headers` | string\|null | `null` | auth/metadata headers |
+| `observability.otlp_insecure` | bool\|null | `null` | auto-inferred when null |
+| `observability.deployment_env` | string\|null | `null` | environment marker |
+
+## Environment Overrides
+- `TYCHERION_OTLP_ENABLED`
+- `TYCHERION_OTLP_ENDPOINT`
+- `TYCHERION_OTLP_PROTOCOL`
+- `TYCHERION_OTLP_HEADERS`
+- `TYCHERION_OTLP_INSECURE`
+- `TYCHERION_DEPLOYMENT_ENV`
+- `TYCHERION_LOG_FORMAT`
+- `TYCHERION_CONSOLE_ENABLED`
+- `TYCHERION_CONSOLE_MIN_LEVEL`
+- `TYCHERION_CONSOLE_CHANNELS` (comma-separated list)
+
+## Recommended Profiles
+- Dev: console on, `log_format=pretty`, OTLP off.
+- Staging: console on, `log_format=json`, OTLP on.
+- Prod: `log_format=json`, OTLP on, conservative console channels.
+
+## Pitfalls
+- Mismatched endpoint/protocol pair (`grpc` vs `http`).
+- Empty `console_channels` can hide logs unexpectedly.
+- Keeping credentials in YAML instead of a secret store.
+
+## Links
+- Next: [Observability Instrumentation](./instrumentation.md)
+- See also: [Observability Runbook](../../runbooks/observability.md)
+
+--- docs\reference\observability\config.md:END ---
+
+--- docs\reference\observability\instrumentation.md:START ---
+# Observability Instrumentation
+
+Audience: developers.
+Goal: implement consistent traces, logs, and metrics without leaking OTel into core logic.
+
+## If You Need...
+- Setup and operator flow: [Observability Guide](../../guides/observability.md).
+- Architecture boundaries: [Observability Architecture](../../architecture/observability.md).
+- Config keys/defaults: [Observability Config Reference](./config.md).
+- Incident restoration: [Observability Runbook](../../runbooks/observability.md).
+
+## Rules
+- Inject `ObservabilityPort`; do not import `opentelemetry.*` in domain or application code.
+- Use semantic names from `ports/observability/semconv.py`.
+- Emit logs with `tycherion.channel` in `{ops,audit,debug}`.
+
+## Traces
+```python
+tracer = observability.traces.get_tracer("tycherion.pipeline", version=TYCHERION_SCHEMA_VERSION)
+with tracer.start_as_current_span(
+    semconv.SPAN_PIPELINE,
+    attributes={"timeframe": cfg.timeframe, "lookback_days": cfg.lookback_days},
+):
+    ...
+```
+
+## Events
+```python
+span.add_event(
+    semconv.EVT_PIPELINE_STAGE_STARTED,
+    {"stage": stage_cfg.name, "threshold": float(stage_cfg.drop_threshold or 0)},
+)
+```
+
+## Logs
+```python
+logger = observability.logs.get_logger("tycherion.pipeline", version=TYCHERION_SCHEMA_VERSION)
+logger.emit(
+    "pipeline.signal_emitted",
+    Severity.INFO,
+    {semconv.ATTR_CHANNEL: "audit", "symbol": symbol, "signed": signed, "confidence": confidence},
+)
+```
+
+## Metrics
+```python
+meter = observability.metrics.get_meter("tycherion.pipeline")
+counter = meter.create_counter("tycherion.signals.emitted")
+counter.add(1, {"symbol": symbol})
+```
+
+## Error Pattern
+- `span.record_exception(e)`
+- `span.set_status_error(str(e))`
+- Log `exception_type`, `message`, and stage context.
+
+## Validation Checklist
+- Span names follow semconv.
+- Logs correlate with trace and span IDs.
+- No sensitive data in log payloads.
+
+## Links
+- Next: [Observability Runbook](../../runbooks/observability.md)
+- See also: [Observability Architecture](../../architecture/observability.md)
+
+--- docs\reference\observability\instrumentation.md:END ---
+
+--- docs\runbooks\mt5-connectivity-auth.md:START ---
+# MT5 Connectivity and Auth Runbook
+
+Audience: operators and on-call engineers.
+Goal: restore market-data and trading connectivity when MT5 terminal/session access fails.
+
+## Symptoms
+- No market data for all symbols.
+- MT5 initialize or login failures at startup.
+- Coverage symbols resolve but data fetch returns empty consistently.
+
+## Checks
+1. Confirm credentials and terminal path source:
+- `MT5_TERMINAL_PATH`
+- `MT5_SERVER`
+- `MT5_LOGIN`
+- `MT5_PASSWORD`
+2. Confirm terminal is installed and reachable on host.
+3. Confirm account can authenticate in MT5 terminal manually.
+4. Confirm symbols are visible/selectable in Market Watch.
+
+## Mitigation
+- Re-apply known-good local `.env` and restart one-cycle run.
+- Switch to demo account credentials if production credentials are unavailable.
+- Reduce symbol universe to a small static set while restoring connectivity.
+
+## Rollback
+1. Set `trading.dry_run=true`.
+2. Set `application.schedule.run_forever=false`.
+3. Run a single-cycle validation after connectivity changes.
+
+## Escalation
+- Escalate if initialization/login still fails after one credential and terminal-path rollback.
+- Include MT5 error output, config source, and host details.
+
+## Code Investigation Pointers
+- `src/tycherion/bootstrap/main.py` (`_ensure_initialized`)
+- `src/tycherion/adapters/mt5/market_data_mt5.py`
+- `src/tycherion/adapters/mt5/universe_mt5.py`
+
+## Links
+- Next: [Order Execution Failures Runbook](./order-execution-failures.md)
+- See also: [Troubleshooting](../guides/troubleshooting.md)
+
+--- docs\runbooks\mt5-connectivity-auth.md:END ---
+
+--- docs\runbooks\observability.md:START ---
+# Observability Runbook
+
+Audience: operators and on-call engineers.
+Goal: restore observability signals and prevent blind operation.
+
+## If You Need...
+- Setup or initial validation: [Observability Guide](../guides/observability.md).
+- Exact config paths/defaults: [Observability Config Reference](../reference/observability/config.md).
+- Architecture rationale: [Observability Architecture](../architecture/observability.md).
+
+## Symptoms
+- No traces, logs, or metrics in collector.
+- Repeated export errors.
+- Missing observability signals during active loop execution.
+
+## Checks
+1. Confirm runtime configuration:
+- `observability.otlp_enabled`
+- `observability.otlp_endpoint`
+- `observability.otlp_protocol`
+2. Confirm network path to collector.
+3. Confirm local console logs still appear (`console_enabled=true`).
+
+## Mitigation
+- If collector path is broken, keep console enabled and continue in degraded mode.
+- Reduce noise via `console_channels` and `console_min_level`.
+- Re-apply last known good observability config.
+
+## Rollback
+1. Set `observability.otlp_enabled=false`.
+2. Keep `observability.console_enabled=true`.
+3. Validate one loop cycle and re-enable OTLP only after endpoint health is confirmed.
+
+## Escalation
+- Escalate after 5 minutes with no observability signals in production.
+- Include current config, endpoint, last healthy timestamp, and recent deploy or change.
+
+## Code Investigation Pointers
+- `src/tycherion/bootstrap/main.py`
+- `src/tycherion/adapters/observability/otel/`
+- `src/tycherion/ports/observability/semconv.py`
+
+## Links
+- Next: [General Troubleshooting](../guides/troubleshooting.md)
+- See also: [Observability Architecture](../architecture/observability.md)
+
+--- docs\runbooks\observability.md:END ---
+
+--- docs\runbooks\order-execution-failures.md:START ---
+# Order Execution Failures Runbook
+
+Audience: operators and on-call engineers.
+Goal: diagnose and recover when order requests are built but rejected or not executed as expected.
+
+## Symptoms
+- Frequent failed `trade.executed` outcomes.
+- Unexpected zero orders despite rebalance plans.
+- Repeated broker-side execution errors or invalid volume behavior.
+
+## Checks
+1. Confirm execution mode and safety flags:
+- `trading.dry_run`
+- `trading.require_demo`
+2. Confirm volume settings:
+- `trading.volume_mode`
+- `trading.fixed_volume` (used only for `volume_mode=fixed`)
+3. Confirm rebalance sensitivity:
+- `application.portfolio.threshold_weight`
+4. Inspect execution logs for side, symbol, volume, and result payload.
+
+## Mitigation
+- Set `trading.volume_mode=min` to align with broker lot constraints.
+- Increase `application.portfolio.threshold_weight` to reduce noisy orders.
+- Keep run in single-cycle mode while validating fixes.
+
+## Rollback
+1. Revert to `configs/demo.yaml` baseline.
+2. Set `trading.dry_run=true`.
+3. Re-run one cycle and confirm stable behavior before re-enabling continuous mode.
+
+## Escalation
+- Escalate when execution failures persist after one rollback cycle.
+- Include failing symbols, volumes, return payloads, and current trading config.
+
+## Code Investigation Pointers
+- `src/tycherion/application/services/order_planner.py`
+- `src/tycherion/application/services/sizer.py`
+- `src/tycherion/adapters/mt5/trading_mt5.py`
+
+## Links
+- Next: [Observability Runbook](./observability.md)
+- See also: [Execution Contract](../reference/execution-contract.md)
+
+--- docs\runbooks\order-execution-failures.md:END ---
+
+--- docs\runbooks\README.md:START ---
+# Runbooks
+
+Audience: operators and on-call engineers.
+Goal: restore service and observability quickly during incidents.
+
+## Available Runbooks
+- [Observability Runbook](./observability.md)
+- [MT5 Connectivity and Auth Runbook](./mt5-connectivity-auth.md)
+- [Order Execution Failures Runbook](./order-execution-failures.md)
+
+## Incident Workflow
+1. Identify symptom and impact scope.
+2. Execute checks listed in the runbook.
+3. Apply mitigation and validate behavior.
+4. Roll back if instability remains.
+5. Escalate with evidence when required.
+
+--- docs\runbooks\README.md:END ---
+
+--- scripts\check_docs.ps1:START ---
+param(
+  [string]$PythonExe = 'python'
+)
+
+$ErrorActionPreference = 'Stop'
+
+Write-Host '[check-docs] Validating markdown links...'
+$files = @((Get-Item README.md)) + (Get-ChildItem docs -Recurse -File -Filter *.md)
+$missing = @()
+$formatIssues = @()
+$structureIssues = @()
+$legacyIssues = @()
+
+foreach ($f in $files) {
+  $content = Get-Content $f.FullName -Raw
+  $repoRoot = (Get-Location).Path
+  $relativePath = $f.FullName.Replace($repoRoot + [System.IO.Path]::DirectorySeparatorChar, '')
+  $rel = $relativePath.Replace('\', '/')
+  $fileName = [System.IO.Path]::GetFileName($f.FullName)
+
+  # Validate regular markdown links.
+  $matches = [regex]::Matches($content, '\[[^\]]+\]\(([^)]+)\)')
+  foreach ($m in $matches) {
+    $target = $m.Groups[1].Value.Trim()
+    if ($target -match '^(http|https|mailto):' -or $target -match '^#') { continue }
+    $target = $target.Split('#')[0]
+    if ([string]::IsNullOrWhiteSpace($target)) { continue }
+    $resolved = Join-Path $f.DirectoryName $target
+    if (-not (Test-Path $resolved)) {
+      $missing += "$($f.FullName) -> $target"
+    }
+  }
+
+  # Enforce clickable diagram-source references for Mermaid pages.
+  $diagramLines = [regex]::Matches($content, '(?m)^\s*Diagram source:\s*(.+)$')
+  foreach ($line in $diagramLines) {
+    $rawTarget = $line.Groups[1].Value.Trim()
+    $mdLink = [regex]::Match($rawTarget, '^\[[^\]]+\]\(([^)]+)\)\.?$')
+    if (-not $mdLink.Success) {
+      $formatIssues += "$($f.FullName) -> Diagram source is not a markdown link"
+      continue
+    }
+
+    $target = $mdLink.Groups[1].Value.Trim().Split('#')[0]
+    if (-not [string]::IsNullOrWhiteSpace($target)) {
+      $resolved = Join-Path $f.DirectoryName $target
+      if (-not (Test-Path $resolved)) {
+        $missing += "$($f.FullName) -> $target"
+      }
+    }
+  }
+
+  # Guard against legacy path references after docs refactor.
+  if ($content -match 'guides/runbooks/' -or $content -match 'docs/observability\.md') {
+    $legacyIssues += "$rel -> contains legacy docs path reference"
+  }
+
+  # Structural lint for docs pages (skip root README and ADR pages).
+  if ($rel -eq 'README.md') { continue }
+  if (-not $rel.StartsWith('docs/')) { continue }
+  if ($rel -match '^docs/architecture/decisions/adr-\d+') { continue }
+  if ($fileName -eq 'README.md') { continue }
+
+  if (-not [regex]::IsMatch($content, '(?m)^Audience:\s+.+$')) {
+    $structureIssues += "$rel -> missing 'Audience:' line"
+  }
+  if (-not [regex]::IsMatch($content, '(?m)^Goal:\s+.+$')) {
+    $structureIssues += "$rel -> missing 'Goal:' line"
+  }
+
+  # Guide minimum structure.
+  if ($rel -like 'docs/guides/*') {
+    foreach ($heading in @('Expected Outcome', 'Prerequisites', 'Rollback', 'Links')) {
+      if (-not [regex]::IsMatch($content, "(?m)^##\s+$heading\s*$")) {
+        $structureIssues += "$rel -> missing '## $heading'"
+      }
+    }
+
+    $actionSections = @(
+      'Steps',
+      'Setup Flow',
+      'Tuning Steps',
+      'Change-Type Checklist',
+      'Validation',
+      'Runtime Flow',
+      'Symptoms and Checks',
+      'Policy',
+      'Local Development'
+    )
+    $hasActionSection = $false
+    foreach ($s in $actionSections) {
+      if ([regex]::IsMatch($content, "(?m)^##\s+$s\s*$")) {
+        $hasActionSection = $true
+        break
+      }
+    }
+    if (-not $hasActionSection) {
+      $structureIssues += "$rel -> missing action section (e.g. '## Steps')"
+    }
+  }
+
+  # Runbook minimum structure.
+  if ($rel -like 'docs/runbooks/*') {
+    foreach ($heading in @('Symptoms', 'Checks', 'Mitigation', 'Rollback', 'Escalation', 'Code Investigation Pointers', 'Links')) {
+      if (-not [regex]::IsMatch($content, "(?m)^##\s+$heading\s*$")) {
+        $structureIssues += "$rel -> missing '## $heading'"
+      }
+    }
+  }
+
+  # Architecture minimum structure.
+  if ($rel -like 'docs/architecture/*' -and $rel -notlike 'docs/architecture/decisions/*') {
+    foreach ($heading in @('Purpose', 'Links')) {
+      if (-not [regex]::IsMatch($content, "(?m)^##\s+$heading\s*$")) {
+        $structureIssues += "$rel -> missing '## $heading'"
+      }
+    }
+  }
+
+  # Reference minimum structure.
+  if ($rel -like 'docs/reference/*') {
+    if (-not [regex]::IsMatch($content, '(?m)^##\s+Links\s*$')) {
+      $structureIssues += "$rel -> missing '## Links'"
+    }
+  }
+}
+
+if ($formatIssues.Count -gt 0) {
+  Write-Host '[check-docs] Diagram source format issues found:'
+  $formatIssues | ForEach-Object { Write-Host "  $_" }
+  exit 1
+}
+
+if ($legacyIssues.Count -gt 0) {
+  Write-Host '[check-docs] Legacy docs path issues found:'
+  $legacyIssues | ForEach-Object { Write-Host "  $_" }
+  exit 1
+}
+
+if ($missing.Count -gt 0) {
+  Write-Host '[check-docs] Missing links found:'
+  $missing | ForEach-Object { Write-Host "  $_" }
+  exit 1
+}
+Write-Host '[check-docs] Links OK.'
+
+if ($structureIssues.Count -gt 0) {
+  Write-Host '[check-docs] Structure lint issues found:'
+  $structureIssues | ForEach-Object { Write-Host "  $_" }
+  exit 1
+}
+Write-Host '[check-docs] Structure OK.'
+
+Write-Host '[check-docs] Validating configs/demo.yaml load...'
+$script = @"
+import sys
+sys.path.insert(0, 'src')
+from tycherion.shared.config import load_config
+cfg = load_config('configs/demo.yaml')
+assert cfg.application.portfolio.threshold_weight is not None
+print('config_ok')
+"@
+$script | & $PythonExe -
+Write-Host '[check-docs] Config OK.'
+
+--- scripts\check_docs.ps1:END ---
+
+--- scripts\run_demo.py:START ---
+import sys, pathlib
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+from tycherion.bootstrap.main import run_app
+if __name__ == "__main__":
+    run_app(config_path=str(ROOT / "configs" / "demo.yaml"))
+
+--- scripts\run_demo.py:END ---
+
+--- src\tycherion\adapters\mt5\account_mt5.py:START ---
 from __future__ import annotations
 
 import MetaTrader5 as mt5
@@ -143,9 +2955,9 @@ class MT5Account(AccountPort):
                 )
         return out
 
---- tycherion\adapters\mt5\account_mt5.py:END ---
+--- src\tycherion\adapters\mt5\account_mt5.py:END ---
 
---- tycherion\adapters\mt5\market_data_mt5.py:START ---
+--- src\tycherion\adapters\mt5\market_data_mt5.py:START ---
 from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Dict
@@ -178,9 +2990,9 @@ class MT5MarketData(MarketDataPort):
         df = pd.DataFrame(rates)
         df["time"] = pd.to_datetime(df["time"], unit="s", utc=True)
         return df
---- tycherion\adapters\mt5\market_data_mt5.py:END ---
+--- src\tycherion\adapters\mt5\market_data_mt5.py:END ---
 
---- tycherion\adapters\mt5\trading_mt5.py:START ---
+--- src\tycherion\adapters\mt5\trading_mt5.py:START ---
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional
@@ -266,9 +3078,9 @@ class MT5Trader(TradingPort):
         ok = bool(res and res.retcode in (mt5.TRADE_RETCODE_DONE, mt5.TRADE_RETCODE_PLACED))
         return TradeResult(ok, getattr(res, "retcode", -4), getattr(res, "order", None), str(res))
 
---- tycherion\adapters\mt5\trading_mt5.py:END ---
+--- src\tycherion\adapters\mt5\trading_mt5.py:END ---
 
---- tycherion\adapters\mt5\universe_mt5.py:START ---
+--- src\tycherion\adapters\mt5\universe_mt5.py:START ---
 from __future__ import annotations
 import MetaTrader5 as mt5
 from typing import List
@@ -283,13 +3095,13 @@ class MT5Universe(UniversePort):
         syms = mt5.symbols_get(pattern)
         return [s.name for s in syms]
 
---- tycherion\adapters\mt5\universe_mt5.py:END ---
+--- src\tycherion\adapters\mt5\universe_mt5.py:END ---
 
---- tycherion\adapters\observability\__init__.py:START ---
+--- src\tycherion\adapters\observability\__init__.py:START ---
 
---- tycherion\adapters\observability\__init__.py:END ---
+--- src\tycherion\adapters\observability\__init__.py:END ---
 
---- tycherion\adapters\observability\noop\noop_observability.py:START ---
+--- src\tycherion\adapters\observability\noop\noop_observability.py:START ---
 from __future__ import annotations
 
 from contextlib import contextmanager
@@ -387,13 +3199,13 @@ class NoopObservability(ObservabilityPort):
     def force_flush(self) -> None:
         return None
 
---- tycherion\adapters\observability\noop\noop_observability.py:END ---
+--- src\tycherion\adapters\observability\noop\noop_observability.py:END ---
 
---- tycherion\adapters\observability\noop\__init__.py:START ---
+--- src\tycherion\adapters\observability\noop\__init__.py:START ---
 
---- tycherion\adapters\observability\noop\__init__.py:END ---
+--- src\tycherion\adapters\observability\noop\__init__.py:END ---
 
---- tycherion\adapters\observability\otel\console_dev.py:START ---
+--- src\tycherion\adapters\observability\otel\console_dev.py:START ---
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -492,9 +3304,9 @@ class ConsoleRenderer:
         attrs_s = (attrs_s + " ") if attrs_s else ""
         print(f"{self._ts()} [EVT] {attrs_s}{name}{meta_s}", file=sys.stdout)
 
---- tycherion\adapters\observability\otel\console_dev.py:END ---
+--- src\tycherion\adapters\observability\otel\console_dev.py:END ---
 
---- tycherion\adapters\observability\otel\otel_export.py:START ---
+--- src\tycherion\adapters\observability\otel\otel_export.py:START ---
 from __future__ import annotations
 
 from typing import Mapping
@@ -572,9 +3384,9 @@ def build_metric_reader(
         print(f"[tycherion] OTLP metric exporter init failed: {exc}")
         return None
 
---- tycherion\adapters\observability\otel\otel_export.py:END ---
+--- src\tycherion\adapters\observability\otel\otel_export.py:END ---
 
---- tycherion\adapters\observability\otel\otel_logs.py:START ---
+--- src\tycherion\adapters\observability\otel\otel_logs.py:START ---
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -707,9 +3519,9 @@ class OtelLoggerProvider(LoggerProviderPort):
             logger_name=name or None,
         )
 
---- tycherion\adapters\observability\otel\otel_logs.py:END ---
+--- src\tycherion\adapters\observability\otel\otel_logs.py:END ---
 
---- tycherion\adapters\observability\otel\otel_metrics.py:START ---
+--- src\tycherion\adapters\observability\otel\otel_metrics.py:START ---
 from __future__ import annotations
 
 from typing import Any
@@ -757,9 +3569,9 @@ class OtelMeterProvider(MeterProviderPort):
         meter = self._provider.get_meter(name, version)
         return _OtelMeter(meter)
 
---- tycherion\adapters\observability\otel\otel_metrics.py:END ---
+--- src\tycherion\adapters\observability\otel\otel_metrics.py:END ---
 
---- tycherion\adapters\observability\otel\otel_observability.py:START ---
+--- src\tycherion\adapters\observability\otel\otel_observability.py:START ---
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -919,9 +3731,9 @@ class OtelObservability(ObservabilityPort):
             except Exception:
                 pass
 
---- tycherion\adapters\observability\otel\otel_observability.py:END ---
+--- src\tycherion\adapters\observability\otel\otel_observability.py:END ---
 
---- tycherion\adapters\observability\otel\otel_resource.py:START ---
+--- src\tycherion\adapters\observability\otel\otel_resource.py:START ---
 from __future__ import annotations
 
 from typing import Mapping
@@ -957,9 +3769,9 @@ def build_resource(
 
     return Resource.create(attrs)
 
---- tycherion\adapters\observability\otel\otel_resource.py:END ---
+--- src\tycherion\adapters\observability\otel\otel_resource.py:END ---
 
---- tycherion\adapters\observability\otel\otel_traces.py:START ---
+--- src\tycherion\adapters\observability\otel\otel_traces.py:START ---
 from __future__ import annotations
 
 import time
@@ -1158,13 +3970,13 @@ class OtelTracerProvider(TracerProviderPort):
             console=self._console,
         )
 
---- tycherion\adapters\observability\otel\otel_traces.py:END ---
+--- src\tycherion\adapters\observability\otel\otel_traces.py:END ---
 
---- tycherion\adapters\observability\otel\__init__.py:START ---
+--- src\tycherion\adapters\observability\otel\__init__.py:START ---
 
---- tycherion\adapters\observability\otel\__init__.py:END ---
+--- src\tycherion\adapters\observability\otel\__init__.py:END ---
 
---- tycherion\application\pipeline\config.py:START ---
+--- src\tycherion\application\pipeline\config.py:START ---
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -1213,9 +4025,9 @@ def build_pipeline_config(cfg: AppConfig) -> PipelineConfig:
         )
     return PipelineConfig(stages=stages)
 
---- tycherion\application\pipeline\config.py:END ---
+--- src\tycherion\application\pipeline\config.py:END ---
 
---- tycherion\application\pipeline\result.py:START ---
+--- src\tycherion\application\pipeline\result.py:START ---
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -1234,9 +4046,9 @@ class PipelineRunResult:
     signals_by_symbol: SignalsBySymbol
     stage_stats: Dict[str, int]
 
---- tycherion\application\pipeline\result.py:END ---
+--- src\tycherion\application\pipeline\result.py:END ---
 
---- tycherion\application\pipeline\service.py:START ---
+--- src\tycherion\application\pipeline\service.py:START ---
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -1609,13 +4421,13 @@ class ModelPipelineService:
             s = 0.0
         return max(-1.0, min(1.0, s))
 
---- tycherion\application\pipeline\service.py:END ---
+--- src\tycherion\application\pipeline\service.py:END ---
 
---- tycherion\application\pipeline\__init__.py:START ---
+--- src\tycherion\application\pipeline\__init__.py:START ---
 
---- tycherion\application\pipeline\__init__.py:END ---
+--- src\tycherion\application\pipeline\__init__.py:END ---
 
---- tycherion\application\plugins\registry.py:START ---
+--- src\tycherion\application\plugins\registry.py:START ---
 from __future__ import annotations
 
 from typing import Dict, List, Iterable
@@ -1780,9 +4592,9 @@ def auto_discover(*, observability: ObservabilityPort | None) -> None:
             balancers_count=int(len(BALANCERS)),
         )
 
---- tycherion\application\plugins\registry.py:END ---
+--- src\tycherion\application\plugins\registry.py:END ---
 
---- tycherion\application\runmodes\live_multimodel.py:START ---
+--- src\tycherion\application\runmodes\live_multimodel.py:START ---
 from __future__ import annotations
 
 import hashlib
@@ -1983,9 +4795,9 @@ def run_live_multimodel(
     else:
         step_once()
 
---- tycherion\application\runmodes\live_multimodel.py:END ---
+--- src\tycherion\application\runmodes\live_multimodel.py:END ---
 
---- tycherion\application\services\coverage_selector.py:START ---
+--- src\tycherion\application\services\coverage_selector.py:START ---
 from __future__ import annotations
 
 from tycherion.shared.config import AppConfig
@@ -2023,9 +4835,9 @@ def build_coverage(cfg: AppConfig, data: MarketDataPort, universe: UniversePort)
     _ = data  # explicit unused
     return _build_base_coverage(cfg, universe)
 
---- tycherion\application\services\coverage_selector.py:END ---
+--- src\tycherion\application\services\coverage_selector.py:END ---
 
---- tycherion\application\services\ensemble.py:START ---
+--- src\tycherion\application\services\ensemble.py:START ---
 # application/services/ensemble.py (versão nova)
 
 from __future__ import annotations
@@ -2084,9 +4896,9 @@ def combine(decisions: List[ModelDecision]) -> AggregatedDecision:
     )
 
 
---- tycherion\application\services\ensemble.py:END ---
+--- src\tycherion\application\services\ensemble.py:END ---
 
---- tycherion\application\services\order_planner.py:START ---
+--- src\tycherion\application\services\order_planner.py:START ---
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -2148,9 +4960,9 @@ def build_orders(
     return orders
 
 
---- tycherion\application\services\order_planner.py:END ---
+--- src\tycherion\application\services\order_planner.py:END ---
 
---- tycherion\application\services\sizer.py:START ---
+--- src\tycherion\application\services\sizer.py:START ---
 from __future__ import annotations
 import MetaTrader5 as mt5
 
@@ -2171,9 +4983,9 @@ def volume_from_weight(symbol: str, weight: float, mode: str, fixed_volume: floa
     return symbol_min_volume(symbol)
 
 
---- tycherion\application\services\sizer.py:END ---
+--- src\tycherion\application\services\sizer.py:END ---
 
---- tycherion\bootstrap\main.py:START ---
+--- src\tycherion\bootstrap\main.py:START ---
 from __future__ import annotations
 
 import os
@@ -2318,13 +5130,13 @@ def _build_observability(cfg: AppConfig, config_path: str) -> ObservabilityPort:
         print(f"[tycherion] Observability disabled (failed to init OTel adapter): {e}")
         return NoopObservability()
 
---- tycherion\bootstrap\main.py:END ---
+--- src\tycherion\bootstrap\main.py:END ---
 
---- tycherion\domain\__init__.py:START ---
+--- src\tycherion\domain\__init__.py:START ---
 
---- tycherion\domain\__init__.py:END ---
+--- src\tycherion\domain\__init__.py:END ---
 
---- tycherion\domain\market\entities.py:START ---
+--- src\tycherion\domain\market\entities.py:START ---
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -2366,13 +5178,13 @@ class Bar:
     close: float
     volume: float
 
---- tycherion\domain\market\entities.py:END ---
+--- src\tycherion\domain\market\entities.py:END ---
 
---- tycherion\domain\market\__init__.py:START ---
+--- src\tycherion\domain\market\__init__.py:START ---
 
---- tycherion\domain\market\__init__.py:END ---
+--- src\tycherion\domain\market\__init__.py:END ---
 
---- tycherion\domain\portfolio\entities.py:START ---
+--- src\tycherion\domain\portfolio\entities.py:START ---
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -2451,13 +5263,13 @@ class RebalanceInstruction:
     delta_weight: float
     side: str  # "BUY" | "SELL"
 
---- tycherion\domain\portfolio\entities.py:END ---
+--- src\tycherion\domain\portfolio\entities.py:END ---
 
---- tycherion\domain\portfolio\__init__.py:START ---
+--- src\tycherion\domain\portfolio\__init__.py:START ---
 
---- tycherion\domain\portfolio\__init__.py:END ---
+--- src\tycherion\domain\portfolio\__init__.py:END ---
 
---- tycherion\domain\portfolio\allocators\base.py:START ---
+--- src\tycherion\domain\portfolio\allocators\base.py:START ---
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -2476,9 +5288,9 @@ class BaseAllocator(ABC):
     def allocate(self, signals: SignalsBySymbol) -> TargetAllocation:
         raise NotImplementedError
 
---- tycherion\domain\portfolio\allocators\base.py:END ---
+--- src\tycherion\domain\portfolio\allocators\base.py:END ---
 
---- tycherion\domain\portfolio\allocators\equal_weight.py:START ---
+--- src\tycherion\domain\portfolio\allocators\equal_weight.py:START ---
 from __future__ import annotations
 
 from tycherion.domain.portfolio.allocators.base import BaseAllocator
@@ -2509,9 +5321,9 @@ class EqualWeightAllocator(BaseAllocator):
                 weights[sig.symbol] = 0.0
         return TargetAllocation(weights=weights)
 
---- tycherion\domain\portfolio\allocators\equal_weight.py:END ---
+--- src\tycherion\domain\portfolio\allocators\equal_weight.py:END ---
 
---- tycherion\domain\portfolio\allocators\proportional.py:START ---
+--- src\tycherion\domain\portfolio\allocators\proportional.py:START ---
 from __future__ import annotations
 
 from tycherion.domain.portfolio.allocators.base import BaseAllocator
@@ -2540,13 +5352,13 @@ class ProportionalAllocator(BaseAllocator):
                 weights[sig.symbol] = frac if sig.signed > 0 else -frac
         return TargetAllocation(weights=weights)
 
---- tycherion\domain\portfolio\allocators\proportional.py:END ---
+--- src\tycherion\domain\portfolio\allocators\proportional.py:END ---
 
---- tycherion\domain\portfolio\allocators\__init__.py:START ---
+--- src\tycherion\domain\portfolio\allocators\__init__.py:START ---
 
---- tycherion\domain\portfolio\allocators\__init__.py:END ---
+--- src\tycherion\domain\portfolio\allocators\__init__.py:END ---
 
---- tycherion\domain\portfolio\balancers\base.py:START ---
+--- src\tycherion\domain\portfolio\balancers\base.py:START ---
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -2574,9 +5386,9 @@ class BaseBalancer(ABC):
     ) -> list[RebalanceInstruction]:
         raise NotImplementedError
 
---- tycherion\domain\portfolio\balancers\base.py:END ---
+--- src\tycherion\domain\portfolio\balancers\base.py:END ---
 
---- tycherion\domain\portfolio\balancers\threshold.py:START ---
+--- src\tycherion\domain\portfolio\balancers\threshold.py:START ---
 from __future__ import annotations
 
 from tycherion.domain.portfolio.balancers.base import BaseBalancer
@@ -2623,13 +5435,13 @@ class ThresholdBalancer(BaseBalancer):
             )
         return instructions
 
---- tycherion\domain\portfolio\balancers\threshold.py:END ---
+--- src\tycherion\domain\portfolio\balancers\threshold.py:END ---
 
---- tycherion\domain\portfolio\balancers\__init__.py:START ---
+--- src\tycherion\domain\portfolio\balancers\__init__.py:START ---
 
---- tycherion\domain\portfolio\balancers\__init__.py:END ---
+--- src\tycherion\domain\portfolio\balancers\__init__.py:END ---
 
---- tycherion\domain\signals\entities.py:START ---
+--- src\tycherion\domain\signals\entities.py:START ---
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -2706,13 +5518,13 @@ class SymbolState:
     notes: Dict[str, float] = field(default_factory=dict)
 
 
---- tycherion\domain\signals\entities.py:END ---
+--- src\tycherion\domain\signals\entities.py:END ---
 
---- tycherion\domain\signals\__init__.py:START ---
+--- src\tycherion\domain\signals\__init__.py:START ---
 
---- tycherion\domain\signals\__init__.py:END ---
+--- src\tycherion\domain\signals\__init__.py:END ---
 
---- tycherion\domain\signals\indicators\base.py:START ---
+--- src\tycherion\domain\signals\indicators\base.py:START ---
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -2733,9 +5545,9 @@ class BaseIndicator(ABC):
     def compute(self, df: pd.DataFrame) -> IndicatorOutput:
         raise NotImplementedError
 
---- tycherion\domain\signals\indicators\base.py:END ---
+--- src\tycherion\domain\signals\indicators\base.py:END ---
 
---- tycherion\domain\signals\indicators\stretch_zscore.py:START ---
+--- src\tycherion\domain\signals\indicators\stretch_zscore.py:START ---
 from __future__ import annotations
 
 from tycherion.domain.signals.indicators.base import BaseIndicator
@@ -2760,9 +5572,9 @@ class StretchZScore20(BaseIndicator):
         score = max(-1.0, min(1.0, -zval / 3.0))
         return IndicatorOutput(score=score, features={"z": zval})
 
---- tycherion\domain\signals\indicators\stretch_zscore.py:END ---
+--- src\tycherion\domain\signals\indicators\stretch_zscore.py:END ---
 
---- tycherion\domain\signals\indicators\trend_donchian.py:START ---
+--- src\tycherion\domain\signals\indicators\trend_donchian.py:START ---
 from __future__ import annotations
 
 from tycherion.domain.signals.indicators.base import BaseIndicator
@@ -2792,9 +5604,9 @@ class TrendDonchian5050(BaseIndicator):
             features={"upper": float(hh.iloc[-1]), "lower": float(ll.iloc[-1])},
         )
 
---- tycherion\domain\signals\indicators\trend_donchian.py:END ---
+--- src\tycherion\domain\signals\indicators\trend_donchian.py:END ---
 
---- tycherion\domain\signals\indicators\volatility_atr.py:START ---
+--- src\tycherion\domain\signals\indicators\volatility_atr.py:START ---
 from __future__ import annotations
 
 from tycherion.domain.signals.indicators.base import BaseIndicator
@@ -2824,13 +5636,13 @@ class VolATR14(BaseIndicator):
         score = 1.0 / (1.0 + val) if val > 0 else 0.0
         return IndicatorOutput(score=score, features={"atr": val})
 
---- tycherion\domain\signals\indicators\volatility_atr.py:END ---
+--- src\tycherion\domain\signals\indicators\volatility_atr.py:END ---
 
---- tycherion\domain\signals\indicators\__init__.py:START ---
+--- src\tycherion\domain\signals\indicators\__init__.py:START ---
 
---- tycherion\domain\signals\indicators\__init__.py:END ---
+--- src\tycherion\domain\signals\indicators\__init__.py:END ---
 
---- tycherion\domain\signals\models\base.py:START ---
+--- src\tycherion\domain\signals\models\base.py:START ---
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -2853,9 +5665,9 @@ class SignalModel(ABC):
     def decide(self, indicators: Dict[str, IndicatorOutput]) -> ModelDecision:
         raise NotImplementedError
 
---- tycherion\domain\signals\models\base.py:END ---
+--- src\tycherion\domain\signals\models\base.py:END ---
 
---- tycherion\domain\signals\models\mean_reversion.py:START ---
+--- src\tycherion\domain\signals\models\mean_reversion.py:START ---
 from __future__ import annotations
 
 from tycherion.domain.signals.models.base import SignalModel
@@ -2883,9 +5695,9 @@ class MeanReversion(SignalModel):
         return ModelDecision(side="HOLD", weight=0.0, confidence=0.4)
 
 
---- tycherion\domain\signals\models\mean_reversion.py:END ---
+--- src\tycherion\domain\signals\models\mean_reversion.py:END ---
 
---- tycherion\domain\signals\models\trend_following.py:START ---
+--- src\tycherion\domain\signals\models\trend_following.py:START ---
 from __future__ import annotations
 
 from tycherion.domain.signals.models.base import SignalModel
@@ -2919,13 +5731,13 @@ class TrendFollowing(SignalModel):
         return ModelDecision(side="HOLD", weight=0.0, confidence=0.3)
 
 
---- tycherion\domain\signals\models\trend_following.py:END ---
+--- src\tycherion\domain\signals\models\trend_following.py:END ---
 
---- tycherion\domain\signals\models\__init__.py:START ---
+--- src\tycherion\domain\signals\models\__init__.py:START ---
 
---- tycherion\domain\signals\models\__init__.py:END ---
+--- src\tycherion\domain\signals\models\__init__.py:END ---
 
---- tycherion\ports\account.py:START ---
+--- src\tycherion\ports\account.py:START ---
 from __future__ import annotations
 
 from typing import Protocol, List
@@ -2939,9 +5751,9 @@ class AccountPort(Protocol):
     def equity(self) -> float: ...
     def positions(self) -> List[Position]: ...
 
---- tycherion\ports\account.py:END ---
+--- src\tycherion\ports\account.py:END ---
 
---- tycherion\ports\market_data.py:START ---
+--- src\tycherion\ports\market_data.py:START ---
 from __future__ import annotations
 from typing import Protocol
 from datetime import datetime
@@ -2950,9 +5762,9 @@ import pandas as pd
 class MarketDataPort(Protocol):
     def get_bars(self, symbol: str, timeframe: str, start: datetime, end: datetime) -> pd.DataFrame: ...
 
---- tycherion\ports\market_data.py:END ---
+--- src\tycherion\ports\market_data.py:END ---
 
---- tycherion\ports\trading.py:START ---
+--- src\tycherion\ports\trading.py:START ---
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol, Optional
@@ -2968,9 +5780,9 @@ class TradingPort(Protocol):
     def market_buy(self, symbol: str, volume: Optional[float] = None) -> TradeResult: ...
     def market_sell(self, symbol: str, volume: Optional[float] = None) -> TradeResult: ...
 
---- tycherion\ports\trading.py:END ---
+--- src\tycherion\ports\trading.py:END ---
 
---- tycherion\ports\universe.py:START ---
+--- src\tycherion\ports\universe.py:START ---
 from __future__ import annotations
 from typing import Protocol, List
 
@@ -2978,9 +5790,9 @@ class UniversePort(Protocol):
     def visible_symbols(self) -> List[str]: ...
     def by_pattern(self, pattern: str) -> List[str]: ...
 
---- tycherion\ports\universe.py:END ---
+--- src\tycherion\ports\universe.py:END ---
 
---- tycherion\ports\observability\logs.py:START ---
+--- src\tycherion\ports\observability\logs.py:START ---
 from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
@@ -2998,9 +5810,9 @@ class LoggerPort(Protocol):
 class LoggerProviderPort(Protocol):
     def get_logger(self, name: str, version: str | None = None) -> LoggerPort: ...
 
---- tycherion\ports\observability\logs.py:END ---
+--- src\tycherion\ports\observability\logs.py:END ---
 
---- tycherion\ports\observability\metrics.py:START ---
+--- src\tycherion\ports\observability\metrics.py:START ---
 from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
@@ -3022,9 +5834,9 @@ class MeterPort(Protocol):
 class MeterProviderPort(Protocol):
     def get_meter(self, name: str, version: str | None = None) -> MeterPort: ...
 
---- tycherion\ports\observability\metrics.py:END ---
+--- src\tycherion\ports\observability\metrics.py:END ---
 
---- tycherion\ports\observability\observability.py:START ---
+--- src\tycherion\ports\observability\observability.py:START ---
 from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
@@ -3048,9 +5860,9 @@ class ObservabilityPort(Protocol):
     def shutdown(self) -> None: ...
     def force_flush(self) -> None: ...
 
---- tycherion\ports\observability\observability.py:END ---
+--- src\tycherion\ports\observability\observability.py:END ---
 
---- tycherion\ports\observability\semconv.py:START ---
+--- src\tycherion\ports\observability\semconv.py:START ---
 """Tycherion observability semantic conventions.
 
 These constants keep attribute keys and common span/event names in one place
@@ -3095,9 +5907,9 @@ ATTR_CONFIG_HASH = "config_hash"
 ATTR_CONFIG_PATH = "config_path"
 ATTR_RUN_MODE = "run_mode"
 
---- tycherion\ports\observability\semconv.py:END ---
+--- src\tycherion\ports\observability\semconv.py:END ---
 
---- tycherion\ports\observability\traces.py:START ---
+--- src\tycherion\ports\observability\traces.py:START ---
 from __future__ import annotations
 
 from contextlib import AbstractContextManager
@@ -3129,9 +5941,9 @@ class TracerPort(Protocol):
 class TracerProviderPort(Protocol):
     def get_tracer(self, name: str, version: str | None = None) -> TracerPort: ...
 
---- tycherion\ports\observability\traces.py:END ---
+--- src\tycherion\ports\observability\traces.py:END ---
 
---- tycherion\ports\observability\types.py:START ---
+--- src\tycherion\ports\observability\types.py:START ---
 from __future__ import annotations
 
 from enum import Enum
@@ -3173,13 +5985,13 @@ class SpanStatus(str, Enum):
     OK = "OK"
     ERROR = "ERROR"
 
---- tycherion\ports\observability\types.py:END ---
+--- src\tycherion\ports\observability\types.py:END ---
 
---- tycherion\ports\observability\__init__.py:START ---
+--- src\tycherion\ports\observability\__init__.py:START ---
 
---- tycherion\ports\observability\__init__.py:END ---
+--- src\tycherion\ports\observability\__init__.py:END ---
 
---- tycherion\shared\config.py:START ---
+--- src\tycherion\shared\config.py:START ---
 from __future__ import annotations
 from pydantic import BaseModel, field_validator
 from typing import Optional, Any
@@ -3322,10 +6134,20 @@ def load_config(path: str) -> AppConfig:
     mt5_cfg["password"]      = coalesce(mt5_cfg.get("password"),      env_pass)
 
 
-    # Observability env overrides (kept here to avoid leaking infra details into domain/application)
-    # Support legacy 'telemetry' key as alias.
-    raw.setdefault("observability", raw.get("telemetry", {}))
-    obs_cfg = raw["observability"] or {}
+    # Observability env overrides (kept here to avoid leaking infra details into domain/application).
+    # Canonical key: `observability`.
+    # Legacy alias: `telemetry` (accepted temporarily for backward compatibility).
+    obs_cfg_raw = raw.get("observability")
+    legacy_obs_cfg = raw.get("telemetry")
+    if obs_cfg_raw is None and legacy_obs_cfg is not None:
+        print("[tycherion] WARNING: 'telemetry' config is deprecated; use 'observability'.")
+        obs_cfg_raw = legacy_obs_cfg
+    elif obs_cfg_raw is not None and legacy_obs_cfg is not None:
+        print("[tycherion] WARNING: both 'observability' and deprecated 'telemetry' found; using 'observability'.")
+
+    obs_cfg: dict[str, Any] = ObservabilityCfg().model_dump()
+    if isinstance(obs_cfg_raw, dict):
+        obs_cfg.update(obs_cfg_raw)
 
     def env_bool(name: str) -> bool | None:
         v = os.getenv(name)
@@ -3341,6 +6163,14 @@ def load_config(path: str) -> AppConfig:
     def env_override(yaml_val, env_val):
         return env_val if env_val is not None else yaml_val
 
+    def env_csv_list(name: str) -> list[str] | None:
+        raw_val = os.getenv(name)
+        if raw_val is None:
+            return None
+        values = [part.strip() for part in str(raw_val).split(",")]
+        values = [v for v in values if v]
+        return values if values else []
+
     obs_cfg["otlp_enabled"] = env_override(obs_cfg.get("otlp_enabled"), env_bool("TYCHERION_OTLP_ENABLED"))
     obs_cfg["otlp_endpoint"] = env_override(obs_cfg.get("otlp_endpoint"), os.getenv("TYCHERION_OTLP_ENDPOINT"))
     obs_cfg["otlp_protocol"] = env_override(obs_cfg.get("otlp_protocol"), os.getenv("TYCHERION_OTLP_PROTOCOL"))
@@ -3352,18 +6182,18 @@ def load_config(path: str) -> AppConfig:
     # Console output for local dev
     obs_cfg["console_enabled"] = env_override(obs_cfg.get("console_enabled"), env_bool("TYCHERION_CONSOLE_ENABLED"))
     obs_cfg["console_min_level"] = env_override(obs_cfg.get("console_min_level"), os.getenv("TYCHERION_CONSOLE_MIN_LEVEL"))
-    obs_cfg["console_channels"] = env_override(obs_cfg.get("console_channels"), obs_cfg.get("console_channels"))
+    obs_cfg["console_channels"] = env_override(obs_cfg.get("console_channels"), env_csv_list("TYCHERION_CONSOLE_CHANNELS"))
 
     raw["observability"] = obs_cfg
-    if "telemetry" in raw and raw["telemetry"] and "observability" not in raw:
-        print("[tycherion] WARNING: 'telemetry' config is deprecated; use 'observability'.")
+    # Keep runtime config canonical and avoid validating partial legacy payloads.
+    raw["telemetry"] = None
 
     raw["mt5"] = mt5_cfg
     return AppConfig.model_validate(raw)
 
---- tycherion\shared\config.py:END ---
+--- src\tycherion\shared\config.py:END ---
 
---- tycherion\shared\decorators.py:START ---
+--- src\tycherion\shared\decorators.py:START ---
 from __future__ import annotations
 from functools import wraps
 import logging
@@ -3395,4 +6225,4 @@ def logged(fn):
             raise
     return wrapper
 
---- tycherion\shared\decorators.py:END ---
+--- src\tycherion\shared\decorators.py:END ---
