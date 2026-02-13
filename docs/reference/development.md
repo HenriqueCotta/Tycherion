@@ -4,18 +4,21 @@ Audience: contributors.
 Goal: add and evolve plugins safely with stable conventions.
 
 ## Tooling and Quality
+
 - Python 3.10+, install with `pip install -e .`.
 - Type checks: `mypy --strict`.
 - Style checks: `ruff` with line length 100.
 - Domain code must remain infrastructure-agnostic.
 
 ## Add an Indicator
+
 1. Create a module in `domain/signals/indicators/`.
 2. Inherit `BaseIndicator`.
 3. Register with `@register_indicator(key, method, tags)`.
 4. Return `IndicatorOutput(score, features)`.
 
 Example:
+
 ```python
 @register_indicator(key="momentum", method="roc_10", tags={"default", "swing"})
 class Roc10(BaseIndicator):
@@ -29,12 +32,14 @@ class Roc10(BaseIndicator):
 ```
 
 ## Add a Signal Model
+
 1. Create a module in `domain/signals/models/`.
 2. Inherit `SignalModel`.
 3. Implement `requires()` and `decide(...)`.
 4. Register with `@register_model(name, tags)`.
 
 Example:
+
 ```python
 @register_model(name="momentum_pullback", tags={"swing"})
 class MomentumPullback(SignalModel):
@@ -52,7 +57,9 @@ class MomentumPullback(SignalModel):
 ```
 
 ## Verify Playbook and Tags Resolution
+
 Use this example to force indicator selection by playbook tag:
+
 ```yaml
 application:
   playbook: swing
@@ -62,41 +69,51 @@ application:
 ```
 
 Validation command:
+
 ```powershell
 .\.venv\Scripts\python.exe -c "import sys; sys.path.insert(0,'src'); from tycherion.application.plugins.registry import auto_discover, pick_indicator_for; from tycherion.adapters.observability.noop.noop_observability import NoopObservability; auto_discover(observability=NoopObservability()); ind = pick_indicator_for('momentum', 'swing'); print(ind.method, sorted(ind.tags))"
 ```
 
 ## Add Allocator or Balancer
+
 - Allocator: inherit `BaseAllocator`, implement `allocate(signals)`.
 - Balancer: inherit `BaseBalancer`, implement `plan(portfolio, target, threshold)`.
 - Register with `@register_allocator(...)` or `@register_balancer(...)`.
 
 ## Plugin Not Found: Fast Debug
+
 1. Confirm decorator exists in code:
-```powershell
-rg -n "@register_model\(name=\"momentum_pullback\"" src/tycherion/domain
-```
+
+   ```powershell
+   rg -n "@register_model\(name=\"momentum_pullback\"" src/tycherion/domain
+   ```
+
 2. Confirm auto-discovery can see it:
-```powershell
-.\.venv\Scripts\python.exe -c "import sys; sys.path.insert(0,'src'); from tycherion.application.plugins.registry import auto_discover, MODELS; from tycherion.adapters.observability.noop.noop_observability import NoopObservability; auto_discover(observability=NoopObservability()); print(sorted(MODELS.keys()))"
-```
+
+   ```powershell
+   .\.venv\Scripts\python.exe -c "import sys; sys.path.insert(0,'src'); from tycherion.application.plugins.registry import auto_discover, MODELS; from tycherion.adapters.observability.noop.noop_observability import NoopObservability; auto_discover(observability=NoopObservability()); print(sorted(MODELS.keys()))"
+   ```
 
 ## Testing Expectations
+
 - Add or update tests for every plugin or runtime behavior change.
 - Cover edge conditions (empty data, unknown symbols, threshold edges).
 - Follow [Testing Reference](./testing.md).
 
 ## Observability Expectations
+
 - Inject and use `ObservabilityPort`.
 - Use names from `semconv.py`; avoid ad-hoc event names.
 - Follow [Observability Instrumentation](./observability/instrumentation.md).
 
 ## Pull Request Checklist
+
 - [ ] Plugin is registered and discoverable.
 - [ ] Type and style checks pass.
 - [ ] Tests cover new or changed behavior.
 - [ ] Docs and config are updated when behavior changes.
 
 ## Links
+
 - Next: [Testing Reference](./testing.md)
 - See also: [Plugins and Registry Reference](./plugins.md)

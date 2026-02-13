@@ -4,6 +4,7 @@ Audience: developers and reviewers.
 Goal: show where high-impact config fields are consumed at runtime.
 
 ## Runtime Mapping
+
 | Config Path | Runtime Use | Code Reference | Behavior |
 | --- | --- | --- | --- |
 | `timeframe` | pipeline data window granularity | `src/tycherion/bootstrap/main.py` | passed into `ModelPipelineService(timeframe=...)` |
@@ -26,10 +27,12 @@ Goal: show where high-impact config fields are consumed at runtime.
 | `observability.*` | logs/traces/metrics sink config | `src/tycherion/bootstrap/main.py` | consumed by `_build_observability(...)` |
 
 ## Notes
+
 - Canonical observability key is `observability`.
 - Deprecated alias `telemetry` is accepted by the loader for backward compatibility.
 - `risk.*` is currently a forward-compatible contract and not fully enforced in the live execution path.
 
 ## Links
+
 - Next: [Architecture Overview](../architecture/overview.md)
 - See also: [Canonical Config Paths ADR](../architecture/decisions/adr-0002-canonical-config-paths.md)

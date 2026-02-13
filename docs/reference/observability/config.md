@@ -3,15 +3,18 @@
 Audience: developers and operators.
 Goal: canonical configuration for logs, traces, and metrics export.
 
-## If You Need...
+## If You Need
+
 - Setup steps and validation flow: [Observability Guide](../../guides/observability.md).
 - Architecture rationale and boundaries: [Observability Architecture](../../architecture/observability.md).
 - Incident restoration: [Observability Runbook](../../runbooks/observability.md).
 
 ## Canonical Key
+
 Use `observability` in YAML. `telemetry` is a deprecated alias accepted for compatibility.
 
 ## YAML Contract
+
 | Path | Type | Default | Notes |
 | --- | --- | --- | --- |
 | `observability.console_enabled` | bool | `false` | local stdout output |
@@ -26,6 +29,7 @@ Use `observability` in YAML. `telemetry` is a deprecated alias accepted for comp
 | `observability.deployment_env` | string\|null | `null` | environment marker |
 
 ## Environment Overrides
+
 - `TYCHERION_OTLP_ENABLED`
 - `TYCHERION_OTLP_ENDPOINT`
 - `TYCHERION_OTLP_PROTOCOL`
@@ -38,15 +42,18 @@ Use `observability` in YAML. `telemetry` is a deprecated alias accepted for comp
 - `TYCHERION_CONSOLE_CHANNELS` (comma-separated list)
 
 ## Recommended Profiles
+
 - Dev: console on, `log_format=pretty`, OTLP off.
 - Staging: console on, `log_format=json`, OTLP on.
 - Prod: `log_format=json`, OTLP on, conservative console channels.
 
 ## Pitfalls
+
 - Mismatched endpoint/protocol pair (`grpc` vs `http`).
 - Empty `console_channels` can hide logs unexpectedly.
 - Keeping credentials in YAML instead of a secret store.
 
 ## Links
+
 - Next: [Observability Instrumentation](./instrumentation.md)
 - See also: [Observability Runbook](../../runbooks/observability.md)
