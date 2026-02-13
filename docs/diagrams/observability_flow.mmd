@@ -1,23 +1,17 @@
----
-id: eb18670e-f616-48e5-8b72-28a183db386f
----
 flowchart TD
-  %% High-level entry
-  A["scripts/run_demo.py"] --> B["bootstrap/main.py<br/>run_app()"]
+  A["scripts/run_demo.py"] --> B["bootstrap/main.py run_app()"]
   B --> C["_build_observability()"]
   C -->|if OTel deps/config| D["Adapter: OtelObservability"]
   C -->|fallback| Dn["Adapter: NoopObservability"]
   D --> OP["ObservabilityPort facade"]
   Dn --> OP
 
-  %% Core layer (no OTel imports)
   subgraph CORE["Core (application + domain)"]
     direction TB
     R["application/runmodes/live_multimodel.py"] -->|injects ObservabilityPort| P["application/pipeline/service.py"]
-    P -->|"span events / logs"| ECORE["business logic emits via ports"]
+    P -->|span events and logs| ECORE["business logic emits via ports"]
   end
 
-  %% Ports (stable API)
   subgraph PORTS["Ports: src/tycherion/ports/observability"]
     direction TB
     TP["TracerProviderPort"] --> T["TracerPort"] --> SC["SpanPort"]
@@ -27,24 +21,22 @@ flowchart TD
   CORE --> OP
   OP --> TP & LP & MP
 
-  %% OTel adapter
   subgraph ADAPTER["Adapter: src/tycherion/adapters/observability/otel"]
     direction TB
-    RES["Resource attrs<br/>service.name=tycherion<br/>service.instance.id=runner_id<br/>tycherion.runner_id / run_id<br/>tycherion.schema_version<br/>deployment.environment"]
+    RES["Resource attrs service.name=tycherion service.instance.id=runner_id deployment.environment"]
     SDKTP["OTel SDK TracerProvider"]
     SDKMP["OTel SDK MeterProvider"]
     WTP["OtelTracerProvider (ports impl)"] --> WT["OtelTracer"] --> WS["OtelSpan"]
-    WLP["OtelLoggerProvider"] --> WLG["OtelLogger<br/>formats: pretty | json<br/>filters: console_channels"]
+    WLP["OtelLoggerProvider"] --> WLG["OtelLogger pretty/json console filters"]
     WMP["OtelMeterProvider"]
-    CON["ConsoleRenderer<br/>(dev pretty output)"]
+    CON["ConsoleRenderer"]
     BSP["BatchSpanProcessor"]
     PMR["PeriodicExportingMetricReader"]
-    OTLP_SPAN["OTLP Span Exporter<br/>(grpc|http, headers, insecure inferred/overridden)"]
-    OTLP_METRIC["OTLP Metric Exporter<br/>(grpc|http)"]
-    COL["Collector / Alloy<br/>(Tempo/Loki/Prom etc)"]
+    OTLP_SPAN["OTLP Span Exporter grpc/http"]
+    OTLP_METRIC["OTLP Metric Exporter grpc/http"]
+    COL["Collector / Alloy"]
   end
 
-  %% Wiring inside adapter
   D --> RES --> SDKTP
   D --> SDKMP
   D --> WTP & WLP & WMP
@@ -55,15 +47,13 @@ flowchart TD
   SDKTP --> BSP --> OTLP_SPAN --> COL
   SDKMP --> PMR --> OTLP_METRIC --> COL
 
-  %% Core calls through ports -> adapter impl
   TP --> WTP
   LP --> WLP
   MP --> WMP
 
-  %% Notes
-  N1["Core nunca importa opentelemetry.*; só fala com Ports."]:::note
-  N2["Logs correlacionam com trace/span via contexto OTel.<br/>Produção: preferir stdout JSON (TYCHERION_LOG_FORMAT=json)."]:::note
-  N3["OTLP insecure é inferido (http → true, https → false) ou forçado via TYCHERION_OTLP_INSECURE."]:::note
+  N1["Core never imports opentelemetry.* directly; it uses ports only."]:::note
+  N2["Logs can correlate with trace and span context. In production prefer JSON logs."]:::note
+  N3["OTLP insecure can be inferred from endpoint scheme or explicitly configured."]:::note
 
   CORE --- N1
   ADAPTER --- N2

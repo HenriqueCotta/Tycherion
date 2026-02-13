@@ -1,0 +1,9 @@
+flowchart LR
+  Coverage[Coverage Selector] --> Pipeline
+  Pipeline[ModelPipelineService] --> Allocator
+  Allocator --> Balancer
+  Balancer --> Orders[Order Planner]
+  Orders --> Trader[TradingPort]
+  Trader --> MT5[(MT5)]
+  Account[AccountPort] --> Balancer
+

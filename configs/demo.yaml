@@ -5,7 +5,7 @@ trading:
   require_demo: true
   deviation_points: 10
   volume_mode: min
-  fixed_volume: 100.0
+  fixed_volume: 0.01
 risk:
   risk_per_trade_pct: 0.5
   max_daily_loss_pct: 2.0
@@ -37,7 +37,7 @@ application:
     allocator: proportional
     balancer: threshold
     threshold_weight: 0.25
-telemetry:
+observability:
   console_enabled: true
   console_channels:
     - ops
